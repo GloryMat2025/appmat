@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RBAC — Roles & Permissions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">RBAC — Roles & Permissions</h1>
+      <div class="flex items-center gap-2">
+        <button id="btnSeed" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-white">Seed defaults</button>
+        <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Permissions</h2>
+      <div class="flex gap-2 items-end">
+        <input id="perm" class="border rounded-lg px-3 py-2" placeholder="settings:write">
+        <input id="pnote" class="border rounded-lg px-3 py-2" placeholder="Note (optional)">
+        <button id="btnAddPerm" class="px-3 py-1.5 rounded-lg border">Upsert</button>
+      </div>
+      <ul id="plist" class="mt-3 grid md:grid-cols-2 gap-2"></ul>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Roles</h2>
+      <div class="grid md:grid-cols-3 gap-2 items-end">
+        <input id="rid" class="border rounded-lg px-3 py-2" placeholder="admin">
+        <input id="rname" class="border rounded-lg px-3 py-2" placeholder="Administrator">
+        <input id="rnote" class="border rounded-lg px-3 py-2" placeholder="Note (optional)">
+        <button id="btnAddRole" class="px-3 py-1.5 rounded-lg border">Upsert</button>
+      </div>
+      <div id="roles" class="mt-3 grid md:grid-cols-2 gap-3"></div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">User assignments</h2>
+      <div class="grid md:grid-cols-3 gap-2 items-end">
+        <input id="userKey" class="border rounded-lg px-3 py-2" placeholder="user@example.com">
+        <input id="roleAssign" class="border rounded-lg px-3 py-2" placeholder="role id (e.g., admin)">
+        <div class="flex gap-2">
+          <button id="btnAssign" class="px-3 py-1.5 rounded-lg border">Assign</button>
+          <button id="btnUnassign" class="px-3 py-1.5 rounded-lg border">Unassign</button>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">User key is typically the email (lowercased) or the internal user ID.</p>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let state = { perms:[], roles:[], maps:[], users:[] };
+
+    function chip(text){ return '<span class="text-xs bg-slate-100 border rounded px-2 py-0.5">'+text+'</span>'; }
+
+    function renderPerms(){
+      $('plist').innerHTML = state.perms.map(p => `
+        <li class="border rounded-lg p-2 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-sm">${p.perm}</div>
+            <div class="text-xs text-slate-500">${p.note||''}</div>
+          </div>
+          <button class="text-rose-600 text-sm border rounded px-2 py-1" onclick="delPerm('${p.perm}')">Delete</button>
+        </li>`).join('');
+    }
+
+    function renderRoles(){
+      const permsByRole = {};
+      state.maps.forEach(m => { (permsByRole[m.role_id] ||= []).push(m.perm); });
+      $('roles').innerHTML = state.roles.map(r => `
+        <div class="border rounded-xl p-3">
+          <div class="flex items-center justify-between">
+            <div><div class="font-medium">${r.name}</div><div class="text-xs text-slate-500">${r.id}</div></div>
+            <button class="text-rose-600 text-sm border rounded px-2 py-1" onclick="delRole('${r.id}')">Delete</button>
+          </div>
+          <div class="mt-2 text-xs flex flex-wrap gap-1">${(permsByRole[r.id]||[]).map(chip).join('')}</div>
+          <div class="mt-2 flex gap-2 items-end">
+            <input class="border rounded px-2 py-1 text-sm" placeholder="perm e.g., settings:write" id="g_${r.id}">
+            <button class="text-sm border rounded px-2 py-1" onclick="grant('${r.id}')">Grant</button>
+            <button class="text-sm border rounded px-2 py-1" onclick="revoke('${r.id}')">Revoke</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function refresh(){
+      const r = await fetch('/api/rbac/all', { credentials:'include' });
+      state = await r.json();
+      renderPerms();
+      renderRoles();
+    }
+
+    async function delPerm(perm){
+      await fetch('/api/rbac/perm/'+encodeURIComponent(perm), { method:'DELETE', credentials:'include' });
+      refresh();
+    }
+    async function delRole(id){
+      await fetch('/api/rbac/role/'+encodeURIComponent(id), { method:'DELETE', credentials:'include' });
+      refresh();
+    }
+    async function grant(roleId){
+      const perm = document.getElementById('g_'+roleId).value.trim();
+      if (!perm) return;
+      await fetch('/api/rbac/grant', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ roleId, perm }) });
+      refresh();
+    }
+    async function revoke(roleId){
+      const perm = document.getElementById('g_'+roleId).value.trim();
+      if (!perm) return;
+      await fetch('/api/rbac/revoke', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ roleId, perm }) });
+      refresh();
+    }
+
+    $('btnAddPerm').addEventListener('click', async ()=>{
+      await fetch('/api/rbac/perm', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ perm: $('perm').value.trim(), note: $('pnote').value.trim() }) });
+      $('perm').value=''; $('pnote').value=''; refresh();
+    });
+    $('btnAddRole').addEventListener('click', async ()=>{
+      await fetch('/api/rbac/role', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ id: $('rid').value.trim(), name: $('rname').value.trim(), note: $('rnote').value.trim() }) });
+      $('rid').value=''; $('rname').value=''; $('rnote').value=''; refresh();
+    });
+    $('btnAssign').addEventListener('click', async ()=>{
+      await fetch('/api/rbac/assign', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userKey: $('userKey').value.trim(), roleId: $('roleAssign').value.trim() }) });
+      refresh();
+    });
+    $('btnUnassign').addEventListener('click', async ()=>{
+      await fetch('/api/rbac/unassign', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ userKey: $('userKey').value.trim(), roleId: $('roleAssign').value.trim() }) });
+      refresh();
+    });
+    $('btnSeed').addEventListener('click', async ()=>{
+      await fetch('/api/rbac/seed', { method:'POST', credentials:'include' });
+      refresh();
+    });
+    $('btnRefresh').addEventListener('click', refresh);
+
+    refresh();
+  </script>
+</body>
+</html>

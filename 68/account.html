@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <link rel="manifest" href="/public/manifest.json">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#ff5a5f" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials" />
+  <title>Account</title>
+  <link rel="stylesheet" href="./assets/tailwind.min.css" />
+  <style>
+    @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+    .toast-enter{ animation: tIn .18s ease-out both; } .toast-leave{ animation: tOut .18s ease-in both; }
+    @keyframes tIn{ from{ transform:translateY(12px); opacity:0 } to{ transform:none; opacity:1 } }
+    @keyframes tOut{ from{ transform:none; opacity:1 } to{ transform:translateY(12px); opacity:0 } }
+    dialog::backdrop{ background:rgba(0,0,0,.25); }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <div id="connectivityBanner" class="fixed top-0 left-0 w-full z-[100] hidden">
+    <div class="mx-auto max-w-sm bg-red-500 text-white text-center py-2 text-sm font-semibold rounded-b-2xl shadow-lg animate-pulse">
+      <span>You're offline. Some features may be unavailable.</span>
+    </div>
+  </div>
+  <a href="#mainContent" class="skip-link">Skip to content</a>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
+    <div class="max-w-md mx-auto h-14 px-4 flex items-center justify-between">
+      <div class="w-9 h-9"></div>
+  <h1 class="text-base font-semibold">Account</h1>
+  <button id="langToggle" class="text-[11px] font-semibold px-2 py-2 rounded-lg border border-ring bg-white">BM/EN</button>
+<script>
+  // Simple i18n dictionary
+  const translations = {
+    en: {
+      'lang.toggle': 'BM',
+      'nav.home': 'Home',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Cart',
+      'nav.rewards': 'Rewards',
+      'nav.account': 'Account',
+      'card.wallet': 'Wallet Balance',
+      'search.placeholder': 'Search',
+    },
+    bm: {
+      'lang.toggle': 'EN',
+      'nav.home': 'Laman Utama',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Troli',
+      'nav.rewards': 'Ganjaran',
+      'nav.account': 'Akaun',
+      'card.wallet': 'Baki Dompet',
+      'search.placeholder': 'Cari',
+    }
+  };
+  let lang = localStorage.getItem('lang') || 'en';
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('lang', l);
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[l][key]) el.textContent = translations[l][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (translations[l][key]) el.setAttribute('placeholder', translations[l][key]);
+    });
+    // Update toggle button label
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.textContent = l === 'en' ? 'BM/EN' : 'EN/BM';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    setLang(lang);
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.onclick = () => setLang(lang === 'en' ? 'bm' : 'en');
+  });
+</script>
+      <button class="w-9 h-9 grid place-items-center rounded-full hover:bg-gray-100" aria-label="Privacy & Preferences">
+        <!-- shieldCheckmarkOutline -->
+        <svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/><path d="M9 12l2 2 4-4"/>
+        </svg>
+      </button>
+    </div>
+    <!-- Delivery/Pickup toggle -->
+    <div class="flex justify-center gap-2 py-3" role="tablist" aria-label="Order mode">
+      <button id="btnDelivery" role="tab" aria-selected="false" tabindex="0" class="px-4 py-2 rounded-full border border-slate-300 text-[13px] font-semibold bg-white text-slate-900">Delivery</button>
+      <button id="btnPickup" role="tab" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-full border border-slate-300 text-[13px] font-semibold text-slate-700">Pickup</button>
+    </div>
+  </header>
+
+<!-- Delivery / Pickup Popup Modals -->
+<div id="deliveryModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="deliveryModalTitle">
+  <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+    <button type="button" id="closeDeliveryModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
+  <h2 id="deliveryModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.delivery.title">Delivery Info</h2>
+  <p class="text-sm text-gray-600 mb-4" data-i18n="modal.delivery.desc">Choose delivery options, address, and time slot here. (Demo popup)</p>
+  <button type="button" id="okDeliveryModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+  </div>
+</div>
+<div id="pickupModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="pickupModalTitle">
+  <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+    <button type="button" id="closePickupModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
+  <h2 id="pickupModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.pickup.title">Pickup Info</h2>
+  <p class="text-sm text-gray-600 mb-4" data-i18n="modal.pickup.desc">Choose pickup location and time slot here. (Demo popup)</p>
+  <button type="button" id="okPickupModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+    en: {
+      'lang.toggle': 'BM',
+      'nav.home': 'Home',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Cart',
+      'nav.rewards': 'Rewards',
+      'nav.account': 'Account',
+      'card.wallet': 'Wallet Balance',
+      'search.placeholder': 'Search',
+      'modal.delivery.title': 'Delivery Info',
+      'modal.delivery.desc': 'Choose delivery options, address, and time slot here. (Demo popup)',
+      'modal.pickup.title': 'Pickup Info',
+      'modal.pickup.desc': 'Choose pickup location and time slot here. (Demo popup)',
+      'modal.ok': 'OK',
+    },
+    bm: {
+      'lang.toggle': 'EN',
+      'nav.home': 'Laman Utama',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Troli',
+      'nav.rewards': 'Ganjaran',
+      'nav.account': 'Akaun',
+      'card.wallet': 'Baki Dompet',
+      'search.placeholder': 'Cari',
+      'modal.delivery.title': 'Maklumat Penghantaran',
+      'modal.delivery.desc': 'Pilih pilihan penghantaran, alamat, dan slot masa di sini. (Popup demo)',
+      'modal.pickup.title': 'Maklumat Ambil Sendiri',
+      'modal.pickup.desc': 'Pilih lokasi dan slot masa ambil sendiri di sini. (Popup demo)',
+      'modal.ok': 'OK',
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      opener && opener.focus();
+      dialog.removeEventListener('keydown', escListener);
+    }
+    function escListener(e) { if(e.key==='Escape'){ e.preventDefault(); closeModal(); } }
+    dialog.addEventListener('keydown', escListener);
+    modal.querySelectorAll('[id^="close"],[id^="ok"]').forEach(btn=>btn.onclick=closeModal);
+    return closeModal;
+  }
+  let lastOpener = null;
+  // Delivery/Pickup toggle modal logic for account.html with highlight and shared state
+  const dBtn = document.getElementById('btnDelivery');
+  const pBtn = document.getElementById('btnPickup');
+  const active = ['bg-blue-600','text-white','border-blue-600'];
+  const idle   = ['bg-white','text-slate-900'];
+  function setMode(m, focusBtn) {
+    if(!dBtn||!pBtn) return;
+    if(m==='delivery'){
+      dBtn.classList.add(...active); dBtn.classList.remove(...idle);
+      pBtn.classList.add(...idle);   pBtn.classList.remove(...active);
+      dBtn.setAttribute('aria-selected','true');
+      pBtn.setAttribute('aria-selected','false');
+      dBtn.tabIndex = 0;
+      pBtn.tabIndex = -1;
+      if(focusBtn) dBtn.focus();
+    } else {
+      pBtn.classList.add(...active); pBtn.classList.remove(...idle);
+      dBtn.classList.add(...idle);   dBtn.classList.remove(...active);
+      dBtn.setAttribute('aria-selected','false');
+      pBtn.setAttribute('aria-selected','true');
+      dBtn.tabIndex = -1;
+      pBtn.tabIndex = 0;
+      if(focusBtn) pBtn.focus();
+    }
+    localStorage.setItem('orderMode', m);
+  }
+  dBtn?.addEventListener('click', function(e) {
+  e.preventDefault();
+  setMode('delivery');
+  lastOpener = dBtn;
+  showModal(document.getElementById('deliveryModal'), dBtn);
+  });
+  pBtn?.addEventListener('click', function(e) {
+  e.preventDefault();
+  setMode('pickup');
+  lastOpener = pBtn;
+  showModal(document.getElementById('pickupModal'), pBtn);
+  });
+  // Keyboard navigation
+  [dBtn, pBtn].forEach((btn, idx, arr) => {
+    btn?.addEventListener('keydown', function(e) {
+      if(e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const next = (idx + (e.key==='ArrowRight'?1:-1) + arr.length) % arr.length;
+        setMode(next===0?'delivery':'pickup', true);
+      } else if(e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+  setMode(localStorage.getItem('orderMode') || 'delivery');
+</script>
+
+  <main id="mainContent" class="max-w-md mx-auto px-4 py-4" tabindex="-1">
+    <!-- Latest Pickup Details -->
+    <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4" id="pickupDetailsSection" style="display:none">
+      <h2 class="text-sm font-semibold mb-2">Latest Pickup</h2>
+      <div id="pickupDetailsCard" class="bg-gray-50 rounded-xl p-4 w-full max-w-xs text-left mb-2"></div>
+      <button type="button" id="btnClearPickup" class="mt-2 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[11px] font-semibold">Clear</button>
+    </section>
+    <!-- Profile -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+    <div class="flex items-center gap-4 mb-4">
+      <label class="flex items-center gap-2 cursor-pointer select-none">
+        <input type="checkbox" id="notifToggle" class="accent-blue-600" onchange="if(this.checked){requestNotificationPermission();}else{alert('To disable notifications, use your browser settings.')}" />
+        <span class="text-sm font-medium">Enable Push Notifications</span>
+      </label>
+      <button type="button" onclick="showTestNotification()" class="ml-4 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition">Test Notification</button>
+    </div>
+      <div class="flex items-center gap-4">
+        <button id="btnAvatar" class="relative w-16 h-16 shrink-0 rounded-full ring-1 ring-gray-200 overflow-hidden bg-gray-100" aria-label="Change avatar">
+          <img id="avatarImg" class="w-full h-full object-cover" alt="Avatar" onerror="this.src='/images/common/placeholder.svg'" loading="lazy">
+          <span class="absolute right-0 bottom-0 m-1 w-6 h-6 grid place-items-center rounded-full bg-white text-gray-700 ring-1 ring-gray-200" title="Change">
+            <!-- createOutline -->
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </span>
+        </button>
+
+        <div class="flex-1 min-w-0">
+          <h2 class="flex items-center gap-2 text-base font-semibold">
+            <span id="nameText" class="truncate">Guest User</span>
+            <svg id="verifiedIcon" class="w-5 h-5 text-blue-600 hidden" viewBox="0 0 24 24" fill="currentColor" aria-label="Verified">
+              <path d="M12 2l2.4 2 3-.5 1.5 2.6 2.6 1.5-.5 3 2 2.4-2 2.4.5 3-2.6 1.5-1.5 2.6-3-.5L12 22l-2.4 2-3 .5-1.5-2.6L2.5 20l.5-3L1 14.6 3 12.2l-.5-3L5.2 7.6 6.7 5l3 .5L12 2z"/><path fill="#fff" d="M10.5 16.2l-2.7-2.7 1.4-1.4 1.3 1.3 4.2-4.2 1.4 1.4-5.6 5.6z"/>
+            </svg>
+          </h2>
+          <p id="emailText" class="text-sm text-gray-600 truncate">guest@example.com</p>
+        </div>
+
+        <button id="btnEdit" class="w-9 h-9 grid place-items-center rounded-full hover:bg-gray-100" aria-label="Edit profile">
+          <svg class="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Install Funnel Analytics -->
+    <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4" id="installFunnelPanel" hidden>
+      <h2 class="text-sm font-semibold mb-2" data-i18n="pwa.funnel.title">PWA Install Funnel</h2>
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.ctaShown">CTA Shown</div>
+          <div class="font-semibold" data-funnel-cta-shown>0</div>
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.ctaClicked">CTA Clicked</div>
+          <div class="font-semibold" data-funnel-cta-clicked>0</div>
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.promptAccepted">Prompt Accepted</div>
+          <div class="font-semibold" data-funnel-accepted>0</div>
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.promptDismissed">Prompt Dismissed</div>
+          <div class="font-semibold" data-funnel-dismissed>0</div>
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.installed">Installed</div>
+          <div class="font-semibold" data-funnel-installed>0</div>
+        </div>
+        <div class="space-y-0.5">
+          <div class="text-gray-500" data-i18n="pwa.funnel.rates">Rates (CTR / Accept / Install)</div>
+          <div class="font-semibold text-[11px]" data-funnel-rates>0% / 0% / 0%</div>
+        </div>
+      </div>
+      <button type="button" class="mt-3 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium" id="btnRefreshFunnel" data-i18n="pwa.funnel.refresh">Refresh</button>
+      <div class="mt-2 flex gap-2">
+        <button type="button" class="flex-1 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 text-[11px] font-medium" id="btnExportFunnel" data-i18n="pwa.funnel.export">Export</button>
+        <button type="button" class="flex-1 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 text-[11px] font-medium" id="btnResetFunnel" data-i18n="pwa.funnel.reset">Reset</button>
+      </div>
+    </section>
+
+    <!-- Shortcuts -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <h2 class="text-sm font-semibold mb-2">Shortcuts</h2>
+      <div class="space-y-2">
+  <a href="/profile" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300">
+          <span class="left">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-5 0-9 2.5-9 5v1h18v-1c0-2.5-4-5-9-5Z"/></svg>
+            <span>My Profile</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+  <a href="/delivery-address" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300">
+          <span class="left">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"/></svg>
+            <span>Set Delivery Address</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+  <a href="/pickup-outlet" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300">
+          <span class="left">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M4 10V6l2-2h12l2 2v4M4 10h16v8H4z"/></svg>
+            <span>Select Pickup Outlet</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+  <a href="/topup" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300">
+          <span class="left">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M3 7h18v10H3z"/><path d="M16 7V5a2 2 0 0 0-2-2H6"/></svg>
+            <span>Top Up Balance</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+  <a href="/settings" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300">
+          <span class="left">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4z"/><path d="M12 8v8"/></svg>
+            <span>Privacy & Preferences</span>
+          </span>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Balance & Get Started -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <div class="flex items-center gap-3">
+  <img class="w-16 h-16 rounded-xl ring-1 ring-gray-200 object-cover" src="https://placehold.co/64x64/1e40af/ffffff?text=ZUS" alt="ZUS Coffee" loading="lazy">
+        <div class="flex-1">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500">Balance</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">NEW!</span>
+          </div>
+          <h3 class="text-lg font-semibold tracking-wide">GET STARTED</h3>
+        </div>
+        <svg class="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+  <button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold mt-3" id="btnTopup">
+        <!-- addOutline -->
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>Top Up</span>
+      </button>
+      <div class="mt-3 rounded-xl ring-1 ring-gray-200 bg-indigo-50 text-indigo-900 p-3 text-sm text-center">
+        Top Up RM30 or more and enjoy a <b>20% OFF Voucher</b>
+      </div>
+    </section>
+
+    <!-- Recent Orders -->
+    <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4" id="recentOrdersSection" hidden>
+      <h2 class="text-sm font-semibold mb-2">Recent Orders</h2>
+      <div id="recentOrdersList" class="space-y-2 text-sm"></div>
+      <button type="button" id="btnClearOrders" class="mt-3 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-[11px] font-semibold">Clear History</button>
+    </section>
+
+    <!-- Points & Loyalty -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <div class="grid grid-cols-2 divide-x divide-gray-200">
+        <div class="px-2 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-gray-500">Points</div>
+            <div class="text-sm text-gray-700">Daily Check-in</div>
+            <div class="text-xl font-bold">5 pts</div>
+          </div>
+          <svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+        <div class="px-2 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-gray-500" id="loyaltyLabel">GF START</div>
+            <div class="text-xl font-bold">0 / 10</div>
+          </div>
+          <span class="text-2xl">🎁</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Offline Queue (actions waiting to sync) -->
+    <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4" id="offlineQueuePanel" hidden>
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm font-semibold">Offline Queue</h2>
+        <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600" data-offline-queue-count>0</span>
+      </div>
+      <p class="text-xs text-gray-600 mb-3">Some actions were saved while you were offline. They will sync automatically when you reconnect.</p>
+      <div class="flex gap-2">
+        <button type="button" class="flex-1 px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold" data-offline-queue-sync>Sync Now</button>
+        <button type="button" class="px-3 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm font-semibold" data-offline-queue-clear>Clear</button>
+      </div>
+    </section>
+
+    <!-- Preferences / Consents -->
+    <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4" data-settings-panel>
+      <h2 class="text-sm font-semibold mb-3">Preferences</h2>
+      <div class="flex flex-col gap-3 text-sm">
+        <label class="flex items-center justify-between gap-4">
+          <span class="flex-1">
+            <span class="font-medium">Order Notifications</span>
+            <span class="block text-xs text-gray-500">Notify when order becomes Ready / Completed.</span>
+          </span>
+          <button type="button" data-toggle-notifs class="w-12 h-7 rounded-full relative focus:outline-none ring-1 ring-gray-300 transition data-[on=true]:bg-green-500" data-on="false" aria-pressed="false">
+            <span class="absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform translate-x-0 data-[on=true]:translate-x-5"></span>
+          </button>
+        </label>
+        <label class="flex items-center justify-between gap-4">
+          <span class="flex-1">
+            <span class="font-medium">Analytics Logging</span>
+            <span class="block text-xs text-gray-500">Allow local event logging (never sent to server).</span>
+          </span>
+          <button type="button" data-toggle-analytics class="w-12 h-7 rounded-full relative focus:outline-none ring-1 ring-gray-300 transition data-[on=true]:bg-blue-600" data-on="true" aria-pressed="true">
+            <span class="absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform translate-x-0 data-[on=true]:translate-x-5"></span>
+          </button>
+        </label>
+      </div>
+    </section>
+
+    <!-- Place an Order -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <h2 class="text-sm font-semibold mb-2">Place an Order</h2>
+      <div class="space-y-2">
+  <a href="/orders" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🛍️</span><span>Orders</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/gift" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🥤</span><span>Register Your ZUS Tumbler</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/rewards" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🏆</span><span>Missions & Rewards</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+      </div>
+    </section>
+
+    <!-- Especially For You -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <h2 class="text-sm font-semibold mb-2">Especially For You</h2>
+      <div class="space-y-2">
+  <a href="/vouchers" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🏷️</span><span>My Vouchers</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/gift" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🎁</span><span>Gift Cards</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/coupon" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🏷️</span><span>Apply Coupon</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/invite" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">👥</span><span>Invite Your Friends</span><em class="text-blue-600 not-italic text-xs">Earn Voucher</em></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+      </div>
+    </section>
+
+    <!-- Need Help? -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <h2 class="text-sm font-semibold mb-2">Need Help?</h2>
+      <div class="space-y-2">
+  <a href="/help" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">❓</span><span>Help Centre</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/pitch" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">💬</span><span>Pitch Your Idea</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/feedback" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">💬</span><span>Feedback</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/settings" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">🛡️</span><span>Settings</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+      </div>
+    </section>
+
+    <!-- General -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 mt-4">
+      <h2 class="text-sm font-semibold mb-2">General</h2>
+      <div class="space-y-2">
+  <a href="/terms" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">📄</span><span>Terms of Use and Agreement</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/about" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">ℹ️</span><span>About ZUS Coffee</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+  <a href="/work-with-us" class="w-full flex items-center justify-between py-3 px-3 rounded-xl ring-1 ring-gray-200 hover:ring-gray-300"><span class="flex items-center gap-3"><span class="text-2xl">💼</span><span>Work With Us</span></span><svg class="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></a>
+      </div>
+    </section>
+
+    <!-- Verification Box -->
+  <section id="verifyBox" class="hidden mt-4 rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+      <h3 class="text-base font-semibold">It looks like your account hasn't been verified</h3>
+      <p class="text-sm text-gray-600 mt-1">By verifying your account, you will get full access of the app. You will also receive all upcoming notifications in your mailbox.</p>
+      <div class="flex gap-2 mt-3">
+  <button id="btnSendEmail" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">SEND ME AN EMAIL</button>
+  <button id="btnMarkVerified" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">MARK VERIFIED</button>
+      </div>
+    </section>
+
+    <!-- Footer with cup + tagline -->
+    <footer class="mt-8 mb-20">
+      <div class="mx-auto w-24 h-24 rounded-full bg-indigo-100 grid place-items-center">
+        <span class="text-3xl">☕</span>
+      </div>
+      <p class="text-center text-sm text-gray-700 mt-2">a Necessity, not a <span class="font-semibold">Luxury</span></p>
+    </footer>
+  </main>
+
+  <!-- Bottom nav -->
+  <nav aria-label="Primary" class="fixed bottom-3 inset-x-0 mx-auto max-w-sm bg-white/90 dark:bg-slate-800/80 backdrop-blur rounded-2xl border border-ring dark:border-slate-600 shadow-soft p-2 grid grid-cols-5 md:grid-cols-7 gap-1">
+  <a data-tab="home" href="./index.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏠<span class="text-xs" data-i18n="nav.home">Home</span></a>
+  <a data-tab="menu" href="./menu.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🍽️<span class="text-xs" data-i18n="nav.menu">Menu</span></a>
+  <a data-tab="checkout" href="#/checkout" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">✅<span class="text-xs">Checkout</span></a>
+  <a data-tab="orders" href="#/orders" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">📦<span class="text-xs">My Orders</span></a>
+  <a data-tab="cart" href="./cart.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🛒<span class="text-xs" data-i18n="nav.cart">Cart</span></a>
+  <a data-tab="rewards" href="./rewards.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏆<span class="text-xs" data-i18n="nav.rewards">Rewards</span></a>
+  <a data-tab="account" href="./account.html" class="flex flex-col items-center gap-1 py-2 rounded-xl" aria-current="page">👤<span class="text-xs" data-i18n="nav.account">Account</span></a>
+  </nav>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 pointer-events-none hidden">
+    <div class="pointer-events-auto px-4 py-2 rounded-full bg-emerald-600 text-white text-sm shadow-md">Verification email sent! Please check your inbox.</div>
+  </div>
+
+  <!-- Edit Modal -->
+  <dialog id="editDialog" class="rounded-2xl p-0 w-[min(90vw,420px)]">
+    <form method="dialog" class="p-4">
+      <h2 class="text-lg font-semibold mb-3">Edit Profile</h2>
+      <label class="block text-sm font-medium">Name</label>
+      <input id="inpName" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg ring-1 ring-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <label class="block text-sm font-medium">Email</label>
+      <input id="inpEmail" type="email" class="w-full mt-1 mb-4 px-3 py-2 rounded-lg ring-1 ring-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <div class="flex gap-2 justify-end">
+        <button id="btnCancelEdit" type="button" class="px-4 py-2 rounded-lg ring-1 ring-gray-300">Cancel</button>
+        <button id="btnSaveEdit" type="button" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <input id="fileAvatar" type="file" accept="image/*" class="hidden" />
+
+  <!-- Toast system (shared) -->
+  <div id="toast-root" class="fixed z-50 inset-x-0 bottom-4 flex flex-col items-center gap-2 pointer-events-none" aria-live="polite" aria-atomic="true"></div>
+  <script src="./js/toast.js"></script>
+  <script>
+    // --- Config "constants"
+    const LOYALTY_LABEL_START = "GF START";
+
+    // --- Local storage helpers
+    const LS = {
+      name: "account:name",
+      email: "account:email",
+      avatar: "account:avatar",
+      authed: "account:isAuthenticated"
+    };
+
+    // --- Elements
+    const nameText = document.getElementById("nameText");
+    const emailText = document.getElementById("emailText");
+    const verifiedIcon = document.getElementById("verifiedIcon");
+    const verifyBox = document.getElementById("verifyBox");
+    const loyaltyLabel = document.getElementById("loyaltyLabel");
+    loyaltyLabel.textContent = LOYALTY_LABEL_START;
+
+    const fileAvatar = document.getElementById("fileAvatar");
+    const avatarImg = document.getElementById("avatarImg");
+    const btnAvatar = document.getElementById("btnAvatar");
+    const btnEdit = document.getElementById("btnEdit");
+
+    const editDialog = document.getElementById("editDialog");
+    const inpName = document.getElementById("inpName");
+    const inpEmail = document.getElementById("inpEmail");
+    const btnCancelEdit = document.getElementById("btnCancelEdit");
+    const btnSaveEdit = document.getElementById("btnSaveEdit");
+
+    const btnSendEmail = document.getElementById("btnSendEmail");
+    const btnMarkVerified = document.getElementById("btnMarkVerified");
+    const toast = document.getElementById("toast");
+  const recentOrdersSection = document.getElementById('recentOrdersSection');
+  const recentOrdersList = document.getElementById('recentOrdersList');
+  const btnClearOrders = document.getElementById('btnClearOrders');
+
+    // --- Load persisted profile
+    function loadState(){
+      const name = localStorage.getItem(LS.name) || "Guest User";
+      const email = localStorage.getItem(LS.email) || "guest@example.com";
+      const avatar = localStorage.getItem(LS.avatar) || "";
+      const authed = localStorage.getItem(LS.authed) === "true";
+
+      nameText.textContent = name;
+      emailText.textContent = email;
+      if (avatar) avatarImg.src = avatar; else avatarImg.removeAttribute("src");
+      setAuthed(authed, false);
+    }
+
+    function setAuthed(isAuthed, persist = true){
+      verifiedIcon.classList.toggle("hidden", !isAuthed);
+      verifyBox.classList.toggle("hidden", isAuthed);
+      if (persist) localStorage.setItem(LS.authed, String(isAuthed));
+    }
+
+    // --- Avatar picker
+    btnAvatar.addEventListener("click", ()=> fileAvatar.click());
+    fileAvatar.addEventListener("change", (e)=>{
+      const file = e.target.files?.[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = String(reader.result || "");
+        avatarImg.src = url;
+        localStorage.setItem(LS.avatar, url);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // --- Edit modal
+    btnEdit.addEventListener("click", ()=>{
+      inpName.value = nameText.textContent || "";
+      inpEmail.value = emailText.textContent || "";
+      editDialog.showModal();
+    });
+    btnCancelEdit.addEventListener("click", ()=> editDialog.close());
+    btnSaveEdit.addEventListener("click", ()=>{
+      const n = (inpName.value || "").trim() || "Guest User";
+      const e = (inpEmail.value || "").trim() || "guest@example.com";
+      nameText.textContent = n;
+      emailText.textContent = e;
+      localStorage.setItem(LS.name, n);
+      localStorage.setItem(LS.email, e);
+      editDialog.close();
+    });
+
+    // --- Verification actions
+    if (btnSendEmail) {
+      btnSendEmail.addEventListener("click", ()=>{
+        // show toast
+        toast.classList.remove("hidden"); toast.firstElementChild.classList.add("toast-enter");
+        setTimeout(()=>{ toast.firstElementChild.classList.replace("toast-enter","toast-leave"); }, 1600);
+        setTimeout(()=>{ toast.classList.add("hidden"); toast.firstElementChild.classList.remove("toast-leave"); }, 1800);
+      });
+    }
+
+    // --- Recent Orders Rendering
+    function loadOrderHistory(){ try { return JSON.parse(localStorage.getItem('orderHistory')||'[]'); } catch { return []; } }
+    function renderRecentOrders(){
+      const hist = loadOrderHistory().slice(-10).reverse();
+      if(!hist.length){ recentOrdersSection.hidden = true; return; }
+      recentOrdersSection.hidden = false;
+      recentOrdersList.innerHTML = hist.map(o=>{
+        const eta = o.status === 'completed' ? 'Completed' : (o.status==='ready' ? 'Ready' : 'In Progress');
+        return `<div class="rounded-xl ring-1 ring-gray-200 bg-white p-3 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-md bg-indigo-50 grid place-items-center text-lg">🧾</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-semibold truncate">${o.id}</span>
+              <span class="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">${eta}</span>
+            </div>
+            <div class="text-xs text-gray-600 mt-0.5">${(o.items||[]).reduce((s,x)=>s+x.qty,0)} item(s) · ${currency(o.total||0)}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    btnClearOrders?.addEventListener('click', ()=>{ if(confirm('Clear order history?')){ localStorage.removeItem('orderHistory'); renderRecentOrders(); }});
+    renderRecentOrders();
+    if (btnMarkVerified) {
+      btnMarkVerified.addEventListener("click", ()=> setAuthed(true));
+    }
+
+    // --- Top up button (navigate or hook)
+    document.getElementById("btnTopup").addEventListener("click", ()=> location.href="/topup");
+
+    // Offline queue panel wiring (if present)
+    (function(){
+      const panel = document.getElementById('offlineQueuePanel');
+      if(!panel) return;
+      const countEl = panel.querySelector('[data-offline-queue-count]');
+      const btnSync = panel.querySelector('[data-offline-queue-sync]');
+      const btnClear = panel.querySelector('[data-offline-queue-clear]');
+      function refresh(len){
+        if(len>0){ panel.hidden=false; if(countEl) countEl.textContent=String(len); }
+        else panel.hidden=true;
+      }
+      window.addEventListener('offlinequeuechange', e => refresh(e.detail.length));
+      if(window.__offlineQueue){ refresh(window.__offlineQueue.length()); }
+      btnSync?.addEventListener('click', ()=> window.__offlineQueue?.replay());
+      btnClear?.addEventListener('click', ()=>{
+        localStorage.removeItem('offlineActionQueue');
+        if(typeof pushToast==='function') pushToast('Cleared queue', { tone:'info' });
+        refresh(0);
+      });
+    })();
+
+    // init
+    loadState();
+
+    // --- Install Funnel Panel Logic
+    (function(){
+      const panel = document.getElementById('installFunnelPanel');
+      if(!panel) return;
+      const els = {
+        shown: panel.querySelector('[data-funnel-cta-shown]'),
+        clicked: panel.querySelector('[data-funnel-cta-clicked]'),
+        accepted: panel.querySelector('[data-funnel-accepted]'),
+        dismissed: panel.querySelector('[data-funnel-dismissed]'),
+        installed: panel.querySelector('[data-funnel-installed]'),
+        rates: panel.querySelector('[data-funnel-rates]')
+      };
+      function pct(n){ return (n*100).toFixed(1)+'%'; }
+      function render(){
+        if(typeof window.__computeInstallFunnel !== 'function') return;
+        const m = window.__computeInstallFunnel();
+        const any = (m.ctaShown + m.ctaClicked + m.promptAccepted + m.promptDismissed + m.installed) > 0;
+        panel.hidden = !any;
+        if(!any) return;
+        els.shown.textContent = m.ctaShown;
+        els.clicked.textContent = m.ctaClicked;
+        els.accepted.textContent = m.promptAccepted;
+        els.dismissed.textContent = m.promptDismissed;
+        els.installed.textContent = m.installed;
+        els.rates.textContent = `${pct(m.clickThrough)} / ${pct(m.acceptRate)} / ${pct(m.installRate)}`;
+      }
+      render();
+      document.getElementById('btnRefreshFunnel')?.addEventListener('click', render);
+      const LS_KEY = 'analytics:events:v1';
+      document.getElementById('btnExportFunnel')?.addEventListener('click', ()=>{
+        try {
+          const raw = localStorage.getItem(LS_KEY)||'[]';
+          const blob = new Blob([raw], { type:'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = 'analytics-events.json'; a.click();
+          setTimeout(()=> URL.revokeObjectURL(url), 1500);
+        } catch(e){ console.error(e); }
+      });
+      document.getElementById('btnResetFunnel')?.addEventListener('click', ()=>{
+        const confirmMsg = (window.t? t('pwa.funnel.resetConfirm') : 'Reset?');
+        if(!confirm(confirmMsg)) return;
+        localStorage.removeItem(LS_KEY);
+        window.dispatchEvent(new CustomEvent('analyticsreset'));
+        render();
+      });
+      window.addEventListener('analyticslogged', (e)=>{
+        const t = e.detail?.type; if(t && t.startsWith('pwa_install')) render();
+      });
+      window.addEventListener('analyticsreset', render);
+    })();
+  </script>
+    <script>
+      // Show latest pickup details from localStorage
+      function renderPickupDetails() {
+        const sec = document.getElementById('pickupDetailsSection');
+        const card = document.getElementById('pickupDetailsCard');
+        const raw = localStorage.getItem('pickupDetails');
+        if (!raw) { sec.style.display = 'none'; return; }
+        const d = JSON.parse(raw);
+        card.innerHTML = `
+          <div class='mb-1'><span class='font-semibold'>Name:</span> ${d.name || '-'}</div>
+          <div class='mb-1'><span class='font-semibold'>Location:</span> ${d.location ? (d.location.charAt(0).toUpperCase() + d.location.slice(1).replace('-', ' ')) : '-'}</div>
+          <div class='mb-1'><span class='font-semibold'>Time:</span> ${d.time || '-'}</div>
+          <div class='mb-1 text-xs text-gray-400'>Saved: ${d.ts ? new Date(d.ts).toLocaleString() : ''}</div>
+        `;
+        sec.style.display = '';
+      }
+      renderPickupDetails();
+      document.getElementById('btnClearPickup')?.addEventListener('click', () => {
+        localStorage.removeItem('pickupDetails');
+        renderPickupDetails();
+      });
+    </script>
+  </body>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  });
+}
+</script>
+</html>

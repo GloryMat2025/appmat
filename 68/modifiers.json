@@ -1,0 +1,46 @@
+{
+  "modifier_groups": [
+    {
+      "id": "mod-size-coffee",
+      "name_en": "Coffee Size",
+      "name_bm": "Saiz Kopi",
+      "required": true,
+      "max_select": 1,
+      "options": [
+        {
+          "id": "opt-ss",
+          "name_en": "Single Shot",
+          "name_bm": "Satu Syot",
+          "price_delta": 0.0
+        },
+        {
+          "id": "opt-ds",
+          "name_en": "Double Shot",
+          "name_bm": "Dua Syot",
+          "price_delta": 2.0
+        }
+      ]
+    },
+    {
+      "id": "mod-milk",
+      "name_en": "Milk Type",
+      "name_bm": "Jenis Susu",
+      "required": false,
+      "max_select": 1,
+      "options": [
+        {
+          "id": "opt-whole",
+          "name_en": "Whole Milk",
+          "name_bm": "Susu Penuh",
+          "price_delta": 0.0
+        },
+        {
+          "id": "opt-oat",
+          "name_en": "Oat Milk",
+          "name_bm": "Susu Oat",
+          "price_delta": 2.0
+        }
+      ]
+    }
+  ]
+}

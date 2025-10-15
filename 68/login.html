@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full grid place-items-center text-slate-800">
+  <main class="bg-white border rounded-2xl shadow-sm p-6 w-[420px] max-w-[92vw]">
+    <h1 class="text-xl font-semibold">Welcome</h1>
+    <p class="text-sm text-slate-500 mt-1">Sign in with your identity provider.</p>
+    <a href="/api/sso/login" class="mt-4 inline-flex items-center justify-center w-full px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700">Continue with SSO</a>
+    <p class="text-xs text-slate-500 mt-3">Make sure your OIDC env is configured in the server.</p>
+  </main>
+</body>
+</html>

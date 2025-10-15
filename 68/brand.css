@@ -1,0 +1,7 @@
+:root{
+  --brand: #0ea5e9;   /* primary */
+  --brand-2: #22d3ee; /* primary-2 */
+}
+/* Optional: set this in runtime too
+   localStorage.setItem('app.logoUrl', JSON.stringify('https://your.cdn/logo.png'));
+*/

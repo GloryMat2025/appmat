@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo — Reservations</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:24px}
+    .card{border:1px solid #ddd;padding:16px;border-radius:8px;max-width:640px}
+    .row{display:flex;gap:8px;margin-top:8px}
+    button{padding:8px 12px}
+    .muted{color:#666}
+    pre{background:#f6f6f6;padding:8px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h1>Reservations client — demo</h1>
+  <div class="card">
+    <p class="muted">This demo shows creating a reservation (server or local fallback), starting the countdown, and releasing it.</p>
+
+    <div>
+      <strong>Timer:</strong> <span id="reserveTimer">00:00</span>
+    </div>
+    <div>
+      <strong>Status:</strong> <span id="payStatus">idle</span>
+    </div>
+
+    <div class="row">
+      <button id="btnCreateServer">Create (server)</button>
+      <button id="btnCreateLocal">Create (local fallback)</button>
+      <button id="btnRelease">Release</button>
+      <button id="btnClear">Clear</button>
+    </div>
+
+    <div class="row">
+      <div>ActiveReserveId: <code id="activeId">-</code></div>
+      <div>Reservations: <code id="reservList">[]</code></div>
+    </div>
+
+    <h3>Console</h3>
+    <pre id="log"></pre>
+  </div>
+
+  <script src="/assets/js/api-reservations.js"></script>
+  <script>
+    const logEl = document.getElementById('log');
+    function log(...args){ logEl.textContent += args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ') + '\n'; logEl.scrollTop = 9e9; }
+
+    // Provide a mocked local fallback for tryReserveCart (demo only)
+    window.tryReserveCart = function(){
+      const id = 'local-' + Date.now();
+      return { ok: true, reservationId: id, expiresAt: Date.now() + window.apiReservations.RESERVE_MS };
+    };
+
+    const el = {
+      reserveTimer: document.getElementById('reserveTimer'),
+      payStatus: document.getElementById('payStatus')
+    };
+
+    const btnCreateServer = document.getElementById('btnCreateServer');
+    const btnCreateLocal = document.getElementById('btnCreateLocal');
+    const btnRelease = document.getElementById('btnRelease');
+    const btnClear = document.getElementById('btnClear');
+    const activeIdEl = document.getElementById('activeId');
+    const reservListEl = document.getElementById('reservList');
+
+    function refreshUi(){
+      activeIdEl.textContent = window.activeReserveId || '-';
+      reservListEl.textContent = JSON.stringify(window.apiReservations.getReservations());
+    }
+
+    // wire buttons
+    btnCreateLocal.addEventListener('click', async ()=>{
+      el.payStatus.textContent = 'Creating (local)...';
+      const res = await window.apiReservations.tryReserveCart();
+      if (!res.ok) { el.payStatus.textContent = 'Local reserve failed'; log('local failed', res); return; }
+      const id = res.reservationId || ('local-'+Date.now());
+      window.apiReservations.setActiveReservationId(id);
+      const arr = window.apiReservations.getReservations();
+      arr.push({ id, expiresAt: res.expiresAt });
+      window.apiReservations.setReservations(arr);
+      window.apiReservations.startReserveCountdown(res.expiresAt, { el, onExpire: (id)=> log('expired', id) });
+      el.payStatus.textContent = 'Local reservation OK';
+      refreshUi();
+      log('local reserve', res);
+    });
+
+    btnCreateServer.addEventListener('click', async ()=>{
+      el.payStatus.textContent = 'Creating (server)...';
+      try {
+        const items = [{ productId: 'demo-1', qty: 1 }];
+        const svr = await window.apiReservations.apiCreateReservation({ items, ttlMs: window.apiReservations.RESERVE_MS });
+        if (!svr || !svr.reservationId) throw new Error('no reservation returned');
+        window.apiReservations.setActiveReservationId(svr.reservationId);
+        window.apiReservations.setReservations([ { id: svr.reservationId, expiresAt: svr.expiresAt } ]);
+        window.apiReservations.startReserveCountdown(svr.expiresAt, { el, onExpire: (id)=> log('expired', id) });
+        el.payStatus.textContent = 'Server reservation OK';
+        refreshUi();
+        log('server reserve', svr);
+      } catch (err){
+        el.payStatus.textContent = 'Server reserve failed (see console)';
+        log('server reserve error', err && err.message ? err.message : err);
+      }
+    });
+
+    btnRelease.addEventListener('click', async ()=>{
+      const id = window.apiReservations.getActiveReservationId();
+      if (!id) { el.payStatus.textContent = 'No active reservation'; return; }
+      try {
+        await window.apiReservations.apiReleaseReservation(id).catch(()=>{});
+      } catch(e){}
+      window.apiReservations.releaseReservation(id);
+      window.apiReservations.clearReserveCountdown();
+      el.payStatus.textContent = 'Released';
+      refreshUi();
+      log('released', id);
+    });
+
+    btnClear.addEventListener('click', ()=>{
+      window.apiReservations.clearReserveCountdown();
+      window.apiReservations.setActiveReservationId(null);
+      window.apiReservations.setReservations([]);
+      el.payStatus.textContent = 'Cleared';
+      refreshUi();
+    });
+
+    // initial UI
+    refreshUi();
+  </script>
+</body>
+</html>

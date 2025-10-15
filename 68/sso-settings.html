@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SSO Settings — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <main class="max-w-3xl mx-auto p-6 space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold">SSO Settings</h1>
+      <span id="roleBadge" class="text-xs rounded-full px-2 py-1 bg-emerald-100 text-emerald-700">admin</span>
+    </header>
+
+    <section class="bg-white rounded-2xl p-6 shadow-sm border space-y-4">
+      <h2 class="text-sm font-semibold">Providers</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Google Client ID</label>
+          <input id="googleId" class="w-full border rounded-lg px-3 py-2" placeholder="GOOGLE_CLIENT_ID" />
+          <label class="block text-sm font-medium">Google Client Secret</label>
+          <input id="googleSecret" type="password" class="w-full border rounded-lg px-3 py-2" placeholder="GOOGLE_CLIENT_SECRET" />
+          <p class="text-xs text-slate-500">Redirect URI: <code class="font-mono">https://your-app.example.com/api/auth/google/callback</code></p>
+        </div>
+        <div class="space-y-2">
+          <label class="block text-sm font-medium">Microsoft Client ID</label>
+          <input id="msId" class="w-full border rounded-lg px-3 py-2" placeholder="MS_CLIENT_ID" />
+          <label class="block text-sm font-medium">Microsoft Client Secret</label>
+          <input id="msSecret" type="password" class="w-full border rounded-lg px-3 py-2" placeholder="MS_CLIENT_SECRET" />
+          <p class="text-xs text-slate-500">Redirect URI: <code class="font-mono">https://your-app.example.com/api/auth/microsoft/callback</code></p>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium">Allowed Domains (comma)</label>
+          <input id="domains" class="w-full border rounded-lg px-3 py-2" placeholder="company.com, partner.org" />
+          <p class="text-xs text-slate-500">Only emails with these domains can sign in via SSO.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Role Mapping</label>
+          <textarea id="mapping" rows="5" class="w-full border rounded-lg px-3 py-2 font-mono text-xs"
+            placeholder='{"company.com":"admin","partner.org":"staff","*":"staff"}'></textarea>
+          <p class="text-xs text-slate-500">JSON mapping: domain → role (`*` as fallback).</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input id="jit" type="checkbox" class="h-4 w-4"> <span>Just‑In‑Time (JIT) user provisioning</span>
+        </label>
+        <label class="inline-flex items-center gap-2 text-sm">
+          <input id="ssoOnly" type="checkbox" class="h-4 w-4"> <span>Enforce SSO‑only (disable passwords)</span>
+        </label>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="save" class="px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700">Save</button>
+        <span id="saved" class="text-sm text-emerald-700 hidden">Saved.</span>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-6 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Callback Claims (example)</h2>
+      <pre id="claims" class="text-xs bg-slate-50 p-3 rounded-lg overflow-auto">—</pre>
+      <p class="text-xs text-slate-500 mt-2">Server should verify ID token, extract email, name, picture, and assign a role using the mapping above.</p>
+    </section>
+  </main>
+
+  <script>
+    const storeKey = 'sso.settings';
+    const sample = {
+      googleId: '', googleSecret: '',
+      msId: '', msSecret: '',
+      domains: 'company.com',
+      mapping: '{"company.com":"admin","*":"staff"}',
+      jit: true, ssoOnly: false
+    };
+
+    function load(){
+      const raw = localStorage.getItem(storeKey);
+      return raw ? JSON.parse(raw) : sample;
+    }
+    function saveObj(obj){
+      localStorage.setItem(storeKey, JSON.stringify(obj));
+      document.getElementById('saved').classList.remove('hidden');
+      setTimeout(()=>document.getElementById('saved').classList.add('hidden'), 1200);
+    }
+
+    const st = load();
+    googleId.value = st.googleId; googleSecret.value = st.googleSecret;
+    msId.value = st.msId; msSecret.value = st.msSecret;
+    domains.value = st.domains; mapping.value = st.mapping;
+    jit.checked = st.jit; ssoOnly.checked = st.ssoOnly;
+
+    save.onclick = () => {
+      try { JSON.parse(mapping.value || '{}'); }
+      catch(e){ alert('Role Mapping must be valid JSON'); return; }
+      saveObj({
+        googleId: googleId.value, googleSecret: googleSecret.value,
+        msId: msId.value, msSecret: msSecret.value,
+        domains: domains.value, mapping: mapping.value,
+        jit: jit.checked, ssoOnly: ssoOnly.checked
+      });
+    };
+
+    // Demo only: show example claims payload (ID token)
+    const exampleClaims = {
+      iss: "https://accounts.google.com",
+      email: "user@company.com",
+      email_verified: true,
+      name: "User Name",
+      picture: "https://…/photo.jpg",
+      sub: "1234567890"
+    };
+    document.getElementById('claims').textContent = JSON.stringify(exampleClaims, null, 2);
+  </script>
+</body>
+</html>

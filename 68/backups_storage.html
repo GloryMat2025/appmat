@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Backups Storage</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Backups Storage</h1>
+      <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border">Refresh</button>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Upload a backup</h2>
+      <form id="uform" class="flex items-center gap-2">
+        <input id="file" type="file" class="border rounded-lg px-3 py-2 w-full">
+        <button class="px-3 py-1.5 rounded-lg bg-sky-600 text-white" type="submit">Upload</button>
+      </form>
+      <pre id="out" class="mt-2 text-xs bg-slate-50 p-3 rounded-xl overflow-auto">—</pre>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Existing backups</h2>
+      <div id="list" class="space-y-2"></div>
+      <p id="empty" class="text-sm text-slate-500">No backups found.</p>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function row(b){
+      const el = document.createElement('div');
+      el.className = 'border rounded-xl p-3 flex items-center justify-between';
+      el.innerHTML = \`
+        <div>
+          <div class="font-medium">\${b.id}</div>
+          <div class="text-xs text-slate-500">created: \${new Date(b.created_at).toLocaleString()} · type: \${b.type} · size: \${b.size_bytes || '—'} · checksum: <code>\${b.checksum || '—'}</code></div>
+        </div>
+        <div class="flex gap-2">
+          <button class="px-3 py-1.5 rounded-lg border" data-act="url">Get URL</button>
+          <button class="px-3 py-1.5 rounded-lg border" data-act="head">Head</button>
+          <button class="px-3 py-1.5 rounded-lg border text-rose-600" data-act="delblob">Delete blob</button>
+        </div>\`;
+      el.querySelector('[data-act="url"]').onclick = async ()=>{
+        const r = await fetch('/api/storage/backups/'+encodeURIComponent(b.id)+'/url', { credentials:'include' });
+        const j = await r.json(); alert(j.url);
+      };
+      el.querySelector('[data-act="head"]').onclick = async ()=>{
+        const r = await fetch('/api/storage/backups/'+encodeURIComponent(b.id)+'/head', { credentials:'include' });
+        const j = await r.json(); alert(JSON.stringify(j, null, 2));
+      };
+      el.querySelector('[data-act="delblob"]').onclick = async ()=>{
+        if (!confirm('Delete blob for '+b.id+'?')) return;
+        await fetch('/api/storage/backups/'+encodeURIComponent(b.id)+'/blob', { method:'DELETE', credentials:'include' });
+        refresh();
+      };
+      return el;
+    }
+
+    async function refresh(){
+      const r = await fetch('/api/backups', { credentials:'include' });
+      const arr = await r.json();
+      const wr = $('list'); wr.innerHTML=''; let n=0;
+      arr.forEach(b => { wr.appendChild(row(b)); n++; });
+      $('empty').classList.toggle('hidden', !!n);
+    }
+    $('btnRefresh').addEventListener('click', refresh);
+
+    $('uform').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const f = $('file').files[0];
+      if (!f) return;
+      const fd = new FormData(); fd.append('file', f, f.name);
+      const r = await fetch('/api/storage/backups/upload', { method:'POST', credentials:'include', body: fd });
+      const j = await r.json();
+      $('out').textContent = JSON.stringify(j, null, 2);
+      refresh();
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

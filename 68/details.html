@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Details</title>
+  <link rel="stylesheet" href="/assets/tailwind.css" />
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <!-- Top bar -->
+  <header class="max-w-md mx-auto p-4">
+    <div class="flex items-center gap-3">
+      <a href="/index.html" class="w-9 h-9 grid place-items-center rounded-full ring-1 ring-gray-300">←</a>
+      <h1 class="text-lg font-semibold">Details</h1>
+      <span data-status
+        class="ml-auto text-[11px] px-2 py-0.5 rounded-full ring-1 ring-gray-200 bg-gray-100">status</span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto">
+    <!-- Items -->
+    <section class="bg-white rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+      <h2 class="px-4 pt-4 pb-2 text-sm font-semibold text-gray-700">Order Items</h2>
+      <ul data-items class="divide-y"></ul>
+
+      <!-- Summary -->
+      <div class="px-4 py-3" data-summary>
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+    <!-- Delivery block -->
+    <section class="mt-4 bg-white rounded-2xl ring-1 ring-gray-200 p-4 grid gap-2">
+      <h2 class="text-sm font-semibold text-gray-700">Delivery</h2>
+      <div class="text-sm">
+        <div class="font-medium" data-address-label></div>
+        <div class="text-gray-600" data-address></div>
+      </div>
+      <div class="text-sm text-gray-600">
+        <span class="font-medium">Method:</span> <span data-method></span>
+      </div>
+      <div class="text-sm text-gray-600">
+        <span class="font-medium">ETA:</span> <span data-eta></span>
+      </div>
+    </section>
+
+    <!-- Foot actions -->
+    <div class="p-4">
+      <button data-cancel
+        class="w-full h-12 rounded-xl ring-1 ring-gray-300 bg-white font-semibold hover:bg-gray-50">
+        CANCEL
+      </button>
+    </div>
+  </main>
+
+  <template id="row">
+    <li class="p-4">
+      <div class="flex gap-3">
+        <div class="w-20 h-20 rounded-lg overflow-hidden ring-1 ring-gray-200 bg-gray-100 shrink-0">
+          <img data-img class="w-full h-full object-cover" alt="" loading="lazy" decoding="async">
+        </div>
+        <div class="flex-1 min-w-0">
+          <h3 class="text-sm font-semibold leading-snug" data-name></h3>
+          <p class="text-xs text-gray-500" data-variant></p>
+          <div class="mt-1 hidden" data-preorder>
+            <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 ring-1 ring-rose-200">Pre-order</span>
+          </div>
+          <p class="mt-2 text-xs text-gray-500 hidden" data-note></p>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="font-semibold" data-price></div>
+          <div class="text-xs text-gray-500 mt-1">QTY:<span class="ml-1" data-qty></span></div>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <script type="module" src="/assets/js/orders/details.js"></script>
+</body>
+</html>

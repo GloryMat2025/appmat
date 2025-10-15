@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout + Server Validation — Demo</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">My Cafe — Checkout + Validation</div>
+    <div class="flex items-center gap-3">
+      <select id="outletSelect" class="border rounded-lg px-2 py-1 text-sm"></select>
+      <select id="modeSelect" class="border rounded-lg px-2 py-1 text-sm">
+        <option value="pickup">Pickup</option>
+        <option value="delivery">Delivery</option>
+      </select>
+      <input id="dateInput" type="date" class="border rounded-lg px-2 py-1 text-sm">
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto p-4 space-y-4">
+    <div class="rounded-xl border bg-white p-4">
+      <h2 class="font-semibold mb-2">Choose a Time Slot</h2>
+      <div id="slotMount"></div>
+      <div id="slotBanner" class="mt-2"></div>
+    </div>
+
+    <div class="rounded-xl border bg-white p-4 space-y-2">
+      <div id="gateBanner"></div>
+      <div id="validateBanner"></div>
+      <button id="checkoutBtn" class="px-4 py-2 rounded-lg bg-gray-900 text-white">Proceed to Checkout</button>
+      <div class="text-xs text-gray-500">
+        Button requires open hours, a selected slot, and final server validation.
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initOutletHoursUI } from "/assets/js/outlet-hours-integration.js";
+    import { initSlotPicker } from "/assets/js/slot-picker.js";
+    import { initCheckoutGate } from "/assets/js/order-hours-guards.js";
+    import { persistSelectedSlot, requireSlotForCheckout, composeOrderPayload } from "/assets/js/checkout-slot-integration.js";
+    import { bindValidationToCheckout } from "/assets/js/slot-validation-client.js";
+
+    // Wire outlet picker
+    initOutletHoursUI({ outletSelect: "#outletSelect" });
+
+    // Default date = today
+    document.getElementById("dateInput").valueAsDate = new Date();
+
+    // Slots + persistence
+    initSlotPicker({
+      mount: "#slotMount",
+      outletSelect: "#outletSelect",
+      modeSelect: "#modeSelect",
+      dateInput: "#dateInput",
+      onSelect: (slot) => persistSelectedSlot(slot)
+    });
+
+    // Gate by hours lead/cutoff
+    initCheckoutGate({
+      outletSelect: "#outletSelect",
+      modeSelect: "#modeSelect",
+      checkoutBtn: "#checkoutBtn",
+      bannerMount: "#gateBanner"
+    });
+
+    // Also require a slot
+    requireSlotForCheckout("#checkoutBtn", "#slotBanner");
+
+    // Bind server-side validation on click (calls /api/validate-slot)
+    bindValidationToCheckout({ btnSelector: "#checkoutBtn", bannerSelector: "#validateBanner" });
+
+    // For illustration, still show payload on submit after validation
+    document.getElementById("checkoutBtn").addEventListener("click", (e) => {
+      const payload = composeOrderPayload({ items: [{ sku:"kaya_toast", qty:2 }] });
+      console.log("Order payload", payload);
+    });
+  </script>
+</body>
+</html>

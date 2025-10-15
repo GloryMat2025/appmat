@@ -1,0 +1,116 @@
+/* =========================================================
+   base.css — minimal globals for myapp
+   Works with Tailwind CDN (no @apply used)
+   ========================================================= */
+
+/* Design tokens (light) */
+:root{
+  --c-bg: #f3f4f6;            /* gray-100 */
+  --c-surface: #ffffff;
+  --c-text: #111827;          /* gray-900 */
+  --c-muted: #6b7280;         /* gray-500 */
+  --c-border: #e5e7eb;        /* gray-200 */
+  --c-primary: #2563eb;       /* blue-600 */
+  --c-primary-contrast: #ffffff;
+  --radius-xl: 16px;
+  --radius-lg: 12px;
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1);
+}
+
+/* Base resets */
+*{ box-sizing: border-box; }
+html,body{ height:100%; background:var(--c-bg); color:var(--c-text); }
+img,svg{ display:block; max-width:100%; }
+button{ cursor:pointer; background:transparent; border:0; color:inherit; }
+a{ color:inherit; text-decoration:none; }
+
+/* Motion safety */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation:none !important;
+    transition:none !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* ---------- Dialog (modal) ---------- */
+dialog{
+  border:0;
+  border-radius: var(--radius-xl);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-md);
+  padding:0; /* content handles its own padding */
+}
+dialog[open]{ animation: modalIn .18s ease-out both; }
+@keyframes modalIn{
+  from{ opacity:0; transform: translateY(8px) scale(.98); }
+  to{ opacity:1; transform:none; }
+}
+dialog::backdrop{
+  background: rgba(0,0,0,.35);
+  backdrop-filter: blur(2px);
+}
+/* Container inside dialog injected by JS */
+[data-modal-body]{ display:block; }
+
+/* ---------- Toggle pills (Delivery / Pickup) ---------- */
+.toggle-active{
+  background: var(--c-primary);
+  color: var(--c-primary-contrast);
+  border: 1px solid var(--c-primary) !important;
+}
+.toggle-idle{
+  background: #fff;
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+}
+
+/* ---------- Generic chips ---------- */
+.chip,
+.chip-outline{
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-weight:600; line-height:1;
+  border-radius:999px;
+  padding:.5rem .75rem;
+}
+.chip{
+  background: var(--c-primary);
+  color: var(--c-primary-contrast);
+  border:1px solid transparent;
+}
+.chip-outline{
+  background:#fff;
+  color: var(--c-text);
+  border:1px solid var(--c-border);
+}
+.chip[data-active="true"]{
+  background:#eff6ff;            /* blue-50 */
+  color:#1d4ed8;                 /* blue-700 */
+  border-color:#93c5fd;          /* blue-300 */
+}
+
+/* ---------- Inputs ---------- */
+input[type="text"], input[type="email"], input[type="tel"], input[type="search"]{
+  -webkit-appearance:none; appearance:none;
+}
+input::placeholder{ color: var(--c-muted); }
+
+/* ---------- Lists & rows (used in outlet list) ---------- */
+.list-row{
+  display:flex; gap:.75rem; width:100%; text-align:left;
+  padding:.75rem 1rem; border-radius: var(--radius-lg);
+}
+.list-row:hover{ background:#f9fafb; } /* gray-50 */
+
+/* ---------- Scrollbar (WebKit) ---------- */
+:root{ --scrollbar:#e5e7eb; --scrollbar-thumb:#cbd5e1; }
+*::-webkit-scrollbar{ height:8px; width:8px; }
+*::-webkit-scrollbar-track{ background:var(--scrollbar); }
+*::-webkit-scrollbar-thumb{ background:var(--scrollbar-thumb); border-radius:999px; }
+*::-webkit-scrollbar-thumb:hover{ background:#94a3b8; } /* slate-400 */
+
+/* ---------- Small utilities ---------- */
+.hidden{ display:none !important; }  /* safety if Tailwind not loaded yet */
+.truncate-1{
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}

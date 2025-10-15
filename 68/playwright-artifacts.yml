@@ -1,0 +1,83 @@
+﻿name: Playwright E2E with artifacts
+
+on:
+  push:
+    branches:
+      - main
+      - 'e2e/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Start static server
+        run: |
+          npx http-server public -p 5173 &
+          sleep 1
+
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install --with-deps
+
+      - name: Run Playwright smoke tests
+        run: |
+          npm run test:playwright:smoke
+        continue-on-error: false
+
+      - name: Run full Playwright suite (only if smoke passes)
+        if: success()
+        run: |
+          npx playwright test --config=tests/playwright.ci.config.mjs --reporter=list --output=playwright-report
+        continue-on-error: true
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            test-results/**
+            playwright-report/**
+            tests/test-results/**
+            playwright-report
+            # include any traces or screenshots produced by Playwright
+            **/playwright-report/**/trace.zip
+            **/playwright-report/**/screenshots/**
+
+      # Optional: If your org restricts workflow dispatch with GITHUB_TOKEN, create a
+      # repository secret named WORKFLOW_DISPATCH_TOKEN containing a PAT with workflow
+      # permissions and the step will prefer it. If not present, GITHUB_TOKEN will be used.
+      - name: Trigger debug workflow on failure
+        if: failure()
+        uses: peter-evans/workflow-dispatch@v1
+        with:
+          # Prefer a user-provided PAT stored in WORKFLOW_DISPATCH_TOKEN for org-restricted repos.
+          # If not provided, fall back to the built-in GITHUB_TOKEN.
+          token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN || secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          workflow: playwright-debug.yml
+          # prefer PR head ref if present, otherwise current branch name
+          ref: ${{ github.head_ref || github.ref_name }}
+          inputs: |
+            testPath: tests/tests
+
+      - name: Fail when tests failed
+        if: ${{ failure() }}
+        run: |
+          echo "Playwright tests failed â€” see uploaded artifacts";
+          exit 1
