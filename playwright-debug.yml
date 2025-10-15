@@ -1,0 +1,45 @@
+name: Playwright Debug (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      testPath:
+        description: 'Path or test file(s) to run (optional)'
+        required: false
+        default: 'tests/tests'
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install --with-deps
+
+      - name: Run Playwright in headed debug mode
+        run: |
+          echo "Running: npx playwright test ${{ github.event.inputs.testPath }} --config=tests/playwright.ci.config.mjs --headed --trace=on --output=playwright-debug --workers=1"
+          npx playwright test ${{ github.event.inputs.testPath }} --config=tests/playwright.ci.config.mjs --headed --trace=on --output=playwright-debug --workers=1
+        continue-on-error: true
+
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-debug-artifacts
+          path: |
+            playwright-debug/**
+            playwright-report/**
+            **/playwright-debug/**
