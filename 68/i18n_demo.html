@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>i18n Loader Demo</title>
+<style>
+  :root{ --bg:#0f172a; --card:#111827; --muted:#94a3b8; --fg:#e5e7eb; --brand:#3a6d9b; --brand2:#2E7AA6; --ok:#22c55e; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:var(--fg)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1f2937;background:linear-gradient(180deg,#0f172a,#0c1422)}
+  h1{margin:0;font-size:1.05rem}
+  .right{display:flex;gap:10px;align-items:center}
+  .pill{border:1px solid #223045;border-radius:999px;padding:6px 10px;background:#0c1627;color:#cfe7ff;cursor:pointer;user-select:none}
+  .pill.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+  .wrap{max-width:980px;margin:20px auto;padding:0 16px}
+  .card{background:#0b1020;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:14px}
+  .muted{color:var(--muted)}
+  .btn{border:1px solid #223045;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;background:#0c1627;color:#dbeafe}
+  .btn.buy{background:linear-gradient(90deg, var(--ok), #a7f3d0);color:#06240f;border:0}
+  [data-i18n-missing="true"]{ outline: 2px dashed #ef4444; outline-offset: 2px; } /* debug missing keys */
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="checkout.title">Checkout</h1>
+    <div class="right">
+      <div class="pill active" id="langEN">EN</div>
+      <div class="pill" id="langBM">BM</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div><strong data-i18n="common.cart">Cart</strong> — <span class="muted" data-i18n="common.empty">Nothing here yet</span></div>
+      <div style="margin-top:8px">
+        <input data-i18n-placeholder="common.search_placeholder" placeholder="Search products…" />
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn" data-i18n="common.add_to_cart">Add to Cart</button>
+        <button class="btn buy" id="buyBtn" data-i18n="common.buy_now">Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.loader.js"></script>
+  <script>
+    I18NLoader.init({ defaultLang: 'en', fallback: 'en', sources: { en: 'i18n/en.json', bm: 'i18n/bm.json' } });
+    document.getElementById('buyBtn').addEventListener('click', () => {
+      const msg = I18NLoader.t('common.added_to_cart', { count: 1, name: 'Latte' });
+      alert(msg);
+    });
+    window.addEventListener('i18n:change', () => I18NLoader.apply());
+  </script>
+</body>
+</html>

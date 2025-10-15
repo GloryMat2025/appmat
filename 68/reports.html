@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reports & Analytics</title>
+  <link rel="stylesheet" href="../src/styles/receipt.css" />
+  <link rel="stylesheet" href="../src/styles/motion.css" />
+  <link rel="stylesheet" href="./styles/invoice.css" />
+  <link rel="stylesheet" href="./styles/reports.css" />
+  <link rel="stylesheet" href="./styles/a11y.css">
+  <link rel="stylesheet" href="../src/styles/eta.css">
+  <style>body{background:#f6f8fb;}</style>
+</head>
+<body>
+  <main id="reportsRoot" class="max-w-2xl mx-auto p-4"></main>
+  <script type="module">
+    import { ReportsPage } from "../src/pages/ReportsPage.js";
+    ReportsPage(document.getElementById("reportsRoot"));
+  </script>
+</body>
+</html>

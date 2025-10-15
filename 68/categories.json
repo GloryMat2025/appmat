@@ -1,0 +1,5 @@
+[
+  { "id": "cat-all",   "slug": "all",   "name_en": "All",    "name_bm": "Semua", "sort_order": 0 },
+  { "id": "cat-coffee","slug": "coffee","name_en": "Coffee", "name_bm": "Kopi",  "sort_order": 1 },
+  { "id": "cat-johor", "slug": "johor", "name_en": "Johor",  "name_bm": "Johor", "sort_order": 2 }
+]

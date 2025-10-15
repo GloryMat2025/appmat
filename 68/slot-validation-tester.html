@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slot Validation Tester</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Slot Validation Tester</div>
+    <nav class="text-sm">
+      <a href="/assets/pages/dev/sku-categories-admin.html" class="text-blue-600">SKU → Category Admin</a>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="rounded-xl border bg-white p-4 space-y-3">
+      <div class="grid md:grid-cols-3 gap-3">
+        <div>
+          <label class="text-xs text-gray-600">Outlet</label>
+          <select id="outletId" class="border rounded-lg px-2 py-1 w-full text-sm"></select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Mode</label>
+          <select id="mode" class="border rounded-lg px-2 py-1 w-full text-sm">
+            <option value="pickup">pickup</option>
+            <option value="delivery">delivery</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Duration (min)</label>
+          <input id="duration" type="number" value="30" class="border rounded-lg px-2 py-1 w-full text-sm">
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-gray-600">Start (local ISO)</label>
+          <input id="startISO" class="border rounded-lg px-2 py-1 w-full text-sm" placeholder="2025-10-12T15:30:00">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Cart SKUs (comma-separated)</label>
+          <input id="skus" class="border rounded-lg px-2 py-1 w-full text-sm" placeholder="SKU-CAKE-6IN, SKU-BURGER">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="derive" class="px-3 py-2 rounded-lg border">Derive Categories</button>
+        <div id="cats" class="text-sm text-gray-700"></div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="run" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Validate</button>
+        <div id="result" class="text-sm"></div>
+      </div>
+    </div>
+  </main>
+
+<script type="module">
+  import { initOutletHoursUI } from "/assets/js/outlet-hours-integration.js";
+  import { deriveCategoriesFromSkus } from "/assets/js/sku-to-categories.js";
+
+  initOutletHoursUI({ outletSelect: "#outletId" });
+
+  document.getElementById('derive').onclick = async ()=>{
+    const skus = (document.getElementById('skus').value||'').split(',').map(s=>({ sku: s.trim() })).filter(x=>x.sku);
+    const outletId = document.getElementById('outletId').value || null;
+    const cats = await deriveCategoriesFromSkus(skus, outletId);
+    document.getElementById('cats').textContent = cats.length ? ('Categories: ' + cats.join(', ')) : 'No categories matched';
+    localStorage.setItem('cartCategories', JSON.stringify(cats));
+  };
+
+  document.getElementById('run').onclick = async ()=>{
+    const outletId = document.getElementById('outletId').value || null;
+    const mode = document.getElementById('mode').value || 'pickup';
+    const durationMinutes = parseInt(document.getElementById('duration').value || '30');
+    const startISO = document.getElementById('startISO').value.trim();
+    const cats = JSON.parse(localStorage.getItem('cartCategories')||'[]');
+    const res = await fetch('/api/validate-slot', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ outletId, mode, startISO, durationMinutes, categories: cats })
+    });
+    const j = await res.json().catch(()=>({ ok:false }));
+    const el = document.getElementById('result');
+    if (j.ok) { el.textContent = '✅ Valid'; el.className = 'text-sm text-green-700'; }
+    else { el.textContent = '❌ ' + (j.error || 'Invalid'); el.className = 'text-sm text-red-700'; }
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Audit Log — Admin</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Admin — Audit Log</div>
+    <div><a class="text-sm text-blue-600" href="/assets/pages/dev/business-hours-settings.html">Back to Settings</a></div>
+  </header>
+
+  <main class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="rounded-xl border bg-white p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h1 class="font-semibold">Recent Events</h1>
+        <div class="flex items-center gap-2">
+          <select id="limit" class="border rounded-lg px-2 py-1 text-sm">
+            <option>100</option><option selected>200</option><option>500</option><option>1000</option>
+          </select>
+          <a href="/api/admin/audit.csv?limit=1000" class="px-3 py-2 rounded-lg border">Download CSV</a>
+          <button id="refresh" class="px-3 py-2 rounded-lg border">Refresh</button>
+        </div>
+      </div>
+      <div id="list" class="space-y-2"></div>
+    </div>
+  </main>
+
+<script type="module">
+async function fetchAudit(limit=200){
+  const res = await fetch('/api/admin/audit?limit=' + limit, { credentials:'include' });
+  return res.json();
+}
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) (k==='class') ? x.className=v : x.setAttribute(k,v);
+  for (const c of children) x.appendChild(typeof c==='string' ? document.createTextNode(c) : c);
+  return x;
+}
+function code(obj){
+  const pre = el('pre',{class:'bg-gray-50 border rounded p-2 text-xs overflow-auto'});
+  pre.textContent = JSON.stringify(obj, null, 2);
+  return pre;
+}
+async function render(){
+  const mount = document.getElementById('list');
+  mount.innerHTML = '';
+  const limit = parseInt(document.getElementById('limit').value||'200');
+  const data = await fetchAudit(limit);
+  if (!data.ok){ mount.textContent = 'Failed to load audit log. (Are you logged in as admin?)'; return; }
+  data.logs.forEach(row => {
+    const card = el('div',{class:'border rounded-lg p-3'});
+    card.append(
+      el('div',{class:'flex items-center justify-between mb-1'},
+        el('div',{},
+          el('div',{class:'text-xs text-gray-500'}, row.ts || ''),
+          el('div',{class:'text-sm font-medium'}, row.type || 'audit')
+        ),
+        el('div',{class:'text-xs text-gray-600'},
+          (row.user || ''), ' ', row.role ? `(${row.role})` : ''
+        )
+      )
+    );
+    if (row.message) card.append(el('div',{class:'text-sm mb-2'}, row.message));
+    const meta = {};
+    if (row.diffCount != null) meta.diffCount = row.diffCount;
+    if (row.diffSample) meta.diffSample = row.diffSample;
+    if (Object.keys(meta).length) card.append(code(meta));
+    mount.append(card);
+  });
+}
+document.getElementById('refresh').onclick = render;
+render();
+</script>
+</body>
+</html>

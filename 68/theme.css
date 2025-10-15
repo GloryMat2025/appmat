@@ -1,0 +1,75 @@
+/* Base tokens */
+:root {
+  color-scheme: light;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --text: #111827;
+  --subtext: #6b7280;
+  --muted: #e5e7eb;
+  --primary: #3b82f6;
+  --primary-weak: #e8f0fe;
+  --danger: #ef4444;
+  --warn: #ca8a04;
+  --border: #e5e7eb;
+  --shadow: 0 8px 24px rgba(0,0,0,.06);
+}
+
+/* Dark theme */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b0f14;
+  --card: #0f1620;
+  --text: #dbe5f1;
+  --subtext: #9fb0c7;
+  --muted: #233041;
+  --primary: #60a5fa;
+  --primary-weak: rgba(96,165,250,.15);
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --border: #1e2937;
+  --shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+
+/* Respect system when user selects “system” */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    color-scheme: dark;
+    --bg: #0b0f14;
+    --card: #0f1620;
+    --text: #dbe5f1;
+    --subtext: #9fb0c7;
+    --muted: #233041;
+    --primary: #60a5fa;
+    --primary-weak: rgba(96,165,250,.15);
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --border: #1e2937;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+}
+
+/* Light baseline UI adjustments to use tokens */
+html, body { background: var(--bg); color: var(--text); }
+.card { background: var(--card) !important; border-color: var(--border) !important; box-shadow: var(--shadow) !important; }
+.btn { border-color: var(--border) !important; }
+.btn.primary { background: var(--primary) !important; border-color: var(--primary) !important; color:#fff !important; }
+.helper { color: var(--subtext) !important; }
+
+/* OrderSteps colors via tokens */
+.dot { border-color: var(--muted) !important; color: var(--subtext) !important; background: var(--card) !important; }
+.dot--reached { background: var(--primary) !important; border-color: var(--primary) !important; color:#fff !important; box-shadow: 0 0 0 6px var(--primary-weak) !important; }
+.dot--active { box-shadow: 0 0 0 8px var(--primary-weak) !important; }
+.label { color: var(--subtext) !important; }
+.label--reached { color: var(--text) !important; }
+.connector { background: var(--muted) !important; }
+.connector--reached { background: var(--primary) !important; }
+
+/* Toast + progress */
+.toast { background: var(--text) !important; color: var(--card) !important; }
+.eta-track { background: var(--muted) !important; }
+.eta-fill { background: linear-gradient(90deg, var(--primary), #8cc0ff) !important; }
+
+/* Receipt */
+.receipt { background: var(--card); border-color: var(--border); }
+.receipt-items th, .receipt-items td { border-bottom-color: var(--border); }
+.codebox { border-color: var(--border); }

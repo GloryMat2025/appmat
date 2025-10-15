@@ -1,0 +1,33 @@
+/* Clear, accessible focus ring (respects reduced motion) */
+:where(button, a, input, select, textarea, [tabindex])::selection { background: #c7d2fe; }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+/* Skip link */
+.skip-link {
+  position: absolute; left: 8px; top: 8px; padding: 8px 10px;
+  background: #111827; color: #fff; border-radius: 10px; z-index: 1000;
+  transform: translateY(-150%); transition: transform .15s ease;
+}
+.skip-link:focus { transform: translateY(0); }
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+/* Command palette */
+.cmd-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; z-index: 1000; }
+.cmd-overlay.open { display: block; }
+.cmd-panel {
+  position: absolute; left: 50%; top: 10%;
+  transform: translateX(-50%); width: min(720px, 92vw);
+  background: var(--card); color: var(--text);
+  border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+}
+.cmd-input { width: 100%; padding: 12px 14px; border: none; border-bottom: 1px solid var(--border); font-size: 16px; outline: none; background: transparent; color: inherit; }
+.cmd-list { max-height: 50vh; overflow: auto; }
+.cmd-item { display: flex; justify-content: space-between; gap: 10px; padding: 10px 12px; cursor: pointer; }
+.cmd-item[aria-selected="true"], .cmd-item:hover { background: rgba(59,130,246,.11); }
+.cmd-item .k { opacity: .7; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cmd-empty { padding: 14px; color: var(--subtext); }

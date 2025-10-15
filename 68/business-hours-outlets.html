@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Business Hours — Outlets Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .widget { border: 1px solid #ccc; border-radius: 10px; padding: 18px; max-width: 480px; margin-bottom: 32px; }
+    .row { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+    .slots { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .slot { background: #f3f4f6; border-radius: 6px; padding: 2px 8px; font-size: 13px; }
+    .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 10px; }
+    .day { text-align: center; padding: 6px 2px; border-radius: 6px; font-size: 13px; }
+    .open { background: #d1fae5; color: #065f46; }
+    .closed { background: #fee2e2; color: #991b1b; }
+    select { font-size: 15px; padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <h1>Business Hours — Outlets Demo</h1>
+  <div class="widget">
+    <div class="row">
+      <label for="outletSel"><b>Outlet:</b></label>
+      <select id="outletSel"></select>
+    </div>
+    <div class="row">
+      <span id="bizStatus"></span>
+      <span id="bizDetail"></span>
+    </div>
+    <div class="row">
+      <span><b>Today:</b></span>
+      <span id="todayWindow"></span>
+    </div>
+    <div class="row">
+      <span><b>Slots:</b></span>
+      <div class="slots" id="todaySlots"></div>
+    </div>
+    <div class="row">
+      <span><b>Week:</b></span>
+      <div class="week" id="weekOverview"></div>
+    </div>
+  </div>
+  <script type="module">
+    import { loadSchedule, listOutlets, isOpenNow, nextChange, weekOverview, listSlotsForDate, getHoursForDate } from "/assets/js/schedule-utils.v2.js";
+    let cfg, outletId = null;
+    const outletSel = document.getElementById('outletSel');
+    const bizStatus = document.getElementById('bizStatus');
+    const bizDetail = document.getElementById('bizDetail');
+    const todayWindow = document.getElementById('todayWindow');
+    const todaySlots = document.getElementById('todaySlots');
+    const weekEl = document.getElementById('weekOverview');
+
+    function fmtHM(d) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtDate(d) {
+      return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+
+    async function render() {
+      cfg = await loadSchedule('/config/schedule.json');
+      // Populate outlet selector
+      const outlets = [{ id: null, label: 'Default (Global)' }, ...listOutlets(cfg)];
+      outletSel.innerHTML = outlets.map(o => `<option value="${o.id||''}">${o.label}</option>`).join('');
+      outletSel.value = outletId || '';
+      outletSel.onchange = () => { outletId = outletSel.value || null; update(); };
+      update();
+    }
+
+    function update() {
+      const now = new Date();
+      const state = isOpenNow(cfg, now, outletId);
+      const change = nextChange(cfg, now, outletId);
+      bizStatus.textContent = state.open ? 'Open' : 'Closed';
+      bizStatus.className = state.open ? 'open day' : 'closed day';
+      bizDetail.textContent =
+        state.open && change?.type === 'close'
+          ? `Closes at ${fmtHM(change.at)}`
+          : (!state.open && change?.type === 'open'
+            ? `Opens at ${fmtHM(change.at)}`
+            : '—');
+      // Today's window
+      const hours = getHoursForDate(cfg, now, outletId);
+      todayWindow.textContent = hours.length
+        ? hours.map(r => `${r.start}–${r.end}`).join(', ')
+        : 'Closed';
+      // Today's slots
+      const slots = listSlotsForDate(cfg, now, outletId);
+      todaySlots.innerHTML = slots.length
+        ? slots.map(s => `<span class="slot">${fmtHM(s)}</span>`).join('')
+        : '<span class="slot closed">No slots</span>';
+      // Week overview
+      const week = weekOverview(cfg, now, outletId);
+      weekEl.innerHTML = week.map(day =>
+        `<div class="day ${day.open ? 'open' : 'closed'}">
+          <div>${fmtDate(day.date)}</div>
+          <div>${day.open ? day.windows.map(w => `${w.start}–${w.end}`).join('<br>') : 'Closed'}</div>
+        </div>`
+      ).join('');
+    }
+
+    render();
+  </script>
+</body>
+</html>

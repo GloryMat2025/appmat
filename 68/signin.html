@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign In</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="csrf-token" content="demo_csrf_token_12345">
+  <style>
+    .or { display:flex; align-items:center; gap:.75rem; color:#64748b; font-size:.75rem; }
+    .or:before, .or:after { content:""; flex:1; height:1px; background:#e2e8f0; }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; border:1px solid #cbd5e1; border-radius:12px; padding:.5rem .75rem; background:#fff; }
+    .btn:hover{ background:#f8fafc; }
+    .icon{ width:18px; height:18px; }
+  </style>
+</head>
+<body class="h-full text-slate-800">
+  <main class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+      <div class="text-center space-y-1">
+        <h1 class="text-xl font-semibold">Welcome back</h1>
+        <p class="text-sm text-slate-500">Sign in to your account</p>
+      </div>
+
+      <div class="grid gap-2">
+        <a class="btn justify-center" href="/api/auth/google/start">
+          <img class="icon" alt="" src="https://www.svgrepo.com/show/475656/google-color.svg" />
+          <span>Continue with Google</span>
+        </a>
+        <a class="btn justify-center" href="/api/auth/microsoft/start">
+          <img class="icon" alt="" src="https://www.svgrepo.com/show/475661/microsoft.svg" />
+          <span>Continue with Microsoft</span>
+        </a>
+      </div>
+
+      <div class="or"><span>or</span></div>
+
+      <form id="form" class="space-y-3">
+        <input type="hidden" name="csrf_token" id="csrf" />
+        <div>
+          <label class="block text-sm font-medium mb-1">Email</label>
+          <input id="email" name="email" type="email" required placeholder="you@example.com"
+                 class="w-full border rounded-lg px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Password</label>
+          <div class="relative">
+            <input id="password" name="password" type="password" required class="w-full border rounded-lg px-3 py-2 pr-10" />
+            <button type="button" id="toggle" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-500">show</button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" name="remember" class="h-4 w-4" />
+            <span>Remember me</span>
+          </label>
+          <a href="/forgot.html" class="text-sm text-sky-700 hover:underline">Forgot password?</a>
+        </div>
+        <button id="signInBtn" class="w-full px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:bg-slate-300">
+          Sign In
+        </button>
+      </form>
+
+      <div id="alert" class="hidden text-sm rounded-lg p-3"></div>
+
+      <p class="text-xs text-slate-500 text-center">By signing in you agree to our <a href="#" class="underline">Terms</a> and <a href="#" class="underline">Privacy Policy</a>.</p>
+    </div>
+  </main>
+
+  <script>
+    const csrf = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+    document.getElementById('csrf').value = csrf;
+    const form = document.getElementById('form');
+    const alertBox = document.getElementById('alert');
+    const toggle = document.getElementById('toggle');
+    const pwd = document.getElementById('password');
+    toggle.addEventListener('click', ()=>{ pwd.type = pwd.type==='password'?'text':'password'; });
+
+    function showAlert(msg, ok=true){
+      alertBox.textContent = msg;
+      alertBox.className = 'text-sm rounded-lg p-3 ' + (ok ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800');
+      alertBox.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        await new Promise(r=>setTimeout(r,500));
+        showAlert('Signed in (demo). Redirecting…');
+      } catch (err) {
+        showAlert('Invalid email or password.', false);
+      }
+    });
+  </script>
+</body>
+</html>

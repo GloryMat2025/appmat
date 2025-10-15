@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — SKU → Category</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+<style> textarea.code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; } </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Admin — SKU → Category</div>
+    <nav class="text-sm">
+      <a href="/assets/pages/dev/category-rules-admin.html" class="text-blue-600">Category Rules</a>
+      <span class="mx-2">•</span>
+      <a href="/assets/pages/dev/slot-validation-tester.html" class="text-blue-600">Validation Tester</a>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="rounded-xl border bg-white p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h1 class="font-semibold">sku-categories.json</h1>
+        <div id="roleBadge"></div>
+      </div>
+
+      <p class="text-sm text-gray-600 mb-3">Map SKUs to categories used by category prep buffers.</p>
+
+      <div class="grid md:grid-cols-2 gap-3 mb-3">
+  <div class="border rounded-lg p-3">
+    <div class="text-sm font-medium mb-2">Quick Edit — Outlet override</div>
+    <div class="flex items-center gap-2 mb-2">
+      <input id="outletId" class="border rounded px-2 py-1 text-sm w-full" placeholder="outlet id (e.g., damansara)">
+      <button id="loadOutlet" class="px-2 py-1 rounded border text-sm">Load</button>
+    </div>
+    <div id="ovList" class="space-y-2"></div>
+    <div class="flex items-center gap-2 mt-2">
+      <input id="ovSku" class="border rounded px-2 py-1 text-sm w-full" placeholder="SKU code">
+      <input id="ovCat" class="border rounded px-2 py-1 text-sm w-40" placeholder="category">
+      <button id="ovAdd" class="px-2 py-1 rounded border text-sm">Add</button>
+    </div>
+    <div class="text-xs text-gray-500 mt-1">Edits <code>outletOverrides[&lt;outletId&gt;].map</code> in JSON.</div>
+  </div>
+  
+        <div class="border rounded-lg p-3">
+          <div class="text-sm font-medium mb-2">Quick Edit — SKU map</div>
+          <div id="skuList" class="space-y-2"></div>
+          <div class="flex items-center gap-2 mt-2">
+            <input id="newSku" class="border rounded px-2 py-1 text-sm w-full" placeholder="SKU code (e.g., SKU-CAKE-6IN)">
+            <input id="newCat" class="border rounded px-2 py-1 text-sm w-40" placeholder="category">
+            <button id="addSku" class="px-2 py-1 rounded border text-sm">Add</button>
+          </div>
+        </div>
+        <div>
+          <textarea id="editor" rows="16" class="code w-full border rounded-lg p-3" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="mt-3 flex items-center gap-2">
+        <button id="save" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Save to Server</button>
+        <button id="format" class="px-3 py-2 rounded-lg border">Format</button>
+        <a id="historyLink" href="#" class="px-3 py-2 rounded-lg border admin-only">History</a>
+        <div id="msg" class="text-sm text-gray-600 ml-2"></div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-white p-4 admin-only">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold">History</h2>
+        <button id="refresh" class="px-3 py-2 rounded-lg border">Refresh</button>
+      </div>
+      <div id="list" class="space-y-2"></div>
+    </div>
+  </main>
+
+<script type="module">
+import { applyRoleGate } from "/assets/js/role-gate.js";
+import { postJSON } from "/assets/js/audit-client.js";
+
+async function getCfg(){
+  const r = await fetch('/api/config/sku-categories', { credentials:'include', cache:'no-store' });
+  return r.json();
+}
+async function backups(){
+  const r = await fetch('/api/config/sku-categories/backups', { credentials:'include', cache:'no-store' });
+  return r.json();
+}
+async function restore(file){
+  if (!confirm('Restore ' + file + ' ? This will overwrite sku-categories.json')) return;
+  const r = await postJSON('/api/config/sku-categories/restore', { file });
+  if (r.ok){ await load(); } else { alert('Restore failed'); }
+}
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) (k==='class') ? x.className=v : x.setAttribute(k,v);
+  for (const c of children) x.appendChild(typeof c==='string' ? document.createTextNode(c) : c);
+  return x;
+}
+function readObj(){ try{ return JSON.parse(document.getElementById('editor').value); }catch{return null;} }
+function writeObj(o){ document.getElementById('editor').value = JSON.stringify(o, null, 2); }
+function renderKvList(mount, map, onChange){
+  mount.innerHTML = '';
+  const entries = Object.entries(map||{}).sort(([a],[b])=>a.localeCompare(b));
+  entries.forEach(([k,v])=>{
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-12 gap-2 items-center';
+    row.innerHTML = `
+      <input class='col-span-6 border rounded px-2 py-1 text-sm k' value='${k}'>
+      <input class='col-span-4 border rounded px-2 py-1 text-sm v' value='${v}'>
+      <button class='col-span-2 px-2 py-1 rounded border text-sm del'>Delete</button>`;
+    mount.appendChild(row);
+    row.querySelector('.del').onclick = ()=>{ onChange('del', k); };
+    row.querySelector('.k').onchange = (e)=>{ onChange('key', k, e.target.value.trim()); };
+    row.querySelector('.v').onchange = (e)=>{ onChange('val', k, e.target.value.trim()); };
+  });
+}
+document.getElementById('loadOutlet').onclick = ()=>{
+  const id = document.getElementById('outletId').value.trim(); if (!id) return;
+  const obj = readObj(); if (!obj) return alert('Invalid JSON');
+  const m = (obj.outletOverrides && obj.outletOverrides[id] && obj.outletOverrides[id].map) || {};
+  renderKvList(document.getElementById('ovList'), m, (type, key, nv)=>{
+    const o = readObj(); if (!o) return;
+    o.outletOverrides = o.outletOverrides || {}; o.outletOverrides[id] = o.outletOverrides[id] || { map:{} };
+    const map = Object.assign({}, o.outletOverrides[id].map);
+    if (type==='del'){ delete map[key]; }
+    if (type==='key'){ const val = map[key]; delete map[key]; if (nv) map[nv]=val; }
+    if (type==='val'){ map[key] = nv; }
+    o.outletOverrides[id].map = map; writeObj(o); document.getElementById('loadOutlet').click();
+  });
+};
+document.getElementById('ovAdd').onclick = ()=>{
+  const id = document.getElementById('outletId').value.trim(); if (!id) return;
+  const sku = document.getElementById('ovSku').value.trim();
+  const cat = document.getElementById('ovCat').value.trim();
+  if (!sku || !cat) return alert('SKU and category required');
+  const o = readObj(); if (!o) return;
+  o.outletOverrides = o.outletOverrides || {}; o.outletOverrides[id] = o.outletOverrides[id] || { map:{} };
+  o.outletOverrides[id].map[sku] = cat; writeObj(o); document.getElementById('ovSku').value=''; document.getElementById('ovCat').value=''; document.getElementById('loadOutlet').click();
+};
+
+function renderSkuList(map){
+  const mount = document.getElementById('skuList');
+  mount.innerHTML = '';
+  const entries = Object.entries(map||{}).sort(([a],[b])=>a.localeCompare(b));
+  entries.forEach(([sku, cat])=>{
+    const row = el('div',{class:'grid grid-cols-12 gap-2 items-center'});
+    row.innerHTML = \`
+      <input class="col-span-6 border rounded px-2 py-1 text-sm sku" value="\${sku}">
+      <input class="col-span-4 border rounded px-2 py-1 text-sm cat" value="\${cat}">
+      <button class="col-span-2 px-2 py-1 rounded border text-sm del">Delete</button>\`;
+    mount.appendChild(row);
+    row.querySelector('.del').onclick = ()=>{
+      const obj = readObj(); if (!obj) return alert('Invalid JSON');
+      delete (obj.map||{})[sku];
+      writeObj(obj); renderSkuList(obj.map||{});
+    };
+    row.querySelector('.sku').onchange = (e)=>{
+      const obj = readObj(); if (!obj) return;
+      const nv = e.target.value.trim(); if (!nv) return;
+      const m = Object.assign({}, obj.map||{}); delete m[sku]; m[nv] = row.querySelector('.cat').value.trim();
+      obj.map = m; writeObj(obj); renderSkuList(obj.map||{});
+    };
+    row.querySelector('.cat').onchange = (e)=>{
+      const obj = readObj(); if (!obj) return;
+      const m = Object.assign({}, obj.map||{}); m[sku] = e.target.value.trim();
+      obj.map = m; writeObj(obj);
+    };
+  });
+}
+document.getElementById('addSku').onclick = ()=>{
+  const sku = document.getElementById('newSku').value.trim();
+  const cat = document.getElementById('newCat').value.trim();
+  if (!sku || !cat){ alert('SKU and category required'); return; }
+  const obj = readObj(); if (!obj) return alert('Invalid JSON');
+  obj.map = obj.map || {}; obj.map[sku] = cat;
+  writeObj(obj); renderSkuList(obj.map||{});
+  document.getElementById('newSku').value=''; document.getElementById('newCat').value='';
+};
+
+function validateLocal(o){
+  const errs = [];
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return ['Root must be an object'];
+  if (!o.map || typeof o.map !== 'object' || Array.isArray(o.map)) errs.push('`map` must be an object');
+  else {
+    for (const [sku, cat] of Object.entries(o.map)){
+      if (!String(sku).trim()) errs.push('Empty SKU key');
+      if (!String(cat).trim()) errs.push(\`Category for \${sku} must be a non-empty string\`);
+    }
+  }
+  return errs;
+}
+
+async function renderBackups(){
+  const mount = document.getElementById('list');
+  mount.innerHTML = '';
+  const data = await backups();
+  if (!data.ok){ mount.textContent = 'Failed to load backups.'; return; }
+  data.backups.forEach(b => {
+    const row = el('div',{class:'flex items-center justify-between border rounded-lg p-3'});
+    row.append(
+      el('div',{},
+        el('div',{class:'font-mono text-sm'}, b.file),
+        el('div',{class:'text-xs text-gray-500'}, \`\${(b.bytes/1024).toFixed(1)} KB • \${new Date(b.ts).toLocaleString()}\`)
+      ),
+      el('div',{},
+        (()=>{ const btn = el('button',{class:'px-3 py-1.5 rounded-lg border bg-white admin-only restore-link'},'Restore'); btn.onclick=()=>restore(b.file); return btn; })()
+      )
+    );
+    mount.append(row);
+  });
+}
+
+async function load(){
+  await applyRoleGate({ roleBadge: '#roleBadge', adminSelectors: ['#save', '.admin-only'] });
+  const res = await getCfg();
+  const obj = res.data || { map:{} };
+  writeObj(obj);
+  renderSkuList(obj.map||{});
+  await renderBackups();
+}
+
+document.getElementById('format').onclick = ()=>{
+  try{ writeObj(JSON.parse(document.getElementById('editor').value)); }catch(e){ alert('Invalid JSON'); }
+};
+document.getElementById('save').onclick = async ()=>{
+  const msg = document.getElementById('msg'); msg.textContent='';
+  let obj = null;
+  try{ obj = JSON.parse(document.getElementById('editor').value); }catch(e){ alert('Invalid JSON'); return; }
+  const errs = validateLocal(obj);
+  if (errs.length){ msg.textContent = 'Fix errors before saving: ' + errs[0] + (errs.length>1?` (+${errs.length-1} more)`:'' ); return; }
+  const res = await postJSON('/api/config/sku-categories', obj).catch(async (e)=>{
+    try{ const r = await fetch('/api/config/sku-categories', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(obj) }); const j = await r.json(); if (!r.ok && j.errors) throw new Error(j.errors.join('; ')); }catch(err){ throw err; }
+  });
+  msg.textContent = res && res.ok ? 'Saved.' : 'Save failed';
+};
+document.getElementById('refresh').onclick = renderBackups;
+load();
+</script>
+</body>
+</html>

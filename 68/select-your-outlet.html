@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Select Your Outlet</title>
+  <link rel="stylesheet" href="/assets/tailwind.min.css" />
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6">
+  <h1 class="text-xl font-bold mb-4 text-center" data-i18n="outlet.title">Select Your Outlet</h1>
+    <form id="outletForm" class="space-y-4">
+      <!-- Saved Outlets Dropdown -->
+      <div>
+  <label for="savedOutlets" class="block text-xs font-semibold mb-1 text-gray-500" data-i18n="outlet.saved">Saved Outlets</label>
+        <select id="savedOutlets" class="w-full rounded border-gray-300 focus:ring-blue-500 text-sm mb-2">
+          <option value="" data-i18n="outlet.selectSaved">Select from saved...</option>
+        </select>
+      </div>
+      <!-- Outlet Selection -->
+      <div>
+  <label for="outlet" class="block text-sm font-medium mb-1" data-i18n="outlet.label">Outlet</label>
+        <select id="outlet" name="outlet" class="w-full rounded border-gray-300 focus:ring-blue-500" required>
+          <option value="" data-i18n="outlet.choose">Choose an outlet</option>
+          <option value="outlet-klcc" data-i18n="outlet.klcc">KLCC Mall</option>
+          <option value="outlet-midvalley" data-i18n="outlet.midvalley">Mid Valley</option>
+          <option value="outlet-penang" data-i18n="outlet.penang">George Town</option>
+          <option value="outlet-jb" data-i18n="outlet.jb">Johor Bahru</option>
+        </select>
+      </div>
+      <!-- Error Message -->
+    <div id="outletError" class="hidden text-xs text-red-600 bg-red-50 rounded px-2 py-1"></div>
+  <button type="submit" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="outlet.confirm">Confirm</button>
+    </form>
+  <div id="confirmation" class="hidden mt-4 p-3 bg-green-50 text-green-700 rounded text-center"></div>
+  </div>
+  <script>
+    // Simple i18n dictionary for outlet selection
+    const translations = {
+      en: {
+        'outlet.title': 'Select Your Outlet',
+        'outlet.saved': 'Saved Outlets',
+        'outlet.selectSaved': 'Select from saved...',
+        'outlet.label': 'Outlet',
+        'outlet.choose': 'Choose an outlet',
+        'outlet.klcc': 'KLCC Mall',
+        'outlet.midvalley': 'Mid Valley',
+        'outlet.penang': 'George Town',
+        'outlet.jb': 'Johor Bahru',
+        'outlet.confirm': 'Confirm',
+        'outlet.error': 'Please select an outlet.',
+        'outlet.selected': 'Outlet selected: ',
+      },
+      bm: {
+        'outlet.title': 'Pilih Cawangan Anda',
+        'outlet.saved': 'Cawangan Disimpan',
+        'outlet.selectSaved': 'Pilih dari simpanan...',
+        'outlet.label': 'Cawangan',
+        'outlet.choose': 'Pilih cawangan',
+        'outlet.klcc': 'Pusat Beli-belah KLCC',
+        'outlet.midvalley': 'Mid Valley',
+        'outlet.penang': 'George Town',
+        'outlet.jb': 'Johor Bahru',
+        'outlet.confirm': 'Sahkan',
+        'outlet.error': 'Sila pilih cawangan.',
+        'outlet.selected': 'Cawangan dipilih: ',
+      }
+    };
+    function setLang(l) {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[l][key]) el.textContent = translations[l][key];
+      });
+    }
+    function getLang() {
+      return localStorage.getItem('lang') || 'en';
+    }
+    function updateLang() {
+      setLang(getLang());
+    }
+    document.addEventListener('DOMContentLoaded', updateLang);
+    // Listen for language toggle
+    const langBtn = window.parent ? window.parent.document.getElementById('langToggle') : document.getElementById('langToggle');
+    if (langBtn) langBtn.addEventListener('click', updateLang);
+    // Load saved outlets from localStorage
+    function loadSavedOutlets() {
+      try {
+        return JSON.parse(localStorage.getItem('savedOutlets') || '[]');
+      } catch { return []; }
+    }
+    function saveOutletToSaved(outletId) {
+      if (!outletId) return;
+      let saved = loadSavedOutlets();
+      if (!saved.includes(outletId)) {
+        saved.push(outletId);
+        localStorage.setItem('savedOutlets', JSON.stringify(saved));
+      }
+    }
+    function getOutletName(id) {
+      const lang = getLang();
+      switch(id) {
+        case 'outlet-klcc': return translations[lang]['outlet.klcc'];
+        case 'outlet-midvalley': return translations[lang]['outlet.midvalley'];
+        case 'outlet-penang': return translations[lang]['outlet.penang'];
+        case 'outlet-jb': return translations[lang]['outlet.jb'];
+        default: return id;
+      }
+    }
+    function populateSavedOutlets() {
+      const select = document.getElementById('savedOutlets');
+      const saved = loadSavedOutlets();
+  select.innerHTML = `<option value="">${translations[getLang()]['outlet.selectSaved']}</option>`;
+      saved.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = getOutletName(id);
+        select.appendChild(opt);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      populateSavedOutlets();
+      // Auto-fill outlet when saved selected
+      document.getElementById('savedOutlets').addEventListener('change', function() {
+        const v = this.value;
+        if (v) document.getElementById('outlet').value = v;
+      });
+    });
+    document.getElementById('outletForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const outlet = document.getElementById('outlet').value;
+      const errorEl = document.getElementById('outletError');
+      if (!outlet) {
+        errorEl.textContent = translations[getLang()]['outlet.error'];
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      errorEl.classList.add('hidden');
+      localStorage.setItem('selectedOutlet', outlet);
+      saveOutletToSaved(outlet);
+      document.getElementById('confirmation').textContent = translations[getLang()]['outlet.selected'] + getOutletName(outlet);
+      document.getElementById('confirmation').classList.remove('hidden');
+      // Optionally redirect or close modal here
+    });
+  </script>
+</body>
+</html>

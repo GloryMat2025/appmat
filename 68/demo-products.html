@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Products Demo</title>
+  <link rel="stylesheet" href="/assets/tailwind.min.css" />
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-3xl mx-auto">
+    <h1 class="text-xl font-semibold mb-4">Products demo</h1>
+
+    <div class="grid grid-cols-2 gap-3" id="productsGrid">
+      <!-- product cards will be injected -->
+    </div>
+  </div>
+
+  <dialog id="appDialog"><div data-modal-body></div></dialog>
+
+  <script>
+    // simple renderer using product-card fragment
+    const products = [
+      { id: 'p1', name: 'Red Apple', short: 'Fresh & crisp', desc: 'A delicious red apple grown locally.', price: '3.50', image: '/assets/icons/apple.jpg' },
+      { id: 'p2', name: 'Banana Bunch', short: 'Sweet', desc: 'Handpicked ripe bananas.', price: '4.20', image: '/assets/icons/banana.jpg' },
+    ];
+
+    async function loadFragment(path) {
+      const r = await fetch(path);
+      return r.text();
+    }
+
+    (async ()=>{
+      const frag = await loadFragment('/popups/product-card.html');
+      const grid = document.getElementById('productsGrid');
+      products.forEach(p=>{
+        let html = frag.replace(/{{id}}/g,p.id).replace(/{{image}}/g,p.image).replace(/{{name}}/g,p.name).replace(/{{short}}/g,p.short).replace(/{{price}}/g,p.price);
+        const div = document.createElement('div'); div.innerHTML = html; grid.appendChild(div.firstElementChild);
+      });
+
+      // simple popup loader that matches project pattern
+      window.openPopup = window.openPopup || function(name, opts){
+        return new Promise(async (resolve)=>{
+          const d = document.getElementById('appDialog');
+          const body = d.querySelector('[data-modal-body]');
+          const frag = await (await fetch(`/popups/${name}.html`)).text();
+          body.innerHTML = frag;
+          d.showModal();
+          // wire close buttons
+          body.querySelectorAll('[data-close]').forEach(b=> b.addEventListener('click', ()=> { d.close(); resolve(null); }));
+          // call controller if present
+          if (window.PopupControllers && typeof window.PopupControllers[name] === 'function') {
+            window.PopupControllers[name](body, opts || {}, function(res){ d.close(); resolve(res); });
+          }
+        });
+      };
+
+      document.querySelectorAll('[data-modal-target]').forEach(btn=>{
+        btn.addEventListener('click', async (e)=>{
+          const id = btn.getAttribute('data-product-id');
+          const p = products.find(x=>x.id===id);
+          const res = await openPopup(btn.getAttribute('data-modal-target'), { product: p });
+          if (res && res.action === 'add') console.log('Add to cart', res.productId);
+        });
+      });
+    })();
+  </script>
+
+  <script src="/assets/js/popup-controllers.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Order History</title>
+  <link rel="stylesheet" href="./assets/css/base.min.css">
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f9f9f9; color: #222; margin: 0; padding: 24px; }
+    .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 8px #0001; padding: 24px; }
+    h1 { margin-top: 0; }
+    .order { border: 1px solid #eee; border-radius: 10px; padding: 14px; margin-bottom: 18px; background: #fafbfc; }
+    .order-id { font-weight: bold; }
+    .order-items { margin: 8px 0 0 0; font-size: 15px; }
+    .order-total { font-weight: bold; color: #0f9d58; }
+    .muted { color: #888; font-size: 13px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>Order History</h1>
+  <form id="lookupForm" style="margin-bottom:18px">
+    <label>Email: <input id="emailInput" type="email" required placeholder="you@example.com" style="padding:6px 10px;border-radius:8px;border:1px solid #ccc"></label>
+    <button type="submit" style="margin-left:8px;padding:6px 16px;border-radius:8px;background:#0f9d58;color:#fff;border:none;">Lookup</button>
+  </form>
+  <div id="orders"></div>
+</div>
+<script>
+const form = document.getElementById('lookupForm');
+const emailInput = document.getElementById('emailInput');
+const ordersDiv = document.getElementById('orders');
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const email = emailInput.value.trim();
+  if (!email) return;
+  ordersDiv.innerHTML = '<div class="muted">Loading...</div>';
+  try {
+    const res = await fetch(`/api/orders?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error('Failed to fetch');
+    if (!data.orders.length) {
+      ordersDiv.innerHTML = '<div class="muted">No orders found for this email.</div>';
+      return;
+    }
+    ordersDiv.innerHTML = data.orders.map(order => `
+      <div class="order">
+        <div class="order-id">Order ID: ${order.orderId || order.id}</div>
+        <div class="muted">${new Date(order.created).toLocaleString()}</div>
+        <div class="order-items">
+          ${order.items.map(i => `<div>${i.qty} × ${i.name} <span class="muted">(${i.price ? 'RM ' + i.price.toFixed(2) : ''})</span></div>`).join('')}
+        </div>
+        <div class="order-total">Total: RM ${(order.total || 0).toFixed(2)}</div>
+        <div class="muted">Status: ${order.status || 'pending'}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    ordersDiv.innerHTML = '<div class="muted">Error loading orders.</div>';
+  }
+};
+</script>
+</body>
+</html>

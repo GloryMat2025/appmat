@@ -1,0 +1,35 @@
+
+<!-- Badge near your PR/quarantine badges -->
+<span id="dgBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-amber-50 border-amber-200 text-amber-900"></span>
+
+<script>
+async function refreshDriftGuardBadge(){
+  const suite = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+  const el = document.getElementById('dgBadge');
+  if (!el) return;
+  if (!suite){ el.textContent=''; el.classList.add('hidden'); return; }
+  const r = await fetch('/api/admin/drift-guard/status?name='+encodeURIComponent(suite), { credentials:'include' });
+  const j = await r.json().catch(()=>({ ok:false }));
+  if (!j.ok){ el.textContent=''; el.classList.add('hidden'); return; }
+  const st = j.status||{};
+  const msg = `Drift guard: ${st.freshness_ok?'Fresh':'Stale'} (age ${st.ageMin}m / ${st.windowMin}m) • ${st.quality_ok?'Clean':'Fails '+st.fails+'/'+st.maxFails}`;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+(document.getElementById('suite')||{}).onchange = refreshDriftGuardBadge;
+document.addEventListener('DOMContentLoaded', refreshDriftGuardBadge);
+</script>
+
+<!-- Optional override checkbox in your promotion controls -->
+<label class="text-xs flex items-center gap-1 admin-only"><input id="driftOverride" type="checkbox"> Override drift-guard</label>
+
+<script>
+// When posting to /promotion-pr, include driftOverride
+const driftOverride = !!document.getElementById('driftOverride')?.checked;
+// body: JSON.stringify({ name, merge, excludeQuarantined, driftOverride, dryRun: false })
+
+// On response error, show guard message on 412:
+if (res.status === 412){
+  alert((j && j.error) || 'Promotion blocked by drift-guard');
+}
+</script>

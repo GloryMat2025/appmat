@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Validate Cache</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Admin — Validate Cache</div>
+    <nav class="text-sm">
+      <a href="/assets/pages/dev/audit-log.html" class="text-blue-600">Audit Log</a>
+    </nav>
+  </header>
+
+  <main class="max-w-3xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="rounded-xl border bg-white p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div id="roleBadge"></div>
+        <div class="flex items-center gap-2">
+          <input id="tenant" class="border rounded px-2 py-1 text-sm w-40" placeholder="tenant (optional)">
+          <button id="refresh" class="px-3 py-2 rounded-lg border">Refresh</button>
+          <button id="clearTenant" class="px-3 py-2 rounded-lg border admin-only">Clear Tenant</button>
+          <button id="clear" class="px-3 py-2 rounded-lg bg-gray-900 text-white admin-only">Clear All</button>
+        </div>
+      </div>
+      <div id="stats" class="text-sm"></div>
+    </div>
+  </main>
+
+<script type="module">
+import { applyRoleGate } from "/assets/js/role-gate.js";
+import { postJSON } from "/assets/js/audit-client.js";
+
+async function load(){
+  await applyRoleGate({ roleBadge: '#roleBadge', adminSelectors: ['#clear', '.admin-only'] });
+  const hdr = {};
+  const tenantVal = document.getElementById('tenant').value.trim();
+  if (tenantVal) hdr['X-Tenant-ID'] = tenantVal;
+  const r = await fetch('/api/admin/validate-cache', { credentials:'include', cache:'no-store', headers: hdr });
+  const j = await r.json().catch(()=>({ ok:false }));
+  // fetch config leak via a tiny protected endpoint would be cleaner; we show mode textually here
+  const s = document.getElementById('stats');
+  if (!j.ok) { s.textContent = 'Failed to load stats'; return; }
+  const { backend, stats, size, ttlMs, max, windowMs, threshold } = j;
+  s.innerHTML = `
+    <div class='mb-2 text-xs text-gray-600'>Tenant resolution: <strong>TENANT_SOURCE</strong> (jwt|header|both), claim: <strong>TENANT_CLAIM</strong>. Header name: <strong>TENANT_HEADER</strong>.</div>` +
+    <div>Backend: <strong>${backend}</strong>${backend==='redis'?'':' (in-memory)'}</div>` +
+    <div class="grid grid-cols-2 gap-2">
+      <div>Hits: <strong>${stats.hits}</strong></div>
+      <div>Misses: <strong>${stats.misses}</strong></div>
+      <div>Sets: <strong>${stats.sets}</strong></div>
+      <div>Evictions: <strong>${stats.evictions}</strong></div>
+      <div>Size: <strong>${size}</strong> / ${max}</div>
+      <div>TTL: <strong>${ttlMs}</strong> ms</div>
+      <div>Rate Window: <strong>${windowMs}</strong> ms</div>
+      <div>Rate Threshold/IP: <strong>${threshold}</strong></div>
+    </div>`;
+}
+
+document.getElementById('refresh').onclick = load;
+document.getElementById('clearTenant').onclick = async ()=>{
+  const t = document.getElementById('tenant').value.trim();
+  if (!t) { alert('Enter tenant id first'); return; }
+  if (!confirm('Clear cache for tenant '+t+'?')) return;
+  const r = await postJSON('/api/admin/validate-cache/clear-tenant', { tenant: t });
+  if (r.ok) load();
+};
+
+document.getElementById('clear').onclick = async ()=>{
+  if (!confirm('Clear cache now?')) return;
+  const r = await postJSON('/api/admin/validate-cache/clear', {});
+  if (r.ok) load();
+};
+load();
+</script>
+</body>
+</html>

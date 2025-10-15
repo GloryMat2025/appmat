@@ -1,0 +1,64 @@
+{
+  "ci": {
+    "collect": {
+  "staticDistDir": "./dist",
+  "budgetsFile": "./budgets.json",
+      "numberOfRuns": 3,
+      "settings": {
+  "preset": "desktop",
+  "formFactor": "mobile",
+  "screenEmulation": { "mobile": true, "disabled": false }
+      },
+      "url": [
+        "/",
+        "/menu.html",
+        "/assets/pages/cart.html"
+      ]
+    },
+    "assert": {
+      "preset": "lighthouse:recommended",
+      "assertions": {
+        "categories:performance": [
+          "error",
+          {
+            "minScore": 0.9
+          }
+        ],
+        "largest-contentful-paint": [
+          "error",
+          {
+            "maxNumericValue": 2500,
+            "aggregationMethod": "median"
+          }
+        ],
+        "first-contentful-paint": [
+          "warn",
+          {
+            "maxNumericValue": 1500,
+            "aggregationMethod": "median"
+          }
+        ],
+        "total-blocking-time": [
+          "error",
+          {
+            "maxNumericValue": 200,
+            "aggregationMethod": "median"
+          }
+        ],
+        "cumulative-layout-shift": [
+          "error",
+          {
+            "maxNumericValue": 0.1,
+            "aggregationMethod": "median"
+          }
+        ],
+        "uses-responsive-images": "warn",
+        "uses-optimized-images": "warn"
+      },
+      "budgetsFile": "./budgets.json"
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}

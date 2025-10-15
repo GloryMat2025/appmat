@@ -1,0 +1,1 @@
+Password reset for {{email}}. Link: {{link}}\nIf you didn’t request this, ignore this email.

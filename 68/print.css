@@ -1,0 +1,51 @@
+/* General receipt look */
+.receipt {
+  max-width: 720px; margin: 0 auto; color: #111827;
+  font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+}
+.receipt .muted { color: #6b7280; }
+.receipt .title { font-weight: 800; font-size: 18px; }
+.receipt .hr { border-top: 1px dashed #cbd5e1; margin: 8px 0; }
+.receipt table { width: 100%; border-collapse: collapse; }
+.receipt th, .receipt td { padding: 6px 0; vertical-align: top; }
+.receipt .right { text-align: right; }
+.receipt .totals td { padding: 6px 0; }
+.receipt .grand { font-weight: 800; font-size: 16px; }
+
+/* Screen-only actions */
+@media screen {
+  .receipt-actions { display:flex; gap:8px; margin:12px 0; }
+}
+
+/* Print: hide actions, optimize ink, page */
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .receipt-actions, .no-print { display: none !important; }
+  @page { size: A4; margin: 14mm; }
+}
+
+/* Thermal “80mm” class — when applied to body, yields a narrow roll */
+body.thermal-80mm {
+  background: #fff;
+}
+@media print {
+  body.thermal-80mm .receipt { max-width: 72mm; }
+  body.thermal-80mm {
+    /* Custom page size for thermal receipts */
+  }
+  body.thermal-80mm & {
+    /* workaround for some print engines */
+  }
+  @page {
+    /* Default A4 unless overridden */
+  }
+}
+@media print {
+  body.thermal-80mm {
+    /* Only some browsers support this, but try to set 80mm roll */
+  }
+  @page :root.thermal-80mm {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+}

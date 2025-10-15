@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rate Limits & Quotas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.kbd{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:0 6px;font-size:12px}</style>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Rate Limits & Quotas</h1>
+      <div class="flex items-center gap-2">
+        <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border">Refresh</button>
+        <button id="btnSave" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white">Save</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Routes</h2>
+      <p class="text-xs text-slate-500 mb-2">Each rule: <code>{ match, limit, windowSec, by: ip|user|key, name?, quotaScope?, cost? }</code></p>
+      <textarea id="routes" class="w-full h-48 border rounded-xl px-3 py-2 font-mono text-xs"></textarea>
+      <div class="text-xs text-slate-500 mt-1">Tip: Hotkey <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> to save.</div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Quotas</h2>
+      <p class="text-xs text-slate-500 mb-2">Each quota: <code>{ scope: key|user, period: day|month, limit }</code></p>
+      <textarea id="quotas" class="w-full h-32 border rounded-xl px-3 py-2 font-mono text-xs"></textarea>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Peek quota</h2>
+      <div class="grid md:grid-cols-4 gap-2 items-end">
+        <input id="qid" class="border rounded-lg px-3 py-2" placeholder="key id or user email">
+        <select id="qscope" class="border rounded-lg px-3 py-2">
+          <option value="key">key</option>
+          <option value="user">user</option>
+        </select>
+        <button id="btnPeek" class="px-3 py-1.5 rounded-lg border">Check</button>
+      </div>
+      <pre id="peekOut" class="mt-2 bg-slate-50 p-3 rounded-lg text-xs overflow-auto">—</pre>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    async function refresh(){
+      const r = await fetch('/api/rl/policy', { credentials:'include' });
+      const j = await r.json();
+      $('routes').value = JSON.stringify(j.routes||[], null, 2);
+      $('quotas').value = JSON.stringify(j.quotas||[], null, 2);
+    }
+    async function save(){
+      let routes=[], quotas=[];
+      try { routes = JSON.parse($('routes').value || '[]'); } catch { alert('Invalid routes JSON'); return; }
+      try { quotas = JSON.parse($('quotas').value || '[]'); } catch { alert('Invalid quotas JSON'); return; }
+      await fetch('/api/rl/policy', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ routes, quotas }) });
+      alert('Saved');
+      refresh();
+    }
+    $('btnRefresh').addEventListener('click', refresh);
+    $('btnSave').addEventListener('click', save);
+    window.addEventListener('keydown', e => { if (e.ctrlKey && e.key === 'Enter') save(); });
+
+    $('btnPeek').addEventListener('click', async ()=>{
+      const id = $('qid').value.trim();
+      const scope = $('qscope').value;
+      if (!id) return;
+      const r = await fetch('/api/rl/quota?id='+encodeURIComponent(id)+'&scope='+scope, { credentials:'include' });
+      const j = await r.json();
+      $('peekOut').textContent = JSON.stringify(j, null, 2);
+    });
+
+    refresh();
+  </script>
+</body>
+</html>

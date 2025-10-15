@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Checkout</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/base.min.css">
+</head>
+<body class="bg-gray-50 text-gray-900">
+<header class="sticky top-0 bg-white/90 backdrop-blur border-b border-gray-200">
+  <div class="max-w-md mx-auto h-14 px-4 flex items-center justify-between">
+    <a href="./cart.html" class="w-9 h-9 grid place-items-center rounded-full hover:bg-gray-100" aria-label="Back">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+  <h1 class="text-base font-semibold" data-i18n="checkout.title">Checkout</h1>
+  <button id="langToggle" class="text-[11px] font-semibold px-2 py-2 rounded-lg border border-ring bg-white">BM/EN</button>
+    <div class="w-9 h-9"></div>
+  </div>
+</header>
+
+<main class="max-w-md mx-auto p-4">
+  <!-- Order summary -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+  <h2 class="text-sm font-semibold mb-2" data-i18n="checkout.orderSummary">Order Summary</h2>
+    <div id="sumList" class="space-y-2"></div>
+    <div class="mt-3 flex items-center justify-between">
+  <span class="text-sm text-gray-600" data-i18n="checkout.subtotal">Subtotal</span>
+      <span id="sumSubtotal" class="font-semibold">RM 0.00</span>
+    </div>
+    <div class="mt-1 text-xs text-gray-500" id="sumItemsCount"></div>
+  </section>
+
+  <!-- Fulfilment -->
+  <section class="mt-4 rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+  <h2 class="text-sm font-semibold mb-2" data-i18n="checkout.fulfilment">Fulfilment</h2>
+  <div id="fulfilText" class="text-sm text-gray-700" data-i18n="checkout.fulfilmentInfo">Delivery / Pickup selection follows your Home page.</div>
+    <div class="mt-2 flex gap-2">
+  <a href="./index.html" class="px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n="checkout.change">Change</a>
+    </div>
+  </section>
+
+  <!-- Payment -->
+  <section class="mt-4 rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+  <h2 class="text-sm font-semibold mb-2" data-i18n="checkout.payment">Payment</h2>
+    <div class="flex items-center justify-between">
+      <div>
+  <div class="text-sm text-gray-700" data-i18n="checkout.fpx">FPX Online Banking</div>
+  <div id="bankChosen" class="text-xs text-gray-500" data-i18n="checkout.noBank">No bank selected</div>
+      </div>
+  <button id="btnChooseBank" class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold" data-i18n="checkout.chooseBank">Choose bank</button>
+    </div>
+  </section>
+
+  <!-- Customer Details -->
+  <form id="checkoutForm" class="mt-4 rounded-2xl ring-1 ring-gray-200 bg-white p-4 space-y-4" novalidate>
+  <h2 class="text-sm font-semibold" data-i18n="checkout.customerDetails">Customer Details</h2>
+    <div class="grid gap-3">
+      <label class="grid gap-1 text-sm">
+  <span data-i18n="checkout.name">Name</span> <span class="text-rose-600">*</span>
+  <input name="name" required class="px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n-placeholder="checkout.namePlaceholder" placeholder="Your name" />
+  <span data-err-for="name" class="hidden text-[11px] text-rose-600" data-i18n="checkout.nameRequired">Name is required.</span>
+      </label>
+      <label class="grid gap-1 text-sm">
+  <span data-i18n="checkout.email">Email</span> <span class="text-rose-600">*</span>
+  <input name="email" required type="email" class="px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n-placeholder="checkout.emailPlaceholder" placeholder="you@example.com" />
+  <span data-err-for="email" class="hidden text-[11px] text-rose-600" data-i18n="checkout.emailRequired">Valid email required.</span>
+      </label>
+      <label class="grid gap-1 text-sm">
+  <span data-i18n="checkout.phone">Phone</span> <span class="text-rose-600">*</span>
+  <input name="phone" required pattern="^[0-9+\- ]{6,}$" class="px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n-placeholder="checkout.phonePlaceholder" placeholder="0123456789" />
+  <span data-err-for="phone" class="hidden text-[11px] text-rose-600" data-i18n="checkout.phoneRequired">Valid phone required.</span>
+      </label>
+      <label class="grid gap-1 text-sm">
+  <span data-i18n="checkout.notes">Notes</span>
+  <textarea name="notes" rows="2" class="px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n-placeholder="checkout.notesPlaceholder" placeholder="Optional notes (no special instructions supported yet)"></textarea>
+      </label>
+      <div class="grid gap-1 text-sm">
+        <div class="flex items-center justify-between">
+          <span data-i18n="checkout.promo">Promo Code</span>
+          <button type="button" id="btnClearPromo" class="hidden text-[11px] font-semibold text-rose-600 hover:underline" data-i18n="checkout.remove">Remove</button>
+        </div>
+        <div class="flex gap-2">
+          <input name="promo" class="flex-1 px-3 py-2 rounded-lg ring-1 ring-gray-300 text-sm" data-i18n-placeholder="checkout.promoPlaceholder" placeholder="ENTERPROMO" />
+          <button type="button" id="btnApplyPromo" class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold" data-i18n="checkout.apply">Apply</button>
+        </div>
+  <span data-err-for="promo" class="hidden text-[11px] text-rose-600" data-i18n="checkout.promoInvalid">Invalid or expired promo.</span>
+        <div id="promoApplied" class="hidden text-[11px] text-emerald-600 font-medium"></div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Totals Breakdown -->
+  <section class="mt-4 rounded-2xl ring-1 ring-gray-200 bg-white p-4 space-y-2" id="totalsBox">
+  <h2 class="text-sm font-semibold mb-1" data-i18n="checkout.totals">Totals</h2>
+  <div class="flex items-center justify-between text-sm"><span data-i18n="checkout.subtotal">Subtotal</span><span id="tSubtotal">RM 0.00</span></div>
+  <div class="flex items-center justify-between text-sm" id="rowDiscount" hidden><span data-i18n="checkout.discount">Discount</span><span id="tDiscount" class="text-emerald-600">− RM 0.00</span></div>
+  <div class="flex items-center justify-between text-sm"><span data-i18n="checkout.tax">Tax (6%)</span><span id="tTax">RM 0.00</span></div>
+  <div class="flex items-center justify-between text-sm" id="rowDelivery" hidden><span data-i18n="checkout.deliveryFee">Delivery Fee</span><span id="tDelivery">RM 0.00</span></div>
+  <div class="border-t pt-2 flex items-center justify-between font-semibold"><span data-i18n="checkout.total">Total</span><span id="tTotal">RM 0.00</span></div>
+  </section>
+
+  <div aria-live="polite" aria-atomic="true" class="sr-only" id="checkoutLive"></div>
+
+  <button id="btnPay" class="mt-4 w-full px-4 py-3 rounded-xl bg-emerald-600 text-white font-semibold" data-i18n="checkout.payNow">Pay Now</button>
+<script>
+  // Simple i18n dictionary for checkout
+  const translations = {
+    en: {
+      'lang.toggle': 'BM',
+      'checkout.title': 'Checkout',
+      'checkout.orderSummary': 'Order Summary',
+      'checkout.subtotal': 'Subtotal',
+      'checkout.fulfilment': 'Fulfilment',
+      'checkout.fulfilmentInfo': 'Delivery / Pickup selection follows your Home page.',
+      'checkout.change': 'Change',
+      'checkout.payment': 'Payment',
+      'checkout.fpx': 'FPX Online Banking',
+      'checkout.noBank': 'No bank selected',
+      'checkout.chooseBank': 'Choose bank',
+      'checkout.customerDetails': 'Customer Details',
+      'checkout.name': 'Name',
+      'checkout.namePlaceholder': 'Your name',
+      'checkout.nameRequired': 'Name is required.',
+      'checkout.email': 'Email',
+      'checkout.emailPlaceholder': 'you@example.com',
+      'checkout.emailRequired': 'Valid email required.',
+      'checkout.phone': 'Phone',
+      'checkout.phonePlaceholder': '0123456789',
+      'checkout.phoneRequired': 'Valid phone required.',
+      'checkout.notes': 'Notes',
+      'checkout.notesPlaceholder': 'Optional notes (no special instructions supported yet)',
+      'checkout.promo': 'Promo Code',
+      'checkout.remove': 'Remove',
+      'checkout.promoPlaceholder': 'ENTERPROMO',
+      'checkout.apply': 'Apply',
+      'checkout.promoInvalid': 'Invalid or expired promo.',
+      'checkout.totals': 'Totals',
+      'checkout.discount': 'Discount',
+      'checkout.tax': 'Tax (6%)',
+      'checkout.deliveryFee': 'Delivery Fee',
+      'checkout.total': 'Total',
+      'checkout.payNow': 'Pay Now',
+    },
+    bm: {
+      'lang.toggle': 'EN',
+      'checkout.title': 'Pembayaran',
+      'checkout.orderSummary': 'Ringkasan Pesanan',
+      'checkout.subtotal': 'Jumlah Kecil',
+      'checkout.fulfilment': 'Pemenuhan',
+      'checkout.fulfilmentInfo': 'Pilihan penghantaran/pengambilan ikut Laman Utama.',
+      'checkout.change': 'Tukar',
+      'checkout.payment': 'Bayaran',
+      'checkout.fpx': 'Perbankan Dalam Talian FPX',
+      'checkout.noBank': 'Tiada bank dipilih',
+      'checkout.chooseBank': 'Pilih bank',
+      'checkout.customerDetails': 'Maklumat Pelanggan',
+      'checkout.name': 'Nama',
+      'checkout.namePlaceholder': 'Nama anda',
+      'checkout.nameRequired': 'Nama diperlukan.',
+      'checkout.email': 'E-mel',
+      'checkout.emailPlaceholder': 'anda@contoh.com',
+      'checkout.emailRequired': 'E-mel sah diperlukan.',
+      'checkout.phone': 'Telefon',
+      'checkout.phonePlaceholder': '0123456789',
+      'checkout.phoneRequired': 'Telefon sah diperlukan.',
+      'checkout.notes': 'Nota',
+      'checkout.notesPlaceholder': 'Nota pilihan (arahan khas belum disokong)',
+      'checkout.promo': 'Kod Promo',
+      'checkout.remove': 'Buang',
+      'checkout.promoPlaceholder': 'MASUKPROMO',
+      'checkout.apply': 'Guna',
+      'checkout.promoInvalid': 'Promo tidak sah atau tamat tempoh.',
+      'checkout.totals': 'Jumlah',
+      'checkout.discount': 'Diskaun',
+      'checkout.tax': 'Cukai (6%)',
+      'checkout.deliveryFee': 'Caj Penghantaran',
+      'checkout.total': 'Jumlah',
+      'checkout.payNow': 'Bayar Sekarang',
+    }
+  };
+  let lang = localStorage.getItem('lang') || 'en';
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('lang', l);
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[l][key]) el.textContent = translations[l][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (translations[l][key]) el.setAttribute('placeholder', translations[l][key]);
+    });
+    // Update toggle button label
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.textContent = l === 'en' ? 'BM/EN' : 'EN/BM';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    setLang(lang);
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.onclick = () => setLang(lang === 'en' ? 'bm' : 'en');
+  });
+</script>
+</main>
+
+<!-- One dialog shell for all popups -->
+<dialog id="appDialog" class="rounded-2xl p-0 w-[min(96vw,760px)]"><div data-modal-body></div></dialog>
+
+<script>
+  // demo: fulfilment summary from previous LS keys (if you used earlier home code)
+  const addr = JSON.parse(localStorage.getItem('gf_delivery_address') || 'null');
+  const outl = JSON.parse(localStorage.getItem('gf_pickup_outlet') || 'null');
+  const f = document.getElementById('fulfilText');
+  if (outl) f.textContent = `Pickup: ${outl.name} · ${outl.region}`;
+  else if (addr) f.textContent = `Delivery: ${addr.line1 || addr.city || 'Saved address'}`;
+</script>
+
+<script src="./assets/js/min.js"></script>
+<script src="./assets/js/api-reservations.js"></script>
+<script src="./assets/js/modal-payments.js"></script>
+</body>
+</html>

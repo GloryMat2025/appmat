@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notifications & Webhooks</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Notifications & Webhooks</h1>
+      <div class="flex items-center gap-2">
+        <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border">Refresh</button>
+        <button id="btnTest" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white">Send test</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">SMTP Settings</h2>
+      <div class="grid md:grid-cols-5 gap-3">
+        <input id="smtpHost" class="border rounded-lg px-3 py-2" placeholder="SMTP host">
+        <input id="smtpPort" class="border rounded-lg px-3 py-2" placeholder="587" value="587">
+        <label class="inline-flex items-center gap-2 text-sm"><input id="smtpSecure" type="checkbox"> TLS</label>
+        <input id="smtpUser" class="border rounded-lg px-3 py-2" placeholder="username">
+        <input id="smtpPass" class="border rounded-lg px-3 py-2" placeholder="password">
+      </div>
+      <button id="btnSaveSmtp" class="mt-3 px-3 py-1.5 rounded-lg bg-emerald-600 text-white">Save SMTP</button>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border space-y-3">
+      <h2 class="text-sm font-semibold">Add Subscription</h2>
+      <div class="grid md:grid-cols-3 gap-3">
+        <div class="border rounded-lg p-3">
+          <div class="font-medium text-sm mb-2">Webhook</div>
+          <input id="whUrl" class="w-full border rounded-lg px-3 py-2" placeholder="https://example.com/webhook">
+          <input id="whSecret" class="w-full border rounded-lg px-3 py-2 mt-2" placeholder="secret (optional)">
+          <input id="whEvents" class="w-full border rounded-lg px-3 py-2 mt-2" placeholder="events (comma, or *)" value="*">
+          <button id="btnAddWh" class="mt-2 px-3 py-1.5 rounded-lg border">Add</button>
+        </div>
+        <div class="border rounded-lg p-3">
+          <div class="font-medium text-sm mb-2">Slack Webhook</div>
+          <input id="slUrl" class="w-full border rounded-lg px-3 py-2" placeholder="https://hooks.slack.com/services/...">
+          <input id="slEvents" class="w-full border rounded-lg px-3 py-2 mt-2" placeholder="events (comma, or *)" value="*">
+          <button id="btnAddSlack" class="mt-2 px-3 py-1.5 rounded-lg border">Add</button>
+        </div>
+        <div class="border rounded-lg p-3">
+          <div class="font-medium text-sm mb-2">Email</div>
+          <input id="emTo" class="w-full border rounded-lg px-3 py-2" placeholder="alerts@example.com">
+          <input id="emEvents" class="w-full border rounded-lg px-3 py-2 mt-2" placeholder="events (comma, or *)" value="*">
+          <button id="btnAddEmail" class="mt-2 px-3 py-1.5 rounded-lg border">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold">Subscriptions</h2>
+      </div>
+      <div id="subs" class="mt-3 grid md:grid-cols-3 gap-3"></div>
+      <p id="empty" class="text-sm text-slate-500">No subscriptions yet.</p>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    function pill(kind){ return '<span class="text-xs rounded-full px-2 py-0.5 '+(kind==='webhooks'?'bg-sky-100 text-sky-700':kind==='slack'?'bg-purple-100 text-purple-700':'bg-emerald-100 text-emerald-700')+'">'+kind+'</span>'; }
+    function ev(evts){ return '<code>'+evts.join(', ')+'</code>'; }
+    function card(kind, rec){
+      const el = document.createElement('div');
+      el.className = 'border rounded-xl p-3';
+      el.innerHTML = \`
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">\${pill(kind)}<div class="font-mono text-xs">\${rec.id}</div></div>
+          <button class="px-3 py-1.5 rounded-lg border text-rose-600" data-act="del">Delete</button>
+        </div>
+        <div class="mt-2 text-sm text-slate-700">\${rec.url || rec.to}</div>
+        <div class="text-xs text-slate-500 mt-1">events: \${ev(rec.events)}</div>
+      \`;
+      el.querySelector('[data-act="del"]').onclick = ()=> del(kind, rec.id);
+      return el;
+    }
+    async function refresh(){
+      const r = await fetch('/api/notify/subs', { credentials:'include' });
+      const j = await r.json();
+      const wr = $('subs'); wr.innerHTML = ''; let total = 0;
+      for (const kind of ['webhooks','slack','email']){ (j[kind]||[]).forEach(rec => { wr.appendChild(card(kind, rec)); total++; }); }
+      $('empty').classList.toggle('hidden', !!total);
+    }
+    async function del(kind, id){ await fetch('/api/notify/subs/'+kind+'/'+id, { method:'DELETE', credentials:'include' }); refresh(); }
+    $('btnRefresh').addEventListener('click', refresh);
+    $('btnTest').addEventListener('click', async ()=>{ await fetch('/api/notify/test', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ event:'test.ping', payload:{ from:'ui' } }) }); alert('Sent test event'); });
+    $('btnSaveSmtp').addEventListener('click', async ()=>{
+      const body = { host: $('smtpHost').value.trim(), port: parseInt($('smtpPort').value, 10) || 587, secure: $('smtpSecure').checked, user: $('smtpUser').value.trim(), pass: $('smtpPass').value.trim() };
+      await fetch('/api/notify/smtp', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(body) });
+      alert('SMTP saved');
+    });
+    $('btnAddWh').addEventListener('click', async ()=>{
+      const events = $('whEvents').value.split(',').map(x=>x.trim()).filter(Boolean);
+      await fetch('/api/notify/subs/webhook', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ url:$('whUrl').value.trim(), secret:$('whSecret').value.trim(), events }) });
+      refresh();
+    });
+    $('btnAddSlack').addEventListener('click', async ()=>{
+      const events = $('slEvents').value.split(',').map(x=>x.trim()).filter(Boolean);
+      await fetch('/api/notify/subs/slack', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ url:$('slUrl').value.trim(), events }) });
+      refresh();
+    });
+    $('btnAddEmail').addEventListener('click', async ()=>{
+      const events = $('emEvents').value.split(',').map(x=>x.trim()).filter(Boolean);
+      await fetch('/api/notify/subs/email', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ to:$('emTo').value.trim(), events }) });
+      refresh();
+    });
+    refresh();
+  </script>
+</body>
+</html>

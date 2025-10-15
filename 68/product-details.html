@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Product Details</title>
+  <link rel="stylesheet" href="/assets/tailwind.min.css" />
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-lg max-w-sm w-full p-6">
+    <button data-close class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">&times;</button>
+    <img id="prodImg" class="w-full h-40 object-cover rounded-xl mb-4" src="" alt="" />
+    <h1 id="prodName" class="text-xl font-bold mb-2">Produk</h1>
+    <div id="prodDesc" class="text-sm text-gray-600 mb-4"></div>
+    <div id="prodPrice" class="text-lg font-semibold text-emerald-600 mb-4"></div>
+
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex items-center gap-1 border rounded overflow-hidden" style="width:120px">
+        <button type="button" id="pdQtyDec" class="px-3 bg-gray-100">-</button>
+        <input id="pdQtyInput" type="number" min="1" value="1" class="w-16 text-center" style="border:none;outline:none;" />
+        <button type="button" id="pdQtyInc" class="px-3 bg-gray-100">+</button>
+      </div>
+      <div class="ml-auto text-sm text-gray-500">Jumlah</div>
+    </div>
+
+    <button id="addToCart" class="w-full py-2 rounded bg-blue-600 text-white font-semibold">Tambah ke Troli</button>
+  </div>
+  <script>
+    // This script will be replaced by JS logic in menu.js
+  </script>
+</body>
+</html>

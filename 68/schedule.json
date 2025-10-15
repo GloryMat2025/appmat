@@ -1,0 +1,37 @@
+{
+  "slotMinutes": 15,
+  "tz": "Asia/Kuala_Lumpur",
+  "hours": {
+    "0": [{"start": "10:00", "end": "23:00"}],
+    "1": [{"start": "10:00", "end": "23:00"}],
+    "2": [{"start": "10:00", "end": "23:00"}],
+    "3": [{"start": "10:00", "end": "23:00"}],
+    "4": [{"start": "10:00", "end": "23:00"}],
+    "5": [{"start": "10:00", "end": "23:00"}],
+    "6": [{"start": "10:00", "end": "23:00"}]
+  },
+  "blackouts": [
+    "2025-12-25",
+    "2025-01-01"
+  ],
+  "exceptions": {
+    "2025-12-24": { "0": [{"start": "10:00", "end": "16:00"}] },
+    "2025-12-31": { "0": [{"start": "12:00", "end": "18:00"}] }
+  },
+
+  "categoryLeadMinutes": {
+    "cake": 2880,
+    "catering": 1440,
+    "custom": 720,
+    "hot-food": 120
+  },
+  "outletOverrides": {
+    "kb_mall": { "categoryLeadMinutes": { "cake": 4320 } }
+  },
+  "outlets": {
+    "kb_mall": { "label": "KB Mall (Kota Bharu)" },
+    "wakaf_che_yong": { "label": "Wakaf Che Yong" },
+    "tok_bali": { "label": "Tok Bali Coastal" },
+    "dabong_resort": { "label": "Dabong Resort" }
+  }
+}

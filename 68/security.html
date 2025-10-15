@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Security Controls — Rate Limits & Lockouts</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Security Controls</h1>
+      <span class="text-xs rounded-full px-2 py-1 bg-emerald-100 text-emerald-700">admin</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border space-y-3">
+      <h2 class="text-sm font-semibold">Lockout Configuration</h2>
+      <div class="grid md:grid-cols-4 gap-3">
+        <div><label class="block text-sm font-medium mb-1">Base Threshold</label><input id="baseThreshold" type="number" class="w-full border rounded-lg px-3 py-2" value="5"></div>
+        <div><label class="block text-sm font-medium mb-1">Lock Min (ms)</label><input id="lockMsMin" type="number" class="w-full border rounded-lg px-3 py-2" value="300000"></div>
+        <div><label class="block text-sm font-medium mb-1">Lock Max (ms)</label><input id="lockMsMax" type="number" class="w-full border rounded-lg px-3 py-2" value="86400000"></div>
+        <div class="flex items-end"><button id="btnSaveCfg" class="px-3 py-2 rounded-lg bg-sky-600 text-white">Save</button></div>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold">Lockout & Rate Status</h2>
+        <button id="btnRefresh" class="text-sm px-3 py-1.5 rounded-lg border hover:bg-slate-50">Refresh</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mt-3">
+        <div>
+          <h3 class="text-sm font-semibold mb-1">Accounts</h3>
+          <table class="min-w-full text-sm"><thead><tr><th class="py-1 pr-2 text-left">Key</th><th class="py-1 pr-2 text-right">Fails</th><th class="py-1 pr-2 text-right">Locked Until</th><th></th></tr></thead><tbody id="acct"></tbody></table>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold mb-1">IPs</h3>
+          <table class="min-w-full text-sm"><thead><tr><th class="py-1 pr-2 text-left">Key</th><th class="py-1 pr-2 text-right">Fails</th><th class="py-1 pr-2 text-right">Locked Until</th><th></th></tr></thead><tbody id="ips"></tbody></table>
+        </div>
+      </div>
+      <div class="mt-4">
+        <h3 class="text-sm font-semibold mb-1">Top Rate Buckets</h3>
+        <table class="min-w-full text-sm"><thead><tr><th class="py-1 pr-2 text-left">Key</th><th class="py-1 pr-2 text-right">Count</th></tr></thead><tbody id="buckets"></tbody></table>
+      </div>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border space-y-2">
+      <h2 class="text-sm font-semibold">Login Demo (with lockout & rate limit)</h2>
+      <div class="flex items-center gap-2">
+        <input id="email" class="border rounded-lg px-3 py-2" placeholder="email@example.com">
+        <input id="password" class="border rounded-lg px-3 py-2" placeholder="password">
+        <button id="btnLogin" class="px-3 py-2 rounded-lg bg-emerald-600 text-white">Try Login</button>
+      </div>
+      <p id="out" class="text-sm text-slate-600"></p>
+    </section>
+  </main>
+
+  <script>
+    async function refresh(){
+      const r = await fetch('/api/security/status', { credentials:'include' });
+      const j = await r.json();
+      const acct = document.getElementById('acct');
+      const ips  = document.getElementById('ips');
+      const buckets = document.getElementById('buckets');
+      acct.innerHTML = (j.lockout.accounts||[]).map(x=>row(x,'acct')).join('') || '<tr><td class="py-1" colspan="4" style="color:#64748b">—</td></tr>';
+      ips.innerHTML  = (j.lockout.ips||[]).map(x=>row(x,'ips')).join('') || '<tr><td class="py-1" colspan="4" style="color:#64748b">—</td></tr>';
+      buckets.innerHTML = (j.rate||[]).map(x=>`<tr><td class="py-1 pr-2">${x.key}</td><td class="py-1 pr-2 text-right">${x.count}</td></tr>`).join('') || '<tr><td class="py-1" colspan="2" style="color:#64748b">—</td></tr>';
+    }
+    function row(x, t){
+      const d = x.lockedUntil ? new Date(x.lockedUntil).toLocaleString() : '—';
+      return `<tr>
+        <td class="py-1 pr-2">${x.key}</td>
+        <td class="py-1 pr-2 text-right">${x.fails}</td>
+        <td class="py-1 pr-2 text-right">${d}</td>
+        <td class="py-1 pr-2 text-right"><button onclick="unlock('${x.key.replace(/'/g, '')}')" class="text-sm px-2 py-1 rounded-lg border">Unlock</button></td>
+      </tr>`;
+    }
+    async function unlock(key){
+      await fetch('/api/security/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key }), credentials:'include' });
+      refresh();
+    }
+    document.getElementById('btnRefresh').addEventListener('click', refresh);
+    document.getElementById('btnSaveCfg').addEventListener('click', async ()=>{
+      const cfg = {
+        baseThreshold: parseInt(document.getElementById('baseThreshold').value,10) || 5,
+        lockMsMin: parseInt(document.getElementById('lockMsMin').value,10) || 300000,
+        lockMsMax: parseInt(document.getElementById('lockMsMax').value,10) || 86400000,
+      };
+      await fetch('/api/security/config', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(cfg) });
+      refresh();
+    });
+    document.getElementById('btnLogin').addEventListener('click', async ()=>{
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const r = await fetch('/api/security/login-demo', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }), credentials:'include' });
+      const txt = await r.text();
+      document.getElementById('out').textContent = r.status + ': ' + txt;
+      refresh();
+    });
+    refresh();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+.rep-grid { display:grid; gap:12px }
+.rep-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+.rep-kpis { display:grid; gap:8px; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)) }
+.rep-card { border:1px solid var(--border); border-radius:12px; padding:10px; background: var(--surface,#fff) }
+.rep-card .num { font-weight:800; font-size:20px }
+.rep-row { display:flex; justify-content:space-between; padding:4px 0 }
+.rep-table { width:100%; border-collapse:collapse }
+.rep-table th, .rep-table td { padding:6px 4px; border-bottom:1px solid var(--border); text-align:left }
+canvas.rep-chart { width:100%; height:240px; max-height:300px }
