@@ -9,6 +9,14 @@ on:
     branches:
       - main
 
+# Give this workflow the explicit permissions it needs so a workflow-dispatch
+# using the built-in GITHUB_TOKEN can succeed when the org/repo policies allow it.
+# If your org restricts GITHUB_TOKEN from dispatching workflows, continue to use
+# a PAT stored in `secrets.WORKFLOW_DISPATCH_TOKEN` as configured below.
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   playwright:
     runs-on: ubuntu-latest
@@ -66,9 +74,11 @@ jobs:
         if: failure()
         uses: peter-evans/workflow-dispatch@v1
         with:
-          # Prefer a user-provided PAT stored in WORKFLOW_DISPATCH_TOKEN for org-restricted repos.
-          # If not provided, fall back to the built-in GITHUB_TOKEN.
-          token: ${{ secrets.WORKFLOW_DISPATCH_TOKEN || secrets.GITHUB_TOKEN }}
+          # If your organization restricts repository_dispatch/use of GITHUB_TOKEN,
+          # create a Personal Access Token (PAT) with workflow permissions and
+          # store it as the repository secret `WORKFLOW_DISPATCH_TOKEN`. By default
+          # we use the built-in github.token which works for most repos.
+          token: ${{ github.token }}
           repository: ${{ github.repository }}
           workflow: playwright-debug.yml
           # prefer PR head ref if present, otherwise current branch name
