@@ -1,0 +1,42 @@
+<!doctype html><html lang="ms">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cart</title>
+  <link rel="stylesheet" href="../tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900">
+  <header class="max-w-md mx-auto p-4 flex items-center gap-3">
+    <a href="../../index.html" class="w-9 h-9 grid place-items-center rounded-full ring-1 ring-gray-300">←</a>
+    <h1 class="text-lg font-semibold">Troli</h1>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 grid gap-3">
+    <ul id="list" class="bg-white rounded-2xl ring-1 ring-gray-200 divide-y"></ul>
+    <div class="bg-white rounded-2xl ring-1 ring-gray-200 p-4 flex items-center justify-between">
+      <div class="font-semibold">Jumlah</div>
+      <div id="total" class="text-lg font-bold">RM 0.00</div>
+    </div>
+    <div class="flex gap-2">
+      <button id="clear" class="flex-1 py-3 rounded-xl ring-1 ring-gray-300">Kosongkan</button>
+      <button id="checkout" class="flex-1 py-3 rounded-xl bg-blue-600 text-white">Checkout</button>
+    </div>
+  </main>
+
+  <template id="row">
+    <li class="px-4 py-3 flex gap-3 items-center">
+      <img class="w-14 h-14 rounded-lg object-cover" alt="" loading="lazy" decoding="async">
+      <div class="flex-1 min-w-0">
+        <div class="font-medium name"></div>
+        <div class="text-xs text-gray-500 price"></div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="dec w-8 h-8 rounded-lg ring-1 ring-gray-300">−</button>
+        <div class="w-8 text-center qty">1</div>
+        <button class="inc w-8 h-8 rounded-lg ring-1 ring-gray-300">+</button>
+      </div>
+    </li>
+  </template>
+
+  <script src="../js/cart.js" defer></script>
+  <script src="../js/cart-page.js" defer></script>
+</body></html>

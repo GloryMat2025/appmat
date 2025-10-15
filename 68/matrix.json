@@ -1,0 +1,31 @@
+{
+  "roles": [
+    "admin",
+    "staff",
+    "viewer"
+  ],
+  "perms": [
+    "settings:read",
+    "settings:write",
+    "backups:read",
+    "backups:write",
+    "metrics:read",
+    "users:read",
+    "users:admin",
+    "audit:read"
+  ],
+  "matrix": {
+    "admin": [
+      "*:*"
+    ],
+    "staff": [
+      "settings:read",
+      "backups:read",
+      "metrics:read",
+      "audit:read"
+    ],
+    "viewer": [
+      "metrics:read"
+    ]
+  }
+}

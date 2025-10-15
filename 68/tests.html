@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>App Tests</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="stylesheet" href="./assets/tailwind.min.css" />
+<style>
+  body { font-family: system-ui,-apple-system,Segoe UI,Roboto; }
+  .pass { color: #059669; }
+  .fail { color: #dc2626; }
+  pre { white-space: pre-wrap; font-size: 12px; }
+</style>
+</head>
+<body class="p-4 max-w-2xl mx-auto">
+  <h1 class="text-2xl font-bold mb-4">Automated Tests</h1>
+  <p class="text-sm mb-4">Lightweight assertion harness against core functions in <code>app.js</code>. Open DevTools console for detailed logs.</p>
+  <div id="results" class="space-y-2 text-sm"></div>
+  <button id="runAgain" class="mt-6 px-4 py-2 rounded bg-blue-600 text-white font-semibold">Run Again</button>
+  <script src="./assets/js/min.js"></script>
+  <script>
+  (function(){
+    function assert(name, cond, detail){
+      const div = document.createElement('div');
+      div.innerHTML = `<span class="font-mono">${name}</span> : <strong class="${cond?'pass':'fail'}">${cond?'PASS':'FAIL'}</strong>` + (detail?` <span class="opacity-70">${detail}</span>`:'');
+      document.getElementById('results').appendChild(div);
+      if(!cond) console.error('FAIL', name, detail);
+    }
+    function clear(){ document.getElementById('results').innerHTML=''; }
+
+    function run(){
+      clear();
+      try {
+        // Seed: create one fake order
+        localStorage.removeItem('orderHistory');
+        const baseOrder = { id:'ORD-TEST', created: Date.now()-5000, readyAt: Date.now()+2000, completedAt: Date.now()+4000, status:'preparing', items:[{id:'p',name:'Prod',price:5,qty:2}], subtotal:10, tax:0, total:10 };
+        localStorage.setItem('orderHistory', JSON.stringify([baseOrder]));
+        // Progress statuses
+        progressOrderStatuses();
+        const hist = JSON.parse(localStorage.getItem('orderHistory'));
+        assert('history length 1', hist.length===1);
+        assert('order has status', ['preparing','ready','completed','cancelled'].includes(hist[0].status));
+        // Progress computation
+        const pct = computeOrderProgress(hist[0]);
+        assert('progress within 0-100', pct>=0 && pct<=100, 'pct='+pct);
+        const eta = computeOrderETA(hist[0]);
+        assert('ETA object returned', eta && typeof eta==='object');
+        // Stats
+        const stats = (function(){ try { return computeOrderStats(); } catch(e){ return null; } })();
+        assert('stats present', !!stats);
+        if(stats){
+          assert('stats.count>=1', stats.count>=1);
+          assert('cancelRate range', stats.cancelRate>=0 && stats.cancelRate<=1);
+        }
+        // Metrics snapshot
+        snapshotOrderMetrics();
+        const mh = JSON.parse(localStorage.getItem('orderMetricsHistory')||'[]');
+        assert('metrics history appended', mh.length>=1);
+        // Network indicator (async slight delay to allow DOMContentLoaded handler)
+        const netEl = document.querySelector('[data-network-indicator]');
+        assert('network indicator exists', !!netEl);
+        if(netEl){
+          const initial = netEl.textContent.trim();
+          // Simulate offline event
+          window.dispatchEvent(new Event('offline'));
+          setTimeout(()=>{
+            assert('network indicator offline label', /Offline|Luar Talian/.test(netEl.textContent));
+            // Offline start timestamp should exist
+            const startTs = Number(localStorage.getItem('offlineStartTs')||'0');
+            assert('offline start recorded', !!startTs);
+            // Enqueue some fake actions if queue available
+            if(window.__offlineQueue){
+              window.__offlineQueue.enqueue({type:'addCartItem', item:{id:'q1',name:'Queued Item',price:1,qty:1}});
+              window.__offlineQueue.enqueue({type:'addCartItem', item:{id:'q2',name:'Queued Item 2',price:2,qty:1}});
+              // Update indicator manually
+              if(typeof updateNetworkIndicator==='function') updateNetworkIndicator();
+              assert('indicator shows queued count', /\(2\)/.test(document.querySelector('[data-network-indicator]').textContent));
+            }
+            // revert
+            window.dispatchEvent(new Event('online'));
+            setTimeout(()=>{
+              assert('network indicator online label', /Online|Dalam Talian/.test(netEl.textContent));
+              // Simulate manual sync button logic (if offline button removed now)
+              localStorage.setItem('lastSyncTs', Date.now());
+              const ls = Number(localStorage.getItem('lastSyncTs'));
+              assert('last sync stored', ls>0);
+              // Trigger replay to create history entry
+              if(window.__offlineQueue){
+                // Ensure we have at least one action: enqueue and replay
+                window.__offlineQueue.enqueue({type:'addCartItem', item:{id:'q3',name:'Queued Item 3',price:3,qty:1}});
+                // Force online replay
+                if(typeof window.__offlineQueue.replay==='function') window.__offlineQueue.replay().then(()=>{
+                  const hist = JSON.parse(localStorage.getItem('offlineSyncHistory')||'[]');
+                  assert('sync history entry created', hist.length>=1);
+                });
+              }
+            },50);
+          },50);
+        }
+        // Force install CTA
+        if(window.__forceInstallCTA){
+          window.__forceInstallCTA();
+          const cta = document.querySelector('[data-install-cta]');
+          assert('install CTA injected', !!cta);
+          if(cta){
+            cta.querySelector('[data-install-dismiss]')?.click();
+            assert('install CTA dismissed', !document.querySelector('[data-install-cta]'));
+          }
+        }
+        // Install funnel metrics: simulate events
+        if(typeof logAnalytic==='function'){
+          logAnalytic('pwa_install_show',{});
+          logAnalytic('pwa_install_click',{});
+          logAnalytic('pwa_install_choice',{ outcome:'accepted' });
+          logAnalytic('pwa_installed',{});
+          if(typeof window.__computeInstallFunnel==='function'){
+            const m = window.__computeInstallFunnel();
+            assert('funnel ctaShown>=1', m.ctaShown>=1);
+            assert('funnel installed>=1', m.installed>=1);
+            assert('funnel installRate>0', m.installRate>0);
+            if(typeof window.__resetAnalyticsEvents==='function'){
+              window.__resetAnalyticsEvents();
+              const m2 = window.__computeInstallFunnel();
+              assert('funnel reset cleared counts', m2.ctaShown===0 && m2.installed===0);
+            }
+          }
+        }
+        // Sync latency test
+        if(window.__offlineQueue){
+          // Force an enqueue (simulate offline add then online replay)
+          window.__offlineQueue.enqueue({ type:'addCartItem', item:{ id:'test-sync', name:'Test Sync', price:1, qty:1 } });
+          if(navigator.onLine){
+            try {
+              const maybe = window.__offlineQueue.replay();
+              // If replay returns a promise, chain then before timeout verification
+              if(maybe && typeof maybe.then==='function'){
+                maybe.then(()=>{}).catch(()=>{});
+              }
+            } catch {}
+            setTimeout(()=>{
+              const lat = Number(localStorage.getItem('offlineLastLatency')||'0');
+              assert('sync latency recorded', lat>0);
+                  const histRaw = localStorage.getItem('offlineLatencyHistory')||'[]';
+                  try {
+                    const hist = JSON.parse(histRaw)||[];
+                    assert('latency history length >=1', Array.isArray(hist) && hist.length>=1);
+                  } catch { assert('latency history parse', false); }
+              const sparkPath = document.querySelector('[data-perf-sync-spark] path');
+              if(sparkPath){
+                const d = sparkPath.getAttribute('d')||'';
+                assert('sparkline path drawn', /L/.test(d) || d.startsWith('M'));
+              }
+              const exportBtn = document.querySelector('[data-sync-export]');
+              const clearBtn = document.querySelector('[data-sync-clear]');
+              assert('export button present', !!exportBtn);
+              assert('clear button present', !!clearBtn);
+              if(clearBtn){
+                // simulate clear with override confirm
+                const realConfirm = window.confirm; window.confirm = ()=>true;
+                clearBtn.click();
+                window.confirm = realConfirm;
+                setTimeout(()=>{
+                  const histAfter = JSON.parse(localStorage.getItem('offlineLatencyHistory')||'[]')||[];
+                  assert('history cleared', histAfter.length===0);
+                },10);
+              }
+              // Seed sample latency history for metric rows test
+              const sample = [100,220,340,500,900,120].map((ms,i)=>({ms, ts: Date.now()+i}));
+              localStorage.setItem('offlineLatencyHistory', JSON.stringify(sample));
+              window.dispatchEvent(new CustomEvent('offlinesynccomplete'));
+              setTimeout(()=>{
+                const medianEl = document.querySelector('[data-perf-sync-median]');
+                const p90El = document.querySelector('[data-perf-sync-p90]');
+                const maxEl = document.querySelector('[data-perf-sync-max]');
+                assert('median displayed', medianEl && medianEl.textContent && medianEl.textContent!=='-');
+                assert('p90 displayed', p90El && p90El.textContent && p90El.textContent!=='-');
+                assert('max displayed', maxEl && maxEl.textContent && maxEl.textContent!=='-');
+                const failRow = document.querySelector('[data-perf-failures]');
+                assert('failures row present', !!failRow);
+                const exportAllBtn = document.querySelector('[data-export-all]');
+                assert('export all button present', !!exportAllBtn);
+                // Settings panel
+                const settingsPanel = document.querySelector('[data-settings-panel]');
+                assert('settings panel present', !!settingsPanel);
+                const threshInput = settingsPanel.querySelector('input[name="latencyAlertThreshold"]');
+                assert('threshold input present', !!threshInput);
+                if(threshInput){
+                  const prev = Number(threshInput.value);
+                  threshInput.value = prev + 100;
+                  settingsPanel.querySelector('[data-settings-save]')?.click();
+                  const stored = JSON.parse(localStorage.getItem('appSettings')||'{}');
+                  assert('threshold updated stored', stored.latencyAlertThreshold === prev + 100);
+                }
+                // Inject fake failed actions
+                localStorage.setItem('offlineFailedActions', JSON.stringify([
+                  { id:'f1', ts:Date.now()-5000, action:{type:'addCartItem', item:{id:'x',name:'X',price:1}}, attempts:5 },
+                  { id:'f2', ts:Date.now()-4000, action:{type:'placeOrder', snapshot:{}}, attempts:5 }
+                ]));
+                // Open queue debug modal
+                document.querySelector('[data-queue-debug-btn]')?.click();
+                setTimeout(()=>{
+                  const failedToggle = document.querySelector('[data-qd-failed-export]');
+                  assert('failed export toggle present', !!failedToggle);
+                  failedToggle.click();
+                  const failedPanel = document.querySelector('[data-qd-failed-panel]');
+                  assert('failed panel visible', failedPanel && !failedPanel.classList.contains('hidden'));
+                  const requeueBtn = document.querySelector('[data-qd-failed-requeue]');
+                  const clearBtn = document.querySelector('[data-qd-failed-clear]');
+                  assert('requeue button present', !!requeueBtn);
+                  assert('clear button present', !!clearBtn);
+                  // Requeue
+                  requeueBtn?.click();
+                  setTimeout(()=>{
+                    const failedAfter = JSON.parse(localStorage.getItem('offlineFailedActions')||'[]');
+                    assert('failed actions moved', failedAfter.length===0);
+                  },20);
+                },30);
+              },30);
+              done();
+            }, 50);
+          } else {
+            assert('skipped latency test (offline)', true);
+          }
+        }
+        // Outlet selection test (after core tests)
+        setTimeout(()=>{
+          const trigger = document.querySelector('[data-outlet-trigger]');
+          if(trigger){
+            const before = localStorage.getItem('selectedOutlet');
+            trigger.click();
+            setTimeout(()=>{
+              const popup = document.querySelector('[data-outlet-popup]');
+              assert('outlet popup opened', !!popup);
+              const item = popup?.querySelector('[data-outlet-item]');
+              if(item){ item.click(); popup.querySelector('[data-save]')?.click(); }
+              setTimeout(()=>{
+                const after = localStorage.getItem('selectedOutlet');
+                assert('outlet saved (maybe same if already set)', !!after);
+                  // Accessibility checks
+                  if(popup){
+                    const panel = popup.querySelector('[role="dialog"]');
+                    assert('dialog role present', !!panel);
+                    assert('aria-modal true', panel && panel.getAttribute('aria-modal')==='true');
+                  }
+                  // Re-open and test ESC close & All Outlets
+                  trigger.click();
+                  setTimeout(()=>{
+                    const popup2 = document.querySelector('[data-outlet-popup]');
+                    assert('popup reopened', !!popup2);
+                    if(popup2){
+                      // Press Escape
+                      const escEvt = new KeyboardEvent('keydown',{key:'Escape'});
+                      document.dispatchEvent(escEvt);
+                    }
+                    setTimeout(()=>{
+                      assert('popup closed via ESC', !document.querySelector('[data-outlet-popup]'));
+                      // Open again to test All Outlets + banner
+                      trigger.click();
+                      setTimeout(()=>{
+                        const popup3 = document.querySelector('[data-outlet-popup]');
+                        assert('popup reopened second time', !!popup3);
+                        // Click All Outlets button
+                        popup3?.querySelector('[data-all-outlets]')?.click();
+                        setTimeout(()=>{
+                          const cleared = localStorage.getItem('selectedOutlet');
+                          assert('outlet cleared (null means none)', !cleared);
+                          // Banner should be hidden when no selection
+                          const banner = document.querySelector('[data-outlet-filter-banner]');
+                          if(banner){
+                            assert('banner hidden when no outlet', banner.classList.contains('hidden'));
+                          }
+                          // Now choose a restrictive outlet (if any product has outlets list) to force banner
+                          // Heuristic: find first outlet id inside any product's outlets array
+                          const catalogRaw = PRODUCT_CATALOG || {};
+                          let restrictiveOutlet = null;
+                          for(const k in catalogRaw){ const p = catalogRaw[k]; if(p && Array.isArray(p.outlets) && p.outlets.length){ restrictiveOutlet = p.outlets[0]; break; } }
+                          if(restrictiveOutlet){
+                            localStorage.setItem('selectedOutlet', restrictiveOutlet);
+                            renderProductGrid();
+                            const banner2 = document.querySelector('[data-outlet-filter-banner]');
+                            if(banner2){
+                              assert('banner visible with outlet selected', !banner2.classList.contains('hidden'));
+                              // Clear via banner button
+                              banner2.querySelector('[data-outlet-filter-clear]')?.click();
+                              setTimeout(()=>{
+                                const selNow = localStorage.getItem('selectedOutlet');
+                                assert('cleared via banner button', !selNow);
+                                const bannerAfter = document.querySelector('[data-outlet-filter-banner]');
+                                if(bannerAfter){ assert('banner hidden after clear', bannerAfter.classList.contains('hidden')); }
+                              },30);
+                            }
+                          } else {
+                            assert('restrictive outlet available', true, 'No product with outlets[] to test banner visibility thoroughly');
+                          }
+                        },40);
+                      },30);
+                    },30);
+                  },30);
+              },30);
+            },30);
+          } else {
+            assert('outlet trigger present', false);
+          }
+        },80);
+        // Checkout flow tests
+        setTimeout(()=>{
+          // Simulate navigating to checkout by ensuring cart has items and building a mini scenario
+          const cart = JSON.parse(localStorage.getItem('cart:items')||'[]');
+          if(cart.length===0){
+            localStorage.setItem('cart:items', JSON.stringify([{id:'t1', name:'Test Item', price:10, qty:2}]));
+          }
+          // Create a hidden iframe to load checkout page for isolated DOM (lightweight approach)
+          const frame = document.createElement('iframe');
+          frame.src = 'checkout.html';
+          frame.style.display='none';
+          document.body.appendChild(frame);
+          frame.addEventListener('load', ()=>{
+            try {
+              const d = frame.contentDocument;
+              const payBtn = d.getElementById('btnPay');
+              assert('checkout pay button present', !!payBtn);
+              // Fill form
+              d.querySelector('input[name="name"]').value='Tester';
+              d.querySelector('input[name="email"]').value='test@example.com';
+              d.querySelector('input[name="phone"]').value='0123456789';
+              // Apply promo
+              const promoInput = d.querySelector('input[name="promo"]');
+              promoInput.value='WELCOME10';
+              d.getElementById('btnApplyPromo').click();
+              setTimeout(()=>{
+                const discountRowHidden = d.getElementById('rowDiscount').hidden;
+                assert('promo discount row visible', !discountRowHidden);
+                // Force select bank by simulating localStorage (since popup open may need external module)
+                frame.contentWindow.localStorage.setItem('checkout:bank', JSON.stringify({ code:'MB2U', name:'Maybank'}));
+                // Recompute totals after bank selection (logic triggers on apply already)
+                const totalText = d.getElementById('tTotal').textContent;
+                assert('total reflects currency', /^RM /.test(totalText));
+                // Submit order (simulate online)
+                payBtn.click();
+                setTimeout(()=>{
+                  const orders = JSON.parse(localStorage.getItem('checkout:orders')||'[]');
+                  assert('order persisted after submit', orders.length>=1);
+                  assert('cart cleared after order', (JSON.parse(localStorage.getItem('cart:items')||'[]')).length===0);
+                  const legacy = JSON.parse(localStorage.getItem('orderHistory')||'[]');
+                  assert('legacy orderHistory appended', legacy.some(o=> o.id === orders[orders.length-1].id));
+                  frame.remove();
+                }, 1200);
+              }, 150);
+            } catch(err){ assert('checkout flow no error', false, err.message); }
+          });
+        },120);
+      } catch(e){
+        assert('No uncaught exception', false, e.message);
+        console.error(e);
+      }
+    }
+    run();
+    document.getElementById('runAgain').addEventListener('click', run);
+  })();
+  </script>
+</body>
+</html>

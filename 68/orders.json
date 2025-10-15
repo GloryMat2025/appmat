@@ -1,0 +1,45 @@
+[
+  {
+    "id": "ORD-2025-000123",
+    "status": "processing",            // draft | processing | packed | shipped | delivered | canceled
+    "createdAt": "2025-06-18T14:20:00Z",
+    "delivery": {
+      "addressLabel": "Home",
+      "address": "No 12, Jalan Aman, Kota Bharu, Kelantan, 15000",
+      "shippingMethod": "Standard",
+      "shippingEta": "Jun 28, 2025"
+    },
+    "items": [
+      {
+        "id": "p-monsters",
+        "name": "THE MONSTERS Big into Energy Series - Vinyl Plush Pendant Blind Box",
+        "variant": "Whole set",
+        "price": 167.94,
+        "qty": 1,
+        "img": "/assets/images/products/monsters.jpg",
+        "preorder": true,
+        "note": "Shipping time: Jun 28, 2025"
+      },
+      {
+        "id": "p-pucky",
+        "name": "PUCKY Roly-Poly Kitty Series - Vinyl Plush Blind Box",
+        "variant": "Single box",
+        "price": 27.99,
+        "qty": 1,
+        "img": "/assets/images/products/pucky.jpg"
+      }
+    ],
+    "summary": {
+      "subtotal": 195.93,
+      "tax": 19.60,
+      "shippingFee": 7.95,
+      "discount": 0,
+      "total": 223.48,
+      "rewards": 195
+    },
+    "payment": {
+      "method": "Visa •••• 4242",
+      "paid": true
+    }
+  }
+]

@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#ff5a5f" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials" />
+  <title>Missions & Rewards (Pure HTML)</title>
+
+  <!-- Local Tailwind build -->
+  <link rel="stylesheet" href="./assets/tailwind.min.css" />
+  <style>
+    @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+    .tab-active{ color:#111827; }
+    .tab-inactive{ color:#6b7280; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50 text-gray-900 pb-24">
+  <div id="connectivityBanner" class="fixed top-0 left-0 w-full z-[100] hidden">
+    <div class="mx-auto max-w-sm bg-red-500 text-white text-center py-2 text-sm font-semibold rounded-b-2xl shadow-lg animate-pulse">
+      <span>You're offline. Some features may be unavailable.</span>
+    </div>
+  </div>
+  <a href="#mainContent" class="skip-link">Skip to content</a>
+
+  <!-- App bar -->
+  <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
+    <div class="max-w-3xl mx-auto h-14 px-4 flex items-center justify-between">
+      <div class="w-8 h-8"></div>
+  <h1 id="brandTitle" class="text-base font-semibold text-center">Missions & Rewards</h1>
+  <button id="langToggle" class="text-[11px] font-semibold px-2 py-2 rounded-lg border border-ring bg-white">BM/EN</button>
+<script>
+  // Simple i18n dictionary
+  const translations = {
+    en: {
+      'lang.toggle': 'BM',
+      'nav.home': 'Home',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Cart',
+      'nav.rewards': 'Rewards',
+      'nav.account': 'Account',
+      'card.wallet': 'Wallet Balance',
+      'search.placeholder': 'Search',
+    },
+    bm: {
+      'lang.toggle': 'EN',
+      'nav.home': 'Laman Utama',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Troli',
+      'nav.rewards': 'Ganjaran',
+      'nav.account': 'Akaun',
+      'card.wallet': 'Baki Dompet',
+      'search.placeholder': 'Cari',
+    }
+  };
+  let lang = localStorage.getItem('lang') || 'en';
+  function setLang(l) {
+    lang = l;
+    localStorage.setItem('lang', l);
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[l][key]) el.textContent = translations[l][key];
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (translations[l][key]) el.setAttribute('placeholder', translations[l][key]);
+    });
+    // Update toggle button label
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.textContent = l === 'en' ? 'BM/EN' : 'EN/BM';
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    setLang(lang);
+    const btn = document.getElementById('langToggle');
+    if (btn) btn.onclick = () => setLang(lang === 'en' ? 'bm' : 'en');
+  });
+</script>
+      <div class="w-8 h-8"></div>
+    </div>
+    <!-- Delivery/Pickup toggle -->
+    <div class="flex justify-center gap-2 py-3" role="tablist" aria-label="Order mode">
+      <button id="btnDelivery" role="tab" aria-selected="false" tabindex="0" class="px-4 py-2 rounded-full border border-slate-300 text-[13px] font-semibold bg-white text-slate-900">Delivery</button>
+      <button id="btnPickup" role="tab" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-full border border-slate-300 text-[13px] font-semibold text-slate-700">Pickup</button>
+    </div>
+  </header>
+
+<!-- Delivery / Pickup Popup Modals -->
+<div id="deliveryModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="deliveryModalTitle">
+  <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+    <button type="button" id="closeDeliveryModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
+  <h2 id="deliveryModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.delivery.title">Delivery Info</h2>
+  <p class="text-sm text-gray-600 mb-4" data-i18n="modal.delivery.desc">Choose delivery options, address, and time slot here. (Demo popup)</p>
+  <button type="button" id="okDeliveryModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+  </div>
+</div>
+<div id="pickupModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="pickupModalTitle">
+  <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+    <button type="button" id="closePickupModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
+  <h2 id="pickupModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.pickup.title">Pickup Info</h2>
+  <p class="text-sm text-gray-600 mb-4" data-i18n="modal.pickup.desc">Choose pickup location and time slot here. (Demo popup)</p>
+  <button type="button" id="okPickupModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+    en: {
+      'lang.toggle': 'BM',
+      'nav.home': 'Home',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Cart',
+      'nav.rewards': 'Rewards',
+      'nav.account': 'Account',
+      'card.wallet': 'Wallet Balance',
+      'search.placeholder': 'Search',
+      'modal.delivery.title': 'Delivery Info',
+      'modal.delivery.desc': 'Choose delivery options, address, and time slot here. (Demo popup)',
+      'modal.pickup.title': 'Pickup Info',
+      'modal.pickup.desc': 'Choose pickup location and time slot here. (Demo popup)',
+      'modal.ok': 'OK',
+    },
+    bm: {
+      'lang.toggle': 'EN',
+      'nav.home': 'Laman Utama',
+      'nav.menu': 'Menu',
+      'nav.cart': 'Troli',
+      'nav.rewards': 'Ganjaran',
+      'nav.account': 'Akaun',
+      'card.wallet': 'Baki Dompet',
+      'search.placeholder': 'Cari',
+      'modal.delivery.title': 'Maklumat Penghantaran',
+      'modal.delivery.desc': 'Pilih pilihan penghantaran, alamat, dan slot masa di sini. (Popup demo)',
+      'modal.pickup.title': 'Maklumat Ambil Sendiri',
+      'modal.pickup.desc': 'Pilih lokasi dan slot masa ambil sendiri di sini. (Popup demo)',
+      'modal.ok': 'OK',
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      opener && opener.focus();
+      dialog.removeEventListener('keydown', escListener);
+    }
+    function escListener(e) { if(e.key==='Escape'){ e.preventDefault(); closeModal(); } }
+    dialog.addEventListener('keydown', escListener);
+    modal.querySelectorAll('[id^="close"],[id^="ok"]').forEach(btn=>btn.onclick=closeModal);
+    return closeModal;
+  }
+  let lastOpener = null;
+  // Delivery/Pickup toggle modal logic for rewards.html with highlight and shared state
+  const dBtn = document.getElementById('btnDelivery');
+  const pBtn = document.getElementById('btnPickup');
+  const active = ['bg-blue-600','text-white','border-blue-600'];
+  const idle   = ['bg-white','text-slate-900'];
+  function setMode(m, focusBtn) {
+    if(!dBtn||!pBtn) return;
+    if(m==='delivery'){
+      dBtn.classList.add(...active); dBtn.classList.remove(...idle);
+      pBtn.classList.add(...idle);   pBtn.classList.remove(...active);
+      dBtn.setAttribute('aria-selected','true');
+      pBtn.setAttribute('aria-selected','false');
+      dBtn.tabIndex = 0;
+      pBtn.tabIndex = -1;
+      if(focusBtn) dBtn.focus();
+    } else {
+      pBtn.classList.add(...active); pBtn.classList.remove(...idle);
+      dBtn.classList.add(...idle);   dBtn.classList.remove(...active);
+      dBtn.setAttribute('aria-selected','false');
+      pBtn.setAttribute('aria-selected','true');
+      dBtn.tabIndex = -1;
+      pBtn.tabIndex = 0;
+      if(focusBtn) pBtn.focus();
+    }
+    localStorage.setItem('orderMode', m);
+  }
+  dBtn?.addEventListener('click', function(e) {
+  e.preventDefault();
+  setMode('delivery');
+  lastOpener = dBtn;
+  showModal(document.getElementById('deliveryModal'), dBtn);
+  });
+  pBtn?.addEventListener('click', function(e) {
+  e.preventDefault();
+  setMode('pickup');
+  lastOpener = pBtn;
+  showModal(document.getElementById('pickupModal'), pBtn);
+  });
+  // Keyboard navigation
+  [dBtn, pBtn].forEach((btn, idx, arr) => {
+    btn?.addEventListener('keydown', function(e) {
+      if(e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const next = (idx + (e.key==='ArrowRight'?1:-1) + arr.length) % arr.length;
+        setMode(next===0?'delivery':'pickup', true);
+      } else if(e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+  setMode(localStorage.getItem('orderMode') || 'delivery');
+</script>
+
+  <main id="mainContent" class="max-w-3xl mx-auto" tabindex="-1">
+
+    <!-- Hero -->
+    <section class="p-4">
+      <div class="relative rounded-2xl overflow-hidden ring-1 ring-gray-200 bg-white">
+        <picture>
+          <!-- Tukar ikut struktur fail anda -->
+          <source type="image/avif" srcset="/optimized-sharp/hero-1024.avif 1024w, /optimized-sharp/hero-1440.avif 1440w" sizes="100vw">
+          <source type="image/webp" srcset="/optimized-sharp/hero-1024.webp 1024w, /optimized-sharp/hero-1440.webp 1440w" sizes="100vw">
+          <img src="/assets/images/banners/hero-blur.jpg" alt="Featured Malaysian food" class="w-full h-48 sm:h-60 object-cover" loading="lazy">
+        </picture>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+        <!-- Foreground: logo + brand -->
+        <div class="absolute left-0 right-0 bottom-0 p-4 flex items-center gap-3">
+          <img id="brandLogo" src="/assets/images/logos/logo-primary.svg" alt="Logo" class="w-12 h-12 rounded-lg bg-white/80 p-1 ring-1 ring-white/60" loading="lazy">
+    <script>
+    // Dynamic logo from localStorage.app.logoUrl
+    (function(){
+      try {
+        const u = JSON.parse(localStorage.getItem('app.logoUrl')||'null');
+        if(u) document.getElementById('brandLogo').src = u;
+      } catch(_){/* ignore */}
+    })();
+    </script>
+          <div class="text-white">
+            <div id="brandName" class="text-lg font-semibold">Your Brand</div>
+            <div id="brandTagline" class="text-xs opacity-90">Delicious local meals</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Loyalty Summary -->
+    <section class="px-4 -mt-2">
+      <div class="rounded-2xl ring-1 ring-gray-200 bg-white p-4 flex flex-col gap-4" data-loyalty-summary>
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-semibold" data-i18n="loyalty.label">Loyalty Points</h2>
+          <button type="button" class="text-[11px] font-semibold px-3 py-1.5 rounded-full ring-1 ring-gray-300 hover:bg-gray-50" data-loyalty-refresh>↻</button>
+        </div>
+        <div class="grid grid-cols-3 gap-3 text-center">
+          <div class="rounded-xl bg-gray-50 ring-1 ring-gray-200 p-3">
+            <div class="text-[11px] font-medium text-gray-500" data-i18n="loyalty.balance">Balance</div>
+            <div class="mt-1 text-lg font-bold" data-loyalty-balance>0</div>
+          </div>
+          <div class="rounded-xl bg-gray-50 ring-1 ring-gray-200 p-3">
+            <div class="text-[11px] font-medium text-gray-500" data-i18n="loyalty.applied">Applied</div>
+            <div class="mt-1 text-lg font-bold" data-loyalty-applied>0</div>
+          </div>
+            <div class="rounded-xl bg-gray-50 ring-1 ring-gray-200 p-3">
+            <div class="text-[11px] font-medium text-gray-500">RM</div>
+            <div class="mt-1 text-lg font-bold" data-loyalty-applied-rm>0.00</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="button" data-loyalty-apply-max class="flex-1 text-sm font-semibold px-3 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-40" data-i18n="loyalty.apply">Apply Max</button>
+          <button type="button" data-loyalty-clear class="text-sm font-semibold px-3 py-2 rounded-lg ring-1 ring-gray-300 hover:bg-gray-50" data-i18n="loyalty.clear">Clear</button>
+        </div>
+        <p class="text-[11px] text-gray-500 leading-relaxed">
+          Redeem points here or in cart. Order discount order: Promo → Loyalty → Tax. 100 pts = RM1.
+        </p>
+      </div>
+    </section>
+
+    <!-- Tabs header -->
+    <section class="px-4">
+      <div id="tabs" class="rounded-2xl ring-1 ring-gray-200 bg-white p-2" role="tablist" aria-label="Rewards sections">
+        <button class="tab-btn tab-active w-1/3 py-3 text-sm font-semibold rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                id="tab-missions" role="tab" aria-selected="true" aria-controls="panel-missions">MISSIONS</button>
+        <button class="tab-btn tab-inactive w-1/3 py-3 text-sm font-semibold rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                id="tab-redeem" role="tab" aria-selected="false" aria-controls="panel-redeem">REDEEM REWARDS</button>
+        <button class="tab-btn tab-inactive w-1/3 py-3 text-sm font-semibold rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                id="tab-myreward" role="tab" aria-selected="false" aria-controls="panel-myreward">MY REWARD</button>
+      </div>
+    </section>
+
+    <!-- Gift Feature Access -->
+    <section class="px-4 mt-4">
+      <div class="rounded-2xl ring-1 ring-yellow-300 bg-yellow-50 p-4 flex items-center gap-4">
+        <div class="text-3xl">🎁</div>
+        <div class="flex-1">
+          <div class="font-semibold text-yellow-900 text-base">Special Gifts & Vouchers</div>
+          <div class="text-yellow-800 text-sm">Claim exclusive gifts and vouchers here!</div>
+        </div>
+        <a href="./gift.html" class="px-4 py-2 rounded-lg bg-yellow-400 text-yellow-900 font-semibold shadow hover:bg-yellow-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-600 transition">View Gifts</a>
+      </div>
+    </section>
+
+    <!-- TAB: Missions -->
+    <section id="panel-missions" role="tabpanel" aria-labelledby="tab-missions" class="px-4 mt-4 space-y-4">
+      <!-- Points + Check-in -->
+      <!doctype html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="/public/manifest.json">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Daily Check-in</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{ --ring-bg:#e6e9f2; --ring-fg:#3b82f6; --dot:#eaeaea; --dot-active:#3b82f6; }
+
+  /* Circle progress with dots */
+  .ring-wrap{ position:relative; width:180px; height:180px; margin-inline:auto; }
+  .ring{
+    position:absolute; inset:0; border-radius:999px;
+    background:
+      conic-gradient(var(--ring-fg) var(--deg,0deg), var(--ring-bg) 0);
+  }
+  .ring::after{ /* hollow center */
+    content:""; position:absolute; inset:14px; background:white; border-radius:999px;
+    box-shadow:0 8px 24px rgba(0,0,0,.06) inset;
+  }
+  .dots{ position:absolute; inset:0; }
+  .dot{
+    position:absolute; top:50%; left:50%;
+    width:14px; height:14px; border-radius:999px; background:var(--dot);
+    transform: translate(-50%, -50%) rotate(var(--angle)) translate(78px) rotate(calc(-1*var(--angle)));
+    box-shadow:0 0 0 2px #fff inset, 0 0 0 1px rgba(0,0,0,.05);
+  }
+  .dot.active{ background:var(--dot-active); }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important; animation:none!important; scroll-behavior:auto!important}
+  }
+</style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<main class="max-w-md mx-auto p-4">
+  <!-- Circle header -->
+  <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+    <div class="ring-wrap">
+      <div id="ring" class="ring"></div>
+      <div id="dots" class="dots"></div>
+
+      <!-- center cup -->
+      <div class="absolute inset-0 grid place-items-center">
+        <div class="w-24 h-24 rounded-full bg-[#0a3aad] grid place-items-center">
+          <span class="text-4xl" aria-hidden>☕</span>
+        </div>
+      </div>
+    </div>
+    <p class="mt-3 text-center text-sm text-gray-600">
+      <span id="totalPoints" class="text-base font-semibold text-gray-900">0</span> points
+    </p>
+  </section>
+
+  <!-- Daily Check-in -->
+  <section class="mt-3 rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+    <div class="flex items-center gap-1">
+      <h2 class="text-base font-semibold">Daily Check-in</h2>
+      <span class="text-gray-400" title="Earn points by checking in daily">ⓘ</span>
+    </div>
+
+    <div id="days" class="mt-3 grid grid-cols-7 gap-2 text-center">
+      <!-- JS fills 7 chips -->
+    </div>
+
+    <div class="mt-4 grid place-items-center">
+      <button id="btnCheckin"
+        class="px-5 py-3 rounded-full border border-[#1c3faa] text-[#1c3faa] font-semibold disabled:opacity-40 disabled:cursor-not-allowed">
+        Check In & Get 1 pt
+      </button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'daily_checkin_v2';
+  const dayPoints = [1,1,1,3,1,1,2];               // Day 4 = 3pts, Day 7 = 2pts
+  let checked = load();                             // [false, ...] length 7
+
+  const ring = document.getElementById('ring');
+  const dots = document.getElementById('dots');
+  const days = document.getElementById('days');
+  const totalEl = document.getElementById('totalPoints');
+  const btn = document.getElementById('btnCheckin');
+
+  // build 7 dots around the ring
+  const steps = 7, start = -90;                     // start at top
+  dots.innerHTML = '';
+  Array.from({length: steps}).forEach((_,i)=>{
+    const d = document.createElement('span');
+    d.className = 'dot';
+    d.style.setProperty('--angle', `${start + i*(360/steps)}deg`);
+    dots.appendChild(d);
+  });
+
+  // build day chips
+  function renderDays(){
+    days.innerHTML = '';
+    checked.forEach((isOn, i)=>{
+      const wrap = document.createElement('div');
+      wrap.className = 'flex flex-col items-center gap-1';
+      const chip = document.createElement('div');
+      chip.className = 'w-10 h-10 grid place-items-center rounded-full text-[11px] font-semibold ' +
+        (isOn ? 'bg-[#f1f5ff] text-[#0a3aad] ring-1 ring-[#c6d4ff]' : 'bg-gray-100 text-gray-400');
+      chip.textContent = `${dayPoints[i]}pt${dayPoints[i]>1?'s':''}`;
+      const label = document.createElement('div');
+      label.className = 'text-[11px] text-gray-500';
+      label.textContent = `Day ${i+1}`;
+      wrap.appendChild(chip); wrap.appendChild(label);
+      days.appendChild(wrap);
+    });
+  }
+
+  function renderDots(){
+    [...dots.children].forEach((el,i)=>{
+      el.classList.toggle('active', checked[i]);
+    });
+  }
+
+  function renderRing(){
+    const progress = checked.filter(Boolean).length / 7;
+    const deg = Math.round(progress * 360);
+    ring.style.setProperty('--deg', deg + 'deg');
+  }
+
+  function totalPoints(){
+    return checked.reduce((s,on,i)=> s + (on ? dayPoints[i] : 0), 0);
+  }
+
+  function nextUnclaimedIndex(){
+    return checked.indexOf(false); // -1 if complete
+  }
+
+  function updateUI(){
+    renderDays();
+    renderDots();
+    renderRing();
+    totalEl.textContent = totalPoints();
+    const next = nextUnclaimedIndex();
+    if (next === -1){
+      btn.textContent = 'All days completed 🎉';
+      btn.disabled = true;
+    } else {
+      const pts = dayPoints[next];
+      btn.textContent = `Check In & Get ${pts} pt${pts>1?'s':''}`;
+      btn.disabled = false;
+    }
+    save();
+  }
+
+  btn.addEventListener('click', () => {
+    const idx = nextUnclaimedIndex();
+    if (idx === -1) return;
+    // enforce sequential: only allow next index
+    checked[idx] = true;
+    updateUI();
+  });
+
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(checked)); }
+  function load(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      if (Array.isArray(raw) && raw.length === 7) return raw.map(Boolean);
+    }catch{}
+    return Array(7).fill(false);
+  }
+
+  updateUI();
+})();
+</script>
+</body>
+</html>
+
+
+      <!-- Donation highlights -->
+      <div class="rounded-2xl ring-1 ring-gray-200 overflow-hidden bg-white">
+        <div class="px-4 pt-4">
+          <h3 class="text-base font-semibold">Donation Highlights</h3>
+        </div>
+        <div class="p-3">
+          <picture>
+            <source type="image/avif" srcset="/optimized-sharp/hero-1024.avif 1024w, /optimized-sharp/hero-1440.avif 1440w" sizes="100vw">
+            <source type="image/webp" srcset="/optimized-sharp/hero-1024.webp 1024w, /optimized-sharp/hero-1440.webp 1440w" sizes="100vw">
+            <img src="/assets/images/banners/hero-blur.jpg" alt="Donation highlights collage" class="w-full rounded-xl object-cover h-40 sm:h-52" loading="lazy">
+          </picture>
+        </div>
+      </div>
+
+      <!-- Missions list -->
+      <div class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+        <h2 class="text-base font-semibold">Complete missions &amp; get exclusive rewards</h2>
+        <div id="missionsGrid" class="mt-3 grid sm:grid-cols-2 gap-3">
+          <!-- Diisi oleh JS -->
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+        <h2 class="text-base font-semibold">How it works</h2>
+        <div class="mt-3 grid sm:grid-cols-3 gap-3">
+          <article class="rounded-xl ring-1 ring-gray-200 p-4">
+            <div class="w-10 h-10 grid place-items-center rounded-lg bg-blue-50 text-blue-600 font-bold">🏁</div>
+            <h3 class="mt-2 font-medium">Start Monthly Mission</h3>
+            <button class="text-sm text-blue-600 font-medium inline-flex items-center gap-1 mt-1" data-goto="redeem">
+              Start Monthly Mission →
+            </button>
+          </article>
+          <article class="rounded-xl ring-1 ring-gray-200 p-4">
+            <div class="w-10 h-10 grid place-items-center rounded-lg bg-blue-50 text-blue-600 font-bold">📋</div>
+            <h3 class="mt-2 font-medium">Follow Mission Instructions</h3>
+            <button class="text-sm text-blue-600 font-medium inline-flex items-center gap-1 mt-1" data-goto="redeem">
+              Follow Mission Instructions →
+            </button>
+          </article>
+          <article class="rounded-xl ring-1 ring-gray-200 p-4">
+            <div class="w-10 h-10 grid place-items-center rounded-lg bg-blue-50 text-blue-600 font-bold">🏆</div>
+            <h3 class="mt-2 font-medium">Complete Mission &amp; Earn Points</h3>
+            <button class="text-sm text-blue-600 font-medium inline-flex items-center gap-1 mt-1" data-goto="redeem">
+              Earn Points →
+            </button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB: Redeem -->
+    <section id="panel-redeem" role="tabpanel" aria-labelledby="tab-redeem" class="px-4 mt-4 space-y-4 hidden">
+      <div class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+        <div class="flex items-center justify-between">
+          <div id="loyaltyStart" class="text-sm font-semibold text-gray-700">GF START</div>
+          <button class="text-sm text-blue-600 font-medium inline-flex items-center gap-1" data-goto="redeem">Link →</button>
+        </div>
+
+        <div class="mt-3 flex items-center justify-between rounded-xl ring-1 ring-gray-200 p-3">
+          <div>
+            <div class="text-xs text-gray-500">GF Point</div>
+            <div id="redeemPoints" class="text-xl font-bold">0 pt</div>
+          </div>
+          <button class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold" data-goto="myreward">
+            My Rewards
+          </button>
+        </div>
+      </div>
+
+      <div class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+        <h2 class="text-base font-semibold">GF Rewards</h2>
+        <div class="mt-3 overflow-x-auto">
+          <div class="flex gap-3 min-w-max">
+            <!-- Kad reward -->
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/0ea5e9/ffffff?text=GF+Reward+1" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 240pt</div>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/ef4444/ffffff?text=GF+Reward+2" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 120pt</div>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/10b981/ffffff?text=GF+Reward+3" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 180pt</div>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/f59e0b/ffffff?text=GF+Reward+4" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 320pt</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="mt-5 text-base font-semibold">GF Elite Exclusive</h2>
+        <section class="mt-3 rounded-2xl ring-1 ring-gray-200 overflow-hidden">
+          <div class="px-4 py-3 bg-gray-50 flex items-center gap-3">
+            <div class="text-lg font-bold">RM 12</div>
+            <div class="ml-auto text-sm font-semibold">GF Elite Exclusive 👑</div>
+          </div>
+          <div class="bg-white h-40 grid place-items-center text-gray-500">People enjoying meals together</div>
+          <div class="bg-white px-4 py-3 grid grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 grid place-items-center rounded bg-blue-50 text-blue-600 font-bold">GF</div>
+              <div>
+                <div class="text-xs text-gray-500">Redeem With</div>
+                <div class="font-semibold">1000 pts</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 grid place-items-center rounded bg-green-50 text-green-600 font-bold">RM</div>
+              <div>
+                <div class="text-xs text-gray-500">Rewards</div>
+                <div class="font-semibold">RM 12</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <h2 class="mt-5 text-base font-semibold">Partnership Rewards</h2>
+        <div class="mt-3 overflow-x-auto">
+          <div class="flex gap-3 min-w-max">
+            <!-- duplicate few cards for demo -->
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/0ea5e9/ffffff?text=Partner+1" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 240pt</div>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/ef4444/ffffff?text=Partner+2" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 120pt</div>
+                </div>
+              </div>
+            </div>
+            <div class="relative w-72 h-36 rounded-xl overflow-hidden ring-1 ring-gray-200">
+              <img class="w-full h-full object-cover" src="https://placehold.co/288x144/10b981/ffffff?text=Partner+3" alt="">
+              <div class="absolute inset-0 flex items-end p-2">
+                <div class="ml-auto text-right">
+                  <div class="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-white/90 ring-1 ring-white">🏆 Rewards</div>
+                  <div class="text-white font-bold drop-shadow">GF 180pt</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <section class="rounded-2xl ring-1 ring-gray-200 bg-white p-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-semibold">My Rewards</h2>
+          <button class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold" data-goto="myreward">
+            Open My Rewards
+          </button>
+        </div>
+        <p class="text-sm text-gray-600 mt-2">View and manage your claimed rewards in one place.</p>
+      </section>
+    </section>
+
+    <!-- TAB: My Reward -->
+    <section id="panel-myreward" role="tabpanel" aria-labelledby="tab-myreward" class="px-4 mt-10 hidden">
+      <div class="mx-auto max-w-sm rounded-2xl ring-1 ring-gray-200 bg-gradient-to-tr from-blue-500 to-indigo-500 text-white p-8 text-center">
+        <div class="mx-auto w-24 h-24 rounded-full bg-white/15 grid place-items-center">
+          <svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7c1.1 0 2-.9 2-2h14c0 1.1.9 2 2 2v3a2 2 0 0 1 0 4v3c-1.1 0-2 .9-2 2H5c0-1.1-.9-2-2-2v-3a2 2 0 1 1 0-4V7z"/>
+            <line x1="12" y1="6" x2="12" y2="18" stroke-dasharray="2 2"/>
+          </svg>
+        </div>
+        <p class="mt-4 text-lg font-semibold">No Available Voucher</p>
+        <p class="text-sm text-white/80 mt-1">Earn points and redeem rewards to see them here.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Optional bottom nav -->
+  <nav aria-label="Primary" class="fixed bottom-3 inset-x-0 mx-auto max-w-sm bg-white/90 dark:bg-slate-800/80 backdrop-blur rounded-2xl border border-ring dark:border-slate-600 shadow-soft p-2 grid grid-cols-5 md:grid-cols-7 gap-1">
+  <a data-tab="home" href="./index.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏠<span class="text-xs" data-i18n="nav.home">Home</span></a>
+  <a data-tab="menu" href="./menu.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🍽️<span class="text-xs" data-i18n="nav.menu">Menu</span></a>
+  <a data-tab="checkout" href="#/checkout" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">✅<span class="text-xs">Checkout</span></a>
+  <a data-tab="orders" href="#/orders" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">📦<span class="text-xs">My Orders</span></a>
+  <a data-tab="cart" href="./cart.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🛒<span class="text-xs" data-i18n="nav.cart">Cart</span></a>
+  <a data-tab="rewards" href="./rewards.html" class="flex flex-col items-center gap-1 py-2 rounded-xl" aria-current="page">🏆<span class="text-xs" data-i18n="nav.rewards">Rewards</span></a>
+  <a data-tab="account" href="./account.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">👤<span class="text-xs" data-i18n="nav.account">Account</span></a>
+  </nav>
+
+  <script>
+    // ---- Config (ganti ikut projek anda)
+    const BRAND_NAME = "GloriaFood";
+    const BRAND_TAGLINE = "Authentic local flavours";
+    const LOYALTY_LABEL_START = "GF START";
+
+    // ---- Brand inject
+    document.getElementById("brandName").textContent = BRAND_NAME;
+    document.getElementById("brandTitle").textContent = `${BRAND_NAME} - Missions & Rewards`;
+    document.getElementById("brandTagline").textContent = BRAND_TAGLINE;
+    document.getElementById("loyaltyStart").textContent = LOYALTY_LABEL_START;
+
+    // ---- Tabs
+    const tabOrder = ["missions", "redeem", "myreward"];
+    function showTab(name){
+      tabOrder.forEach(t=>{
+        const tab = document.getElementById(`tab-${t}`);
+        const panel = document.getElementById(`panel-${t}`);
+        const active = (t===name);
+        tab.setAttribute("aria-selected", active);
+        tab.classList.toggle("tab-active", active);
+        tab.classList.toggle("tab-inactive", !active);
+        panel.classList.toggle("hidden", !active);
+      });
+    }
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=> showTab(btn.id.replace("tab-","")));
+    });
+    // keyboard left/right/home/end
+    document.getElementById("tabs").addEventListener("keydown", (e)=>{
+      const current = tabOrder.findIndex(t=>document.getElementById(`tab-${t}`).getAttribute("aria-selected")==="true");
+      if(e.key==="ArrowRight"){ showTab(tabOrder[(current+1)%tabOrder.length]); e.preventDefault(); }
+      if(e.key==="ArrowLeft"){ showTab(tabOrder[(current-1+tabOrder.length)%tabOrder.length]); e.preventDefault(); }
+      if(e.key==="Home"){ showTab(tabOrder[0]); e.preventDefault(); }
+      if(e.key==="End"){ showTab(tabOrder[tabOrder.length-1]); e.preventDefault(); }
+    });
+    // quick goto from buttons
+    document.querySelectorAll("[data-goto]").forEach(el=>{
+      el.addEventListener("click", ()=> showTab(el.dataset.goto));
+    });
+    showTab("missions");
+
+    // Loyalty summary now updated by shared app.js logic (calls applyTranslations/renderProductGrid etc.)
+
+    // ---- Daily check-in (7 hari, sequential, localStorage)
+    const LS_KEY = "gf_rewards_checkin";
+    function loadCheckin(){
+      try{
+        const raw = localStorage.getItem(LS_KEY);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(Array.isArray(parsed) && parsed.length===7 && parsed.every(v=>typeof v==="boolean")) return parsed;
+        }
+      }catch(e){}
+      // default: Day 1 already checked
+      return Array.from({length:7}, (_,i)=> i===0);
+    }
+    let checked = loadCheckin();
+    const grid = document.getElementById("checkinGrid");
+    function saveCheckin(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(checked)); }catch(e){} }
+    function renderCheckin(){
+      grid.innerHTML = "";
+      checked.forEach((v,i)=>{
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "rounded-lg ring-1 ring-gray-200 px-3 py-2 text-sm font-medium " + (v ? "bg-blue-600 text-white" : "bg-white");
+        btn.innerHTML = `Day ${i+1}<br><span class="text-xs font-normal">+1pt</span>`;
+        btn.addEventListener("click", ()=>{
+          if(checked[i]) return;
+          if(!checked.slice(0,i).every(Boolean)) return; // enforce sequential
+          checked[i] = true;
+          saveCheckin();
+          updatePoints();
+          renderCheckin();
+        });
+        grid.appendChild(btn);
+      });
+    }
+    function updatePoints(){
+      const pts = checked.filter(Boolean).length; // sama macam React versi anda
+      document.getElementById("points").textContent = String(pts);
+      document.getElementById("redeemPoints").textContent = `${Math.max(pts,6)} pt`;
+    }
+    renderCheckin();
+    updatePoints();
+
+    // ---- Missions seed
+    const missions = [
+      { id:1, title:"3x Order to puff", points:30, days:3 },
+      { id:2, title:"3x Order to puff", points:30, days:3 },
+      { id:3, title:"3x Order to puff", points:30, days:3 },
+      { id:4, title:"3x Order to puff", points:30, days:3 },
+    ];
+    const missionsGrid = document.getElementById("missionsGrid");
+    missions.forEach(m=>{
+      const card = document.createElement("article");
+      card.className = "rounded-xl ring-1 ring-gray-200 overflow-hidden bg-white flex";
+      card.innerHTML = `
+        <div class="w-28 shrink-0 bg-gray-100 bg-cover bg-center" style="background-image:url('/assets/images/banners/hero-blur.jpg')"></div>
+        <div class="p-3 flex-1">
+          <h3 class="font-medium">${m.title}</h3>
+          <div class="my-2 h-px bg-gray-200"></div>
+          <div class="flex items-center justify-between text-sm">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 text-blue-700">GF ${m.points}pt</span>
+            <span class="inline-flex items-center gap-1 text-gray-600">⏱ ${m.days} day</span>
+          </div>
+        </div>
+        <div class="p-3 flex flex-col items-end justify-between">
+          <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-semibold">Start Now</button>
+          <div class="text-[11px] text-gray-600">Unlimited</div>
+        </div>
+      `;
+      missionsGrid.appendChild(card);
+    });
+  </script>
+  <!-- Toast system -->
+  <div id="toast-root" class="fixed z-50 inset-x-0 bottom-4 flex flex-col items-center gap-2 pointer-events-none" aria-live="polite" aria-atomic="true"></div>
+  <script src="./js/toast.js"></script>
+  <script src="./assets/js/min.js"></script>
+</body>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  });
+}
+</script>
+</html>

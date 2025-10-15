@@ -1,0 +1,81 @@
+name: Suite Promotion PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Suite name (without .json)'
+        required: true
+      mode:
+        description: 'merge or replace'
+        required: false
+        default: replace
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install server deps
+        working-directory: server
+        run: npm ci || npm install
+
+      - name: Prepare branch with updated suite
+        env:
+          SUITE: ${{ github.event.inputs.suite }}
+          MODE: ${{ github.event.inputs.mode }}
+        run: node server/tools/promote-to-branch.js
+
+      - name: Push branch
+        run: |
+          BRANCH=$(node -e "console.log(require('fs').readFileSync('.tmp/promote-meta.json','utf-8'))" | jq -r '.branch')
+          git push -u origin "$BRANCH"
+
+      - name: Open PR
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const meta = JSON.parse(fs.readFileSync('.tmp/promote-meta.json','utf-8'));
+            const title = `Promote expected for ${meta.suite} (${meta.mode})`;
+            const body = `Automated promotion from last report.\n\nMode: **${meta.mode}**`;
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              head: meta.branch,
+              base: 'main',
+              body
+            });
+            core.setOutput('number', pr.number.toString());
+            core.setOutput('url', pr.html_url);
+
+      - name: Request reviewers (owners/reviewers from suite)
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const meta = JSON.parse(fs.readFileSync('.tmp/promote-meta.json','utf-8'));
+            const reviewers = [...new Set([...(meta.owners||[]), ...(meta.reviewers||[])])].filter(x => !!x);
+            if (reviewers.length === 0) {
+              core.info('No reviewers specified in suite.');
+            } else {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: Number("${{ steps.pr.outputs.number }}"),
+                reviewers
+              });
+            }

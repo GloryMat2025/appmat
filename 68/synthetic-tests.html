@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Synthetic Slot Tests</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+<style>
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .card { border-radius: 1rem; border: 1px solid #e5e7eb; background: white; }
+</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Synthetic Slot Tests</div>
+    <nav class="text-sm">
+      <a href="/assets/pages/dev/validate-cache-admin.html" class="text-blue-600">Validate Cache Admin</a>
+    </nav>
+  </header>
+
+  <div id="cooldownBanner" class="mx-auto max-w-6xl p-3 hidden bg-yellow-50 border border-yellow-200 text-yellow-900 rounded-lg mt-4"></div>
+<main class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="card p-4 space-y-3">
+      <div class="text-xs text-gray-600">Assertions: optional mapping in suite -> expected[ "outlet|mode|sku+sku" ] = true/false</div>
+      <div class="grid md:grid-cols-3 gap-3">
+        <div class="md:col-span-3 text-xs flex items-center gap-3">
+          <span id="qBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-800"></span>
+          <span id="prBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border"></span>
+          <button id="refreshPR" class="border rounded px-2 py-1">Refresh PR</button>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Suite: <span id="suiteStatusBadge" class="ml-2 px-2 py-0.5 text-xs rounded border align-middle"></span></label>
+          <select id="suite" class="border rounded-lg px-2 py-1 text-sm w-full"></select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="loadSuite" class="px-3 py-2 rounded-lg border w-full">Load</button>
+          <button id="saveSuite" class="px-3 py-2 rounded-lg border admin-only w-full">Save</button>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="exportJUnit" class="px-3 py-2 rounded-lg border w-full">Export JUnit</button>
+          <button id="deleteSuite" class="px-3 py-2 rounded-lg border admin-only w-full">Delete</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button id="saveResults" class="border rounded px-2 py-1 admin-only">Save Results</button>
+          <button id="compareLast" class="border rounded px-2 py-1 admin-only">Compare vs Last</button>
+          <button id="exportDiffCsv" class="border rounded px-2 py-1 admin-only">Export Diff CSV</button>
+          <button id="copyFailingRows" class="border rounded px-2 py-1 admin-only">Copy Failing Rows</button>\n          <label class="text-xs flex items-center gap-1 admin-only"><input id="mergeOnly" type="checkbox"> Merge-only</label>
+          <label class="text-xs flex items-center gap-1 admin-only"><input id="excludeQuarantine" type="checkbox" checked> Exclude quarantined</label>
+          <button id="promoteExpected" class="border rounded px-2 py-1 admin-only">Promote Expected ← Last</button>
+          <button id="requestPromote" class="border rounded px-2 py-1 admin-only">Request Promote</button>
+          <button id="openPR" class="border rounded px-2 py-1 admin-only">Open PR (GitHub)</button>
+          <button id="viewLastPR" class="border rounded px-2 py-1 admin-only">View Last PR</button>
+        </div>
+        <div id="roleBadge" class="text-xs text-gray-600"></div>
+        <div class="text-xs text-gray-500">Admin-only</div>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-3">
+        <div>
+          <label class="text-xs text-gray-600">Tenant header (optional)</label>
+          <input id="tenant" class="border rounded-lg px-2 py-1 text-sm w-full" placeholder="X-Tenant-ID value">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Start ISO</label>
+          <input id="startISO" class="border rounded-lg px-2 py-1 text-sm w-full mono" placeholder="2025-10-12T16:00:00">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Duration (min)</label>
+          <input id="duration" type="number" value="30" class="border rounded-lg px-2 py-1 text-sm w-full">
+        </div>
+        <div class="flex items-end">
+          <button id="run" class="px-3 py-2 rounded-lg bg-gray-900 text-white w-full">Run Matrix</button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-3">
+        <div class="md:col-span-3 text-xs flex items-center gap-3">
+          <span id="qBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-800"></span>
+          <span id="prBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border"></span>
+          <button id="refreshPR" class="border rounded px-2 py-1">Refresh PR</button>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Outlets (comma)</label>
+          <input id="outlets" class="border rounded-lg px-2 py-1 text-sm w-full" placeholder="damansara, puchong">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Modes (comma)</label>
+          <input id="modes" class="border rounded-lg px-2 py-1 text-sm w-full" placeholder="pickup, delivery" value="pickup,delivery">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">SKU sets (semicolon groups; comma items)</label>
+          <input id="skuSets" class="border rounded-lg px-2 py-1 text-sm w-full mono" placeholder="SKU-CAKE-6IN,SKU-BURGER; SKU-CATER-SET-A">
+        </div>
+      </div>
+
+      <div class="text-xs text-gray-600">Tip: leave tenant blank to use server defaults/JWT; ensure you're logged in as admin.</div>
+    </div>
+
+    <div class="card p-4 space-y-3">
+      <div class="text-xs text-gray-600">Assertions: optional mapping in suite -> expected[ "outlet|mode|sku+sku" ] = true/false</div>
+      <div class="grid md:grid-cols-3 gap-3">
+        <div class="md:col-span-3 text-xs flex items-center gap-3">
+          <span id="qBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-800"></span>
+          <span id="prBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border"></span>
+          <button id="refreshPR" class="border rounded px-2 py-1">Refresh PR</button>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Suite: <span id="suiteStatusBadge" class="ml-2 px-2 py-0.5 text-xs rounded border align-middle"></span></label>
+          <select id="suite" class="border rounded-lg px-2 py-1 text-sm w-full"></select>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="loadSuite" class="px-3 py-2 rounded-lg border w-full">Load</button>
+          <button id="saveSuite" class="px-3 py-2 rounded-lg border admin-only w-full">Save</button>
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="exportJUnit" class="px-3 py-2 rounded-lg border w-full">Export JUnit</button>
+          <button id="deleteSuite" class="px-3 py-2 rounded-lg border admin-only w-full">Delete</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button id="saveResults" class="border rounded px-2 py-1 admin-only">Save Results</button>
+          <button id="compareLast" class="border rounded px-2 py-1 admin-only">Compare vs Last</button>
+          <button id="exportDiffCsv" class="border rounded px-2 py-1 admin-only">Export Diff CSV</button>
+          <button id="copyFailingRows" class="border rounded px-2 py-1 admin-only">Copy Failing Rows</button>\n          <label class="text-xs flex items-center gap-1 admin-only"><input id="mergeOnly" type="checkbox"> Merge-only</label>
+          <label class="text-xs flex items-center gap-1 admin-only"><input id="excludeQuarantine" type="checkbox" checked> Exclude quarantined</label>
+          <button id="promoteExpected" class="border rounded px-2 py-1 admin-only">Promote Expected ← Last</button>
+          <button id="requestPromote" class="border rounded px-2 py-1 admin-only">Request Promote</button>
+          <button id="openPR" class="border rounded px-2 py-1 admin-only">Open PR (GitHub)</button>
+          <button id="viewLastPR" class="border rounded px-2 py-1 admin-only">View Last PR</button>
+        </div>
+        <div class="font-semibold">Results</div>
+        <div class="text-xs text-gray-500"><button id="export" class="border rounded px-2 py-1">Export CSV</button></div>
+      </div>
+      <div id="table" class="overflow-x-auto"></div>
+    </div>
+  
+    <div class="card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Pending Promotions</div>
+        <button id="refreshPending" class="border rounded px-2 py-1 admin-only">Refresh</button>
+      </div>
+      <div id="pendingList" class="text-sm"></div>
+    </div>
+
+
+    <div class="card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Batch PR</div>
+      </div>
+      <div class="grid md:grid-cols-3 gap-3">
+        <div class="md:col-span-3 text-xs flex items-center gap-3">
+          <span id="qBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border bg-blue-50 border-blue-200 text-blue-800"></span>
+          <span id="prBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border"></span>
+          <button id="refreshPR" class="border rounded px-2 py-1">Refresh PR</button>
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Suites (comma, names without .json)</label>
+          <input id="batchSuites" class="border rounded-lg px-2 py-1 text-sm w-full" placeholder="example, weekend, peak-hours">
+        </div>
+        <div>
+          <label class="text-xs text-gray-600">Mode</label>
+          <select id="batchMode" class="border rounded-lg px-2 py-1 text-sm w-full"><option value="replace">replace</option><option value="merge">merge</option></select>
+        </div>
+        <div class="flex items-end">
+          <button id="runBatchPR" class="px-3 py-2 rounded-lg border admin-only w-full">Dispatch Batch PRs</button>
+        </div>
+      </div>
+      <div id="batchOutput" class="text-xs text-gray-600"></div>
+    </div>
+
+
+    <div class="card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Recent PR Jobs</div>
+        <div class="flex gap-2">
+          <label class="text-xs flex items-center gap-1 mr-2 admin-only"><input id="onlyMyRuns" type="checkbox"> Only my runs</label>
+<input id="actorFilter" placeholder="github login"
+          />
+          <button id="useMyLogin" class="border rounded px-2 py-1 text-xs">Use my GitHub</button>
+          <input id="suiteFilter" placeholder="suite filter (branch contains)" class="border rounded px-2 py-1 text-xs" class="border rounded px-2 py-1 text-xs" />
+          <button id="refreshRuns" class="border rounded px-2 py-1 admin-only">Refresh</button>
+          <button id="exportRunsCsv" class="border rounded px-2 py-1 admin-only">Export CSV</button>
+        </div>
+      </div>
+      <div id="runsTable" class="text-sm"></div>
+    </div>
+
+
+    <div class="card p-4 space-y-3">
+      <div class="font-semibold">Flaky detection & quarantine</div>
+      <div class="grid md:grid-cols-4 gap-3 text-sm">
+        <label class="flex items-center gap-2">Window
+          <input id="fkWindow" class="border rounded px-2 py-1 w-24" value="10" />
+        </label>
+        <label class="flex items-center gap-2">Min flips
+          <input id="fkFlips" class="border rounded px-2 py-1 w-24" value="2" />
+        </label>
+        <label class="flex items-center gap-2">Pass range
+          <input id="fkLo" class="border rounded px-2 py-1 w-20" value="0.3" />–
+          <input id="fkHi" class="border rounded px-2 py-1 w-20" value="0.7" />
+        </label>
+        <div class="flex items-center gap-2">
+          <button id="fkRecalc" class="border rounded px-2 py-1 admin-only">Recalc Flaky</button>
+          <button id="fkIngest" class="border rounded px-2 py-1 admin-only">Auto-quarantine from Last</button>
+<button id="fkIngestNow" class="border rounded px-2 py-1 admin-only">Run auto‑quarantine now</button>
+          <button id="fkApply" class="border rounded px-2 py-1 admin-only">Apply</button>
+          <button id="fkList" class="border rounded px-2 py-1 admin-only">List</button>
+        </div>
+      </div>
+      <div id="fkPreview" class="text-xs text-gray-700 whitespace-pre-wrap"></div>
+    </div>
+
+    <div class="card p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="font-semibold">Quarantine Review</div>
+      </div>
+      <div id="quarantineReviewTable" class="text-sm"></div>
+    </div>
+
+</main>
+
+<script type="module">
+  async function whoami(){
+    const r = await fetch('/api/admin/whoami', { credentials:'include' });
+    return r.json().catch(()=>({ ok:false }));
+  }
+  function parseSkuSets(s){
+    return (s||'').split(';').map(x => x.trim()).filter(Boolean).map(x=>x.split(',').map(y=>y.trim()).filter(Boolean));
+  }
+  function toCSV(rows){
+    const header = ['tenant','outlet','mode','startISO','duration','skus','categories','ok','status','error'];
+    const lines = [header.join(',')];
+    for (const r of rows){
+      lines.push(header.map(k=>JSON.stringify(r[k] ?? '')).join(','));
+    }
+    return lines.join('\n');
+  }
+  function render(rows){
+    const mount = document.getElementById('table'); mount.innerHTML='';
+    const tbl = document.createElement('table'); tbl.className = 'w-full text-sm';
+    const thead = document.createElement('thead'); const trh = document.createElement('tr');
+    ['Tenant','Outlet','Mode','Start','Dur','SKUs','Cats','OK','Status','Error'].forEach(h=>{
+      const th = document.createElement('th'); th.className='text-left p-2 border-b'; th.textContent=h; trh.appendChild(th);
+    }); thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      const cells = [r.tenant, r.outlet, r.mode, r.startISO, r.duration, r.skus, r.categories, r.ok?'✅':'❌', r.status, r.error||''];
+      cells.forEach(c=>{ const td = document.createElement('td'); td.className='p-1.5 align-top border-b'; td.textContent = c; tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); mount.appendChild(tbl);
+  }
+
+  document.getElementById('run').onclick = async ()=>{
+    const me = await whoami();
+    if (!me.ok){ alert('Admin auth required'); return; }
+
+    const tenant = document.getElementById('tenant').value.trim();
+    const startISO = document.getElementById('startISO').value.trim();
+    const durationMinutes = parseInt(document.getElementById('duration').value || '30');
+    const outlets = (document.getElementById('outlets').value||'').split(',').map(x=>x.trim()).filter(Boolean);
+    const modes = (document.getElementById('modes').value||'pickup').split(',').map(x=>x.trim()).filter(Boolean);
+    const skuSets = parseSkuSets(document.getElementById('skuSets').value);
+
+    const hdr = { 'Content-Type':'application/json' };
+    if (tenant) hdr['X-Tenant-ID'] = tenant;
+
+    const results = [];
+    for (const outlet of outlets){
+      for (const mode of modes){
+        for (const skus of skuSets){
+          // derive categories via config
+          const cfg = await fetch('/config/sku-categories.json', { cache:'no-store' }).then(r=>r.json()).catch(()=>({map:{}}));
+          const map = (cfg.map||{});
+          const cats = Array.from(new Set(skus.map(s => map[s]).filter(Boolean)));
+          const body = { outletId: outlet, mode, startISO, durationMinutes, categories: cats };
+          const res = await fetch('/api/validate-slot', { method:'POST', headers: hdr, body: JSON.stringify(body) });
+          const status = res.status; const j = await res.json().catch(()=>({ ok:false }));
+          results.push({
+            tenant: tenant || me.tenant || '',
+            outlet, mode, startISO, duration: String(durationMinutes),
+            skus: skus.join('|'),
+            categories: cats.join('|'),
+            ok: !!j.ok, status: String(status), error: j.error || ''
+          });
+        }
+      }
+    }
+    render(results);
+    window.__rows = results;
+  };
+
+  document.getElementById('export').onclick = ()=>{
+    const rows = window.__rows || [];
+    const blob = new Blob([toCSV(rows)], { type:'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'synthetic-slot-tests.csv';
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+
+  async function listSuites(){
+    const r = await fetch('/api/admin/suites', { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false, files:[] }));
+    const sel = document.getElementById('suite'); sel.innerHTML='';
+    (j.files||[]).forEach(f => { const o = document.createElement('option'); o.value=f; o.textContent=f; sel.appendChild(o); });
+  }
+  async function getSuite(name){
+    const r = await fetch('/api/admin/suites/'+encodeURIComponent(name), { credentials:'include' });
+    return r.json().catch(()=>({ ok:false }));
+  }
+  function currentToSuite(){
+    return {
+      name: (document.getElementById('suite').value||'manual').replace(/\.json$/,''),
+      tenant: document.getElementById('tenant').value.trim(),
+      startISO: document.getElementById('startISO').value.trim(),
+      duration: parseInt(document.getElementById('duration').value||'30'),
+      outlets: (document.getElementById('outlets').value||'').split(',').map(s=>s.trim()).filter(Boolean),
+      modes: (document.getElementById('modes').value||'pickup').split(',').map(s=>s.trim()).filter(Boolean),
+      skuSets: parseSkuSets(document.getElementById('skuSets').value),
+      expected: window.__expected || {}
+    };
+  }
+  function applySuite(s){
+    document.getElementById('tenant').value = s.tenant || '';
+    document.getElementById('startISO').value = s.startISO || '';
+    document.getElementById('duration').value = String(s.duration||30);
+    document.getElementById('outlets').value = (s.outlets||[]).join(', ');
+    document.getElementById('modes').value = (s.modes||[]).join(', ');
+    document.getElementById('skuSets').value = (s.skuSets||[]).map(g=>g.join(',')).join('; ');
+    window.__expected = s.expected || {};
+  }
+  async function saveSuite(){
+    const s = currentToSuite();
+    const r = await fetch('/api/admin/suites/save', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(s) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert('Saved: '+j.file); listSuites(); } else { alert('Save failed: ' + (j.errors? j.errors[0] : '')); }
+  }
+  async function deleteSuite(){
+    const name = document.getElementById('suite').value;
+    if (!name) return alert('Select a suite first');
+    if (!confirm('Delete suite '+name+'?')) return;
+    const r = await fetch('/api/admin/suites/delete', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert('Deleted'); listSuites(); } else { alert('Delete failed'); }
+  }
+  function keyFor(outlet, mode, skus){
+    return `${outlet}|${mode}|${skus.slice().sort().join('+')}`;
+  }
+  function toJUnit(rows){
+    const fails = rows.filter(r => r.assert === false);
+    const cases = rows.map((r,i)=>{
+      const name = `${r.outlet} ${r.mode} ${r.skus}`;
+      if (r.assert === false){
+        const msg = r.error ? r.error : 'unexpected result';
+        return `<testcase name="${name}"><failure message="${msg}"/></testcase>`;
+      }
+      return `<testcase name="${name}"/>`;
+    }).join('');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite tests="${rows.length}" failures="${fails.length}">${cases}</testsuite>`;
+    return xml;
+  }
+  document.getElementById('exportJUnit').onclick = ()=>{
+    const rows = window.__rows || [];
+    const xml = toJUnit(rows);
+    const blob = new Blob([xml], { type:'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'synthetic-junit.xml'; a.click(); URL.revokeObjectURL(url);
+  };
+  document.getElementById('loadSuite').onclick = async ()=>{
+    const name = document.getElementById('suite').value; if (!name) return;
+    const j = await getSuite(name);
+    if (j.ok){ applySuite(j.data); } else { alert('Failed to load suite'); }
+  };
+  document.getElementById('saveSuite').onclick = saveSuite;
+  document.getElementById('deleteSuite').onclick = deleteSuite;
+  listSuites();
+
+
+
+  async function saveResults(){
+    const rows = window.__rows || [];
+    if (!rows.length) return alert('Run tests first');
+    const name = (document.getElementById('suite').value||'manual').replace(/\.json$/,'');
+    const r = await fetch('/api/admin/suites/report/save', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, rows }) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok) alert('Saved report: '+j.file); else alert('Save failed');
+  }
+  async function compareLast(){
+    const name = (document.getElementById('suite').value||'manual').replace(/\.json$/,'');
+    const r = await fetch('/api/admin/suites/report/last/'+encodeURIComponent(name), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok){ alert('No last report'); return; }
+    const prev = j.data.rows || [];
+    const now = window.__rows || [];
+    const byKey = (rows)=>{
+      const m = new Map();
+      rows.forEach(r=> m.set(`${r.outlet}|${r.mode}|${r.skus}`, r));
+      return m;
+    };
+    const A = byKey(prev), B = byKey(now);
+    const deltas = [];
+    for (const [k, rPrev] of A.entries()){
+      const rNow = B.get(k);
+      if (!rNow) deltas.push({ key:k, change:'removed' });
+      else if (!!rPrev.ok !== !!rNow.ok) deltas.push({ key:k, change:`changed ${rPrev.ok?'OK':'FAIL'}→${rNow.ok?'OK':'FAIL'}` });
+    }
+    for (const [k, rNow] of B.entries()){
+      if (!A.has(k)) deltas.push({ key:k, change:'added' });
+    }
+    if (!deltas.length){ alert('No differences'); return; }
+    const msg = deltas.map(d=>`${d.key}: ${d.change}`).join('\n');
+    alert('Diff vs last:\n' + msg);
+  }
+  document.getElementById('saveResults').onclick = saveResults;
+  document.getElementById('compareLast').onclick = compareLast;
+
+\n  async function promoteExpected(){\n    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');\n    if (!name) return alert('Pick a suite to promote');\n    if (!confirm('Replace suite expected map from last report for '+name+'?')) return;\n    const r = await fetch('/api/admin/suites/promote-expected', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name }) });\n    const j = await r.json().catch(()=>({ ok:false }));\n    if (j.ok){ alert('Promoted expectations for ' + j.updated); } else { alert('Promote failed: ' + (j.error||'')); }\n  }\n  document.getElementById('promoteExpected').onclick = promoteExpected;\n\n
+
+  async function promoteExpected(){
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    const merge = !!document.getElementById('mergeOnly').checked;
+    const excludeQuarantined = !!document.getElementById('excludeQuarantine').checked;
+    if (!name) return alert('Pick a suite to promote');
+    // dry-run first
+    let r = await fetch('/api/admin/suites/promote-expected', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, merge, excludeQuarantined, dryRun:true }) });
+    let j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok){ alert('Dry-run failed'); return; }
+    const c = j.counts || { set:0, updated:0, unchanged:0, removed:0 };
+    if (!confirm(`Promote (${merge?'merge':'replace'})?\nSet: ${c.set}\nUpdated: ${c.updated}\nUnchanged: ${c.unchanged}\nRemoved: ${c.removed}`)) return;
+    r = await fetch('/api/admin/suites/promote-expected', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, merge, excludeQuarantined }) });
+    j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert(`Promoted (${j.mode}). Set ${j.counts.set}, Updated ${j.counts.updated}, Removed ${j.counts.removed}`); } else { alert('Promote failed: ' + (j.error||'')); }
+  }
+  document.getElementById('promoteExpected').onclick = promoteExpected;
+
+
+
+  async function listPending(){
+    const r = await fetch('/api/admin/suites/promotion/pending', { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false, items:[] }));
+    const m = document.getElementById('pendingList'); m.innerHTML='';
+    if (!j.ok){ m.textContent = 'Failed to load pending'; return; }
+    j.items.forEach(it => {
+      const div = document.createElement('div'); div.className='border rounded p-2 mb-2';
+      div.innerHTML = `<div class='flex justify-between'><div><strong>${it.name}</strong> — ${it.merge?'merge':'replace'}</div><div class='text-xs text-gray-500'>${it.requester?.email||''}</div></div>
+      <div class='text-xs text-gray-600'>set:${it.counts.set}, updated:${it.counts.updated}, removed:${it.counts.removed}</div>
+      <div class='mt-2 flex gap-2'>
+        <button class='approve border rounded px-2 py-1'>Approve</button>
+        <button class='reject border rounded px-2 py-1'>Reject</button>
+      </div>`;
+      div.querySelector('.approve').onclick = async ()=>{
+        const r = await fetch('/api/admin/suites/promotion/approve', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: it.id }) });
+        const j = await r.json().catch(()=>({ ok:false }));
+        if (j.ok){ listPending(); } else { alert(j.error||'Approve failed'); }
+      };
+      div.querySelector('.reject').onclick = async ()=>{
+        const reason = prompt('Reason (optional)')||'';
+        const r = await fetch('/api/admin/suites/promotion/reject', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: it.id, reason }) });
+        const j = await r.json().catch(()=>({ ok:false }));
+        if (j.ok){ listPending(); } else { alert(j.error||'Reject failed'); }
+      };
+      m.appendChild(div);
+    });
+  }
+  document.getElementById('refreshPending').onclick = listPending;
+  async function requestPromote(){
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    const merge = !!document.getElementById('mergeOnly').checked;
+    const excludeQuarantined = !!document.getElementById('excludeQuarantine').checked;
+    if (!name) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/suites/promotion/request', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, merge, excludeQuarantined }) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert('Requested. Pending id: ' + j.id); listPending(); } else { alert(j.error||'Request failed'); }
+  }
+  document.getElementById('requestPromote').onclick = requestPromote;
+  listPending();
+
+
+
+  async function openPR(){
+    const suite = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    const mode = document.getElementById('mergeOnly').checked ? 'merge' : 'replace';
+    if (!suite) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/github/promotion-pr', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ suite, mode }) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert('Workflow dispatched for ' + suite + ' ('+mode+')'); } else { if (r.status===403) alert('Owner-only policy: ' + (j.error||'')); else alert(j.error||'Dispatch failed'); }
+  }
+  document.getElementById('openPR').onclick = openPR;
+
+  async function runBatchPR(){
+    const suites = (document.getElementById('batchSuites').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const mode = document.getElementById('batchMode').value;
+    if (!suites.length) return alert('Enter at least one suite');
+    const r = await fetch('/api/admin/github/promotion-pr/batch', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ suites, mode }) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    const out = document.getElementById('batchOutput');
+    if (!j.ok){ out.textContent = 'Batch failed'; return; }
+    out.innerHTML = j.results.map(x => `<div>${x.suite}: ${x.ok?'✅':'❌ ' + (x.error||'')}</div>`).join('');
+  }
+  document.getElementById('runBatchPR').onclick = runBatchPR;
+
+
+
+  async function viewLastPR(auto=false){
+    const suite = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!suite) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/github/promotion-pr/last?suite='+encodeURIComponent(suite), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok && j.pr){
+      if (auto){ alert('Latest PR: ' + j.pr.title + '\n' + j.pr.url); }
+      else { window.open(j.pr.url, '_blank'); }
+    } else {
+      if (!auto) alert('No PR found for this suite yet.');
+    }
+  }
+  document.getElementById('viewLastPR').onclick = ()=>viewLastPR(false);
+
+  // After dispatch, attempt to find PR soon after
+  const _origOpenPR = openPR;
+  openPR = async function(){
+    await _origOpenPR();
+    setTimeout(()=>viewLastPR(true), 4000);
+  }
+
+
+
+  function showCooldown(msg){
+    const el = document.getElementById('cooldownBanner');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(()=> el.classList.add('hidden'), 8000);
+  }
+  async function fetchRuns(){
+    const r = await fetch('/api/admin/github/workflow-runs', { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    const mount = document.getElementById('runsTable'); mount.innerHTML='';
+    if (!j.ok){ mount.textContent = j.error || 'Failed to load runs'; return; }
+    const tbl = document.createElement('table'); tbl.className='w-full text-sm';
+    const thead = document.createElement('thead'); const trh = document.createElement('tr');
+    ['#','Status','Conclusion','Branch','Created','Link'].forEach(h=>{ const th = document.createElement('th'); th.className='text-left p-2 border-b'; th.textContent=h; trh.appendChild(th); });
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    (j.rows||[]).forEach(x => {
+      const tr = document.createElement('tr');
+      const cells = [
+        String(x.run_number), x.status || '-', x.conclusion || '-', x.head_branch || '-', new Date(x.created_at).toLocaleString(),
+        'Open'
+      ];
+      cells.forEach((c,i)=>{ const td = document.createElement('td'); td.className='p-1.5 align-top border-b'; if (i===5){ const a=document.createElement('a'); a.href=x.html_url; a.target='_blank'; a.textContent='View'; td.appendChild(a);} else { td.textContent=c; } tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); mount.appendChild(tbl);
+  }
+  document.getElementById('refreshRuns').onclick = fetchRuns;
+  // Patch openPR to handle 429s and refresh runs
+  const __openPR = openPR;
+  openPR = async function(){
+    try{
+      await __openPR();
+      // after successful dispatch, refresh runs in a bit
+      setTimeout(fetchRuns, 4000);
+    }catch(e){
+      // no-op
+    }
+  }
+
+
+
+  async function fetchRuns(){
+    const only = document.getElementById('onlyMyRuns')?.checked ? '1' : '0';
+    const r = await fetch('/api/admin/github/workflow-runs?onlyMe='+only, { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    const mount = document.getElementById('runsTable'); mount.innerHTML='';
+    if (!j.ok){ mount.textContent = j.error || 'Failed to load runs'; return; }
+    const tbl = document.createElement('table'); tbl.className='w-full text-sm';
+    const thead = document.createElement('thead'); const trh = document.createElement('tr');
+    ['#','Status','Conclusion','Branch','Actor','Created','Link'].forEach(h=>{ const th = document.createElement('th'); th.className='text-left p-2 border-b'; th.textContent=h; trh.appendChild(th); });
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    (j.rows||[]).forEach(x => {
+      const tr = document.createElement('tr');
+      const cells = [
+        String(x.run_number), x.status || '-', x.conclusion || '-', x.head_branch || '-', x.actor || '-', new Date(x.created_at).toLocaleString(), 'Open'
+      ];
+      cells.forEach((c,i)=>{ const td = document.createElement('td'); td.className='p-1.5 align-top border-b';
+          if (i===8){ const a=document.createElement('a'); a.href=x.html_url; a.target='_blank'; a.textContent='View'; td.appendChild(a); }
+          else if (i===7){ const b=document.createElement('button'); b.className='border rounded px-2 py-1 text-xs'; b.textContent='Details'; b.onclick = async ()=>{
+              const rr = await fetch('/api/admin/github/workflow-run/'+x.id+'/jobs', { credentials:'include' });
+              const jj = await rr.json().catch(()=>({ ok:false }));
+              if (!jj.ok) return alert(jj.error||'Failed');
+              const lines = [];
+              (jj.jobs||[]).forEach(jb=>{
+                lines.push(`• ${jb.name} — ${jb.conclusion||jb.status||'-'} ${jb.duration_sec!=null? '('+Math.round(jb.duration_sec/60)+'m '+(jb.duration_sec%60)+'s)':''}`);
+                (jb.steps||[]).forEach(st=>{
+                  lines.push(`    - ${st.name}: ${st.conclusion||st.status||'-'} ${st.duration_sec!=null? '('+st.duration_sec+'s)':''}`);
+                });
+              });
+              alert(lines.join('\n'));
+            }; td.appendChild(b); }
+          else { td.textContent=c; }
+          tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); mount.appendChild(tbl);
+  }
+  document.getElementById('refreshRuns').onclick = fetchRuns;
+  document.getElementById('onlyMyRuns').onchange = fetchRuns;
+
+  function badgeForPR(pr){
+    const el = document.getElementById('suiteStatusBadge');
+    if (!el) return;
+    if (!pr){ el.textContent = 'no PR'; el.className='ml-2 px-2 py-0.5 text-xs rounded border text-gray-600 border-gray-300'; return; }
+    const state = pr.state || 'open';
+    if (state === 'open'){ el.textContent = 'PR open'; el.className='ml-2 px-2 py-0.5 text-xs rounded border text-blue-700 border-blue-300 bg-blue-50'; }
+    else if (state === 'closed'){ el.textContent = 'PR closed'; el.className='ml-2 px-2 py-0.5 text-xs rounded border text-gray-700 border-gray-300 bg-gray-50'; }
+    else { el.textContent = state; el.className='ml-2 px-2 py-0.5 text-xs rounded border text-gray-700 border-gray-300'; }
+    el.onclick = ()=> window.open(pr.url, '_blank');
+    el.title = pr.title || '';
+    el.style.cursor = 'pointer';
+  }
+  async function refreshSuiteBadge(){
+    const suite = (document.getElementById('suite')?.value||'').replace(/\.json$/,'');
+    if (!suite){ badgeForPR(null); return; }
+    const r = await fetch('/api/admin/github/promotion-pr/last?suite='+encodeURIComponent(suite), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ badgeForPR(j.pr || null); } else { badgeForPR(null); }
+  }
+  // Kick off initial loads and poll the badge every 20s
+  refreshSuiteBadge(); fetchRuns();
+  setInterval(refreshSuiteBadge, 20000);
+
+
+
+  function setBadge(el, state, url){
+    const colors = { open:'bg-green-50 border-green-200 text-green-800', closed:'bg-gray-100 border-gray-200 text-gray-700' };
+    el.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ' + (colors[state] || 'bg-gray-50 border-gray-200 text-gray-700');
+    el.innerHTML = state ? `<span class='w-2 h-2 inline-block rounded-full bg-current'></span><a href='${url||'#'}' target='_blank'>PR: ${state}</a>` : 'No PR yet';
+  }
+  async function refreshPRBadge(){
+    const suite = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    const el = document.getElementById('prBadge');
+    if (!suite){ setBadge(el, null, null); return; }
+    const r = await fetch('/api/admin/github/promotion-pr/last?suite='+encodeURIComponent(suite), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok && j.pr){ setBadge(el, j.pr.state, j.pr.url); } else { setBadge(el, null, null); }
+  }
+  document.getElementById('refreshPR').onclick = refreshPRBadge;
+  // Update badge whenever suite changes
+  const suiteSel = document.getElementById('suite');
+  suiteSel && suiteSel.addEventListener('change', refreshPRBadge);
+
+  // Refresh runs with optional actor filter
+  const origFetchRuns = fetchRuns;
+  fetchRuns = async function(){
+    const actor = (document.getElementById('actorFilter').value||'').trim();
+    const r = await fetch('/api/admin/github/workflow-runs' + (actor? ('?actor='+encodeURIComponent(actor)) : ''), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    const mount = document.getElementById('runsTable'); mount.innerHTML='';
+    if (!j.ok){ mount.textContent = j.error || 'Failed to load runs'; return; }
+    const tbl = document.createElement('table'); tbl.className='w-full text-sm';
+    const thead = document.createElement('thead'); const trh = document.createElement('tr');
+    ['#','Status','Conclusion','Actor','Branch','Created','Duration','Details','Logs','Link'].forEach(h=>{ const th = document.createElement('th'); th.className='text-left p-2 border-b'; th.textContent=h; trh.appendChild(th); });
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    (j.rows||[]).forEach(x => {
+      const tr = document.createElement('tr');
+      const cells = [
+        String(x.run_number), x.status || '-', x.conclusion || '-', x.actor || '-', x.head_branch || '-', new Date(x.created_at).toLocaleString(),
+        (x.duration_sec!=null? (Math.round(x.duration_sec/60)+'m '+(x.duration_sec%60)+'s'):'-'), 'Details', 'Open'
+      ];
+      cells.forEach((c,i)=>{ const td = document.createElement('td'); td.className='p-1.5 align-top border-b';
+          if (i===8){ const a=document.createElement('a'); a.href=x.html_url; a.target='_blank'; a.textContent='View'; td.appendChild(a); }
+          else if (i===7){ const b=document.createElement('button'); b.className='border rounded px-2 py-1 text-xs'; b.textContent='Details'; b.onclick = async ()=>{
+              const rr = await fetch('/api/admin/github/workflow-run/'+x.id+'/jobs', { credentials:'include' });
+              const jj = await rr.json().catch(()=>({ ok:false }));
+              if (!jj.ok) return alert(jj.error||'Failed');
+              const lines = [];
+              (jj.jobs||[]).forEach(jb=>{
+                lines.push(`• ${jb.name} — ${jb.conclusion||jb.status||'-'} ${jb.duration_sec!=null? '('+Math.round(jb.duration_sec/60)+'m '+(jb.duration_sec%60)+'s)':''}`);
+                (jb.steps||[]).forEach(st=>{
+                  lines.push(`    - ${st.name}: ${st.conclusion||st.status||'-'} ${st.duration_sec!=null? '('+st.duration_sec+'s)':''}`);
+                });
+              });
+              alert(lines.join('\n'));
+            }; td.appendChild(b); }
+          else { td.textContent=c; }
+          tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); mount.appendChild(tbl);
+  };
+
+  // Initial PR badge and runs load
+  refreshPRBadge();
+
+
+
+  async function useMyLogin(){
+    const r = await fetch('/api/admin/github/actor-suggest', { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok && j.login){ document.getElementById('actorFilter').value = j.login; fetchRuns(); } else { alert('No mapping found for your email.'); }
+  }
+  document.getElementById('useMyLogin').onclick = useMyLogin;
+
+  const _fetchRuns2 = fetchRuns;
+  fetchRuns = async function(){
+    const actor = (document.getElementById('actorFilter').value||'').trim();
+    const suite = (document.getElementById('suiteFilter').value||'').trim();
+    const r = await fetch('/api/admin/github/workflow-runs' + (actor? ('?actor='+encodeURIComponent(actor)) : ''), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    const mount = document.getElementById('runsTable'); mount.innerHTML='';
+    if (!j.ok){ mount.textContent = j.error || 'Failed to load runs'; return; }
+    let rows = j.rows||[];
+    if (suite) rows = rows.filter(x => (x.head_branch||'').toLowerCase().includes(suite.toLowerCase()));
+    const tbl = document.createElement('table'); tbl.className='w-full text-sm';
+    const thead = document.createElement('thead'); const trh = document.createElement('tr');
+    ['#','Status','Conclusion','Actor','Branch','Created','Duration','Details','Logs','Link'].forEach(h=>{ const th = document.createElement('th'); th.className='text-left p-2 border-b'; th.textContent=h; trh.appendChild(th); });
+    thead.appendChild(trh); tbl.appendChild(thead);
+    const tb = document.createElement('tbody');
+    rows.forEach(x => {
+      const tr = document.createElement('tr');
+      const cells = [ String(x.run_number), x.status || '-', x.conclusion || '-', x.actor || '-', x.head_branch || '-', new Date(x.created_at).toLocaleString(), (x.duration_sec!=null? (Math.round(x.duration_sec/60)+'m '+(x.duration_sec%60)+'s'):'-'), 'Details', 'Open' ];
+      cells.forEach((c,i)=>{ const td = document.createElement('td'); td.className='p-1.5 align-top border-b'; if (i===8){ const a=document.createElement('a'); a.href=x.html_url; a.target='_blank'; a.textContent='View'; td.appendChild(a);} else if (i===7){ const b=document.createElement('button'); b.className='border rounded px-2 py-1 text-xs'; b.textContent='Details'; b.onclick = async ()=>{ const rr = await fetch('/api/admin/github/workflow-run/'+x.id+'/jobs', { credentials:'include' }); const jj = await rr.json().catch(()=>({ ok:false })); if (!jj.ok) return alert(jj.error||'Failed'); const lines = []; (jj.jobs||[]).forEach(jb=>{ lines.push(`• ${jb.name} — ${jb.conclusion||jb.status||'-'} ${jb.duration_sec!=null? '('+Math.round(jb.duration_sec/60)+'m '+(jb.duration_sec%60)+'s)':''}`); (jb.steps||[]).forEach(st=>{ lines.push(`    - ${st.name}: ${st.conclusion||st.status||'-'} ${st.duration_sec!=null? '('+st.duration_sec+'s)':''}`); }); }); alert(lines.join('\n')); }; td.appendChild(b);} else { td.textContent=c; } tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); mount.appendChild(tbl);
+  };
+
+  function runsToCsv(rows){
+    const headers = ['run_number','status','conclusion','actor','branch','created','duration_sec','url'];
+    const esc = v => ('"'+String(v).replace(/"/g,'""')+'"');
+    const lines = [headers.map(esc).join(',')];
+    rows.forEach(x => {
+      lines.push([x.run_number, x.status||'', x.conclusion||'', x.actor||'', x.head_branch||'', x.created_at||'', x.duration_sec!=null? x.duration_sec : '', x.html_url||''].map(esc).join(','));
+    });
+    return lines.join('\n');
+  }
+  document.getElementById('exportRunsCsv').onclick = async ()=>{
+    const actor = (document.getElementById('actorFilter').value||'').trim();
+    const suite = (document.getElementById('suiteFilter').value||'').trim();
+    const r = await fetch('/api/admin/github/workflow-runs' + (actor? ('?actor='+encodeURIComponent(actor)) : ''), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert('Failed to load runs');
+    let rows = j.rows||[];
+    if (suite) rows = rows.filter(x => (x.head_branch||'').toLowerCase().includes(suite.toLowerCase()));
+    const csv = runsToCsv(rows);
+    const blob = new Blob([csv], { type:'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='workflow-runs.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+
+
+
+  function showLogModal(text){ const m=document.getElementById('logModal'); document.getElementById('logBody').textContent = text; m.classList.remove('hidden'); m.classList.add('flex'); }
+  document.getElementById('logClose').onclick = ()=>{ const m=document.getElementById('logModal'); m.classList.add('hidden'); m.classList.remove('flex'); };
+
+
+
+  document.getElementById('exportDiffCsv').onclick = async ()=>{
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!name) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/suites/report/diff/'+encodeURIComponent(name), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert(j.error||'Diff failed');
+    const rows = j.rows||[];
+    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+    const csv = ['key,expected,actual,status'].concat(rows.map(x => [x.key, x.expected, x.actual, x.status].map(esc).join(','))).join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download = name+'-diff.csv'; a.click(); URL.revokeObjectURL(url);
+  };
+
+
+
+  let _logRawText = '';
+  function showLogModal(text){
+    const m=document.getElementById('logModal');
+    _logRawText = text || '';
+    document.getElementById('logBody').textContent = _logRawText;
+    document.getElementById('logCount').textContent = '';
+    document.getElementById('logSearch').value = '';
+    m.classList.remove('hidden'); m.classList.add('flex');
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function applyLogSearch(){
+    const q = (document.getElementById('logSearch').value||'').trim();
+    const body = document.getElementById('logBody');
+    if (!q){
+      body.textContent = _logRawText;
+      document.getElementById('logCount').textContent = '';
+      return;
+    }
+    const parts = _logRawText.split(/\r?\n/);
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'), 'i');
+    let matches = 0;
+    const html = parts.map(line => {
+      const m = line.match(rx);
+      if (!m) return null;
+      matches++;
+      const esc = escapeHtml(line);
+      // simple highlight: wrap first match
+      const idx = esc.toLowerCase().indexOf(q.toLowerCase());
+      if (idx < 0) return esc;
+      return esc.slice(0, idx) + '<mark>' + esc.slice(idx, idx+q.length) + '</mark>' + esc.slice(idx+q.length);
+    }).filter(Boolean).join('\n');
+    body.innerHTML = html || '<em class="text-gray-500">No matches</em>';
+    document.getElementById('logCount').textContent = matches + ' match' + (matches===1?'':'es');
+  }
+  const _logSearchEl = document.getElementById('logSearch');
+  if (_logSearchEl){ _logSearchEl.addEventListener('input', applyLogSearch); }
+
+
+  document.getElementById('copyFailingRows').onclick = async ()=>{
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!name) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/suites/report/diff/'+encodeURIComponent(name), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert(j.error||'Diff failed');
+    const rows = (j.rows||[]).filter(x => x.status !== 'unchanged');
+    if (!rows.length){ alert('No failing/changed rows'); return; }
+    const esc = v => '"'+String(v).replace(/"/g,'""')+'"';
+    const csv = ['key,expected,actual,status'].concat(rows.map(x => [x.key, x.expected, x.actual, x.status].map(esc).join(','))).join('\n');
+    try{
+      await navigator.clipboard.writeText(csv);
+      alert('Copied failing rows to clipboard (' + rows.length + ' rows).');
+    }catch(e){
+      // Fallback: download as file
+      const blob = new Blob([csv], { type:'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download = name+'-failing-rows.csv'; a.click(); URL.revokeObjectURL(url);
+    }
+  };
+
+
+
+  async function fkRecalc(dry){
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!name) return alert('Pick a suite first');
+    const body = {
+      name,
+      window: parseInt(document.getElementById('fkWindow').value||'10',10),
+      minFlips: parseInt(document.getElementById('fkFlips').value||'2',10),
+      minPass: parseFloat(document.getElementById('fkLo').value||'0.3'),
+      maxPass: parseFloat(document.getElementById('fkHi').value||'0.7'),
+      dryRun: dry
+    };
+    const r = await fetch('/api/admin/suites/quarantine/recalc', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert(j.error||'Recalc failed');
+    const out = (j.rows||[]).slice(0,50).map(x => `${x.key}  flips:${x.flips}  pass:${(x.passRate*100).toFixed(0)}%`).join('\n');
+    document.getElementById('fkPreview').textContent = `Found ${j.count??j.added??0} flaky keys` + (out? ('\n'+out + (j.rows.length>50? `\n… +${j.rows.length-50} more` : '')) : '');
+    return j;
+  }
+  async function fkApply(){
+    const j = await fkRecalc(false);
+    if (!j || !j.ok) return;
+    alert('Quarantine size now: ' + j.count);
+  }
+  async function fkList(){
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!name) return alert('Pick a suite first');
+    const r = await fetch('/api/admin/suites/quarantine/list?name='+encodeURIComponent(name), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert(j.error||'List failed');
+    const out = (j.quarantine||[]).slice(0,100).join('\n');
+    document.getElementById('fkPreview').textContent = `Quarantined: ${j.quarantine.length}\n` + out + (j.quarantine.length>100? `\n… +${j.quarantine.length-100} more` : '');
+  }
+  document.getElementById('fkRecalc').onclick = ()=>fkRecalc(true);
+  document.getElementById('fkApply').onclick = fkApply;
+  document.getElementById('fkList').onclick = fkList;
+
+
+
+  async function refreshQBadge(){
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    const el = document.getElementById('qBadge');
+    if (!name){ el.textContent = ''; el.classList.add('hidden'); return; }
+    const r = await fetch('/api/admin/suites/quarantine/list?name='+encodeURIComponent(name), { credentials:'include' });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ el.textContent = `Quarantined: ${j.quarantine.length}`; el.classList.remove('hidden'); } else { el.textContent=''; el.classList.add('hidden'); }
+  }
+  const suiteSel2 = document.getElementById('suite'); suiteSel2 && suiteSel2.addEventListener('change', refreshQBadge);
+
+  document.getElementById('fkIngest').onclick = async ()=>{
+    const name = (document.getElementById('suite').value||'').replace(/\.json$/,'');
+    if (!name) return alert('Pick a suite first');
+    const body = { name, stableRuns: 3, addOnFail: true, unquarantineOnStable: true, dryRun: false };
+    const r = await fetch('/api/admin/suites/quarantine/ingest-last', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (j.ok){ alert(`Added ${j.add}, removed ${j.remove}. Total ${j.count}.`); refreshQBadge(); } else { alert(j.error||'Ingest failed'); }
+  };
+
+  // Initial load
+  refreshQBadge();
+
+
+
+  document.getElementById('fkIngestNow').onclick = async ()=>{
+    const r = await fetch('/api/admin/suites/quarantine/ingest-now', { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({}) });
+    const j = await r.json().catch(()=>({ ok:false }));
+    if (!j.ok) return alert(j.error||'Run failed');
+    const lines = (j.results||[]).map(x => `${x.suite}: ${x.ok?'ok':'fail'} +${x.add||0}/-${x.remove||0} total:${x.total||'?'}${x.error? ' ('+x.error+')' : ''}`);
+    alert('Auto‑quarantine run completed:\n' + lines.join('\n'));
+  };
+
+
+  // Render quarantine review table (admin-only)
+function renderQuarantineReviewTable(proposals) {
+  const headers = ['ID','Added','Removed','Requester','Created','Note','Status','Actions'];
+  const table = document.createElement('table');
+  table.className = 'w-full text-sm border';
+  const thead = document.createElement('thead');
+  const trh = document.createElement('tr');
+  headers.forEach(h => {
+    const th = document.createElement('th');
+    th.className = 'text-left p-2 border-b';
+    th.textContent = h;
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tb = document.createElement('tbody');
+  proposals.forEach(row => {
+    const tr = document.createElement('tr');
+    [row.id, row.add.length, row.remove.length, row.requester, new Date(row.created).toLocaleString(), row.note || '', row.status, '']
+      .forEach((c, i) => {
+        const td = document.createElement('td');
+        td.className = 'p-1.5 align-top border-b';
+        if (i === 7) {
+          // Actions: Approve/Reject buttons
+          if (row.status === 'pending' || row.status === 'awaiting_second') {
+            const approveBtn = document.createElement('button');
+            approveBtn.className = 'border rounded px-2 py-1 text-xs bg-green-100 hover:bg-green-200 mr-1';
+            approveBtn.textContent = 'Approve';
+            approveBtn.onclick = () => approveQuarantine(row.id);
+            td.appendChild(approveBtn);
+            const rejectBtn = document.createElement('button');
+            rejectBtn.className = 'border rounded px-2 py-1 text-xs bg-red-100 hover:bg-red-200';
+            rejectBtn.textContent = 'Reject';
+            rejectBtn.onclick = () => rejectQuarantine(row.id);
+            td.appendChild(rejectBtn);
+          }
+        } else {
+          td.textContent = c;
+        }
+        tr.appendChild(td);
+      });
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  return table;
+}
+// Usage: mount.appendChild(renderQuarantineReviewTable(proposals));
+
+</script>
+
+<div id="logModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg w-[90vw] max-w-3xl max-h-[80vh] flex flex-col shadow-xl">
+    <div class="p-2 border-b flex items-center justify-between">
+      <div class="flex items-center gap-2 text-xs">
+        <input id="logSearch" class="border rounded px-2 py-1" placeholder="Search logs" />
+        <span id="logCount" class="text-gray-500"></span>
+      </div>
+      <div class="font-semibold text-sm">Job Logs (tail)</div>
+      <button id="logClose" class="text-sm px-2 py-1 border rounded">Close</button>
+    </div>
+    <pre id="logBody" class="p-3 text-xs overflow-auto whitespace-pre-wrap"></pre>
+  </div>
+</div>
+
+</body>
+</html>

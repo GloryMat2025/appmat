@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>2FA Setup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-full text-slate-800">
+  <main class="min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm border p-6 space-y-4">
+      <h1 class="text-xl font-semibold">Enable 2FA (TOTP)</h1>
+      <ol class="list-decimal list-inside text-sm text-slate-600 space-y-1">
+        <li>Click <strong>Generate</strong> to create your secret.</li>
+        <li>Scan the QR with Google Authenticator / 1Password / Authy.</li>
+        <li>Enter the 6-digit code to confirm and enable.</li>
+      </ol>
+      <div id="genWrap" class="space-y-3">
+        <button id="btnGen" class="w-full px-4 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700">Generate</button>
+        <div id="qrWrap" class="hidden">
+          <img id="qr" class="mx-auto border rounded-lg" alt="QR Code">
+          <p class="text-xs text-center text-slate-500 mt-1">If you can’t scan, use this secret:</p>
+          <p id="secret" class="text-center font-mono text-sm"></p>
+        </div>
+      </div>
+      <form id="form" class="space-y-3 hidden">
+        <div>
+          <label class="block text-sm font-medium mb-1">Authenticator Code</label>
+          <input id="code" class="w-full border rounded-lg px-3 py-2" placeholder="123 456" />
+        </div>
+        <button class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Verify & Enable</button>
+      </form>
+      <div id="result" class="hidden text-sm rounded-lg p-3"></div>
+    </div>
+  </main>
+
+  <script>
+    const resBox = document.getElementById('result');
+    function note(msg, ok=true){
+      resBox.textContent = msg;
+      resBox.className = 'text-sm rounded-lg p-3 ' + (ok ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800');
+      resBox.classList.remove('hidden');
+    }
+    async function getMe(){
+      const r = await fetch('/api/auth/me', { credentials:'include' });
+      const j = await r.json();
+      if (!j.user) location.href = '/login.html';
+    }
+    getMe();
+
+    document.getElementById('btnGen').addEventListener('click', async ()=>{
+      const r = await fetch('/api/2fa/setup', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include' });
+      if (!r.ok){ note('Failed to start setup', false); return; }
+      const j = await r.json();
+      document.getElementById('qr').src = j.qr;
+      document.getElementById('secret').textContent = j.secret;
+      document.getElementById('qrWrap').classList.remove('hidden');
+      document.getElementById('form').classList.remove('hidden');
+    });
+
+    document.getElementById('form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const code = document.getElementById('code').value.trim();
+      const r = await fetch('/api/2fa/verify', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ code }) });
+      const j = await r.json();
+      if (!r.ok){ note('Invalid code. Please try again.', false); return; }
+      const list = (j.backup||[]).map(x=> '<code>'+x+'</code>').join(', ');
+      note('2FA enabled. Backup codes (store safely): ' + list, true);
+    });
+  </script>
+</body>
+</html>

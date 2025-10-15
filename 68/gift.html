@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#ff5a5f" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="manifest" href="./manifest.webmanifest" crossorigin="use-credentials" />
+  <title>Gift</title>
+  <link rel="stylesheet" href="./assets/tailwind.min.css" />
+  <style>@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}</style>
+</head>
+<body class="min-h-screen bg-bg text-ink dark:bg-darkbg dark:text-slate-100 pb-28">
+  <a href="#mainContent" class="skip-link">Skip to content</a>
+  <main id="mainContent" class="max-w-sm mx-auto p-4" tabindex="-1">
+    <header class="bg-white dark:bg-[#162033] dark:text-slate-100 rounded-2xl shadow-soft border border-ring dark:border-slate-700 p-4 mb-4">
+      <h1 class="text-xl font-extrabold" data-i18n="nav.gift">Gift</h1>
+    </header>
+    <section class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-4 shadow-soft grid gap-4" data-gift-section>
+      <p class="text-sm text-slate-600 dark:text-slate-300" data-i18n="gift.intro">Add and redeem your gift vouchers below.</p>
+      <form data-gift-form class="grid gap-2">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400" for="giftCode" data-i18n="gift.addLabel">Add Voucher Code</label>
+        <div class="flex gap-2">
+          <input id="giftCode" data-gift-input type="text" maxlength="20" class="flex-1 rounded-xl border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-700/40 px-3 py-2 text-sm" data-i18n-placeholder="gift.inputPlaceholder" placeholder="Enter code" autocomplete="off" />
+          <button type="submit" class="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-40" data-gift-add data-i18n="gift.addBtn">Add</button>
+        </div>
+        <p class="text-[11px] min-h-[14px] text-red-500" data-gift-error aria-live="polite"></p>
+      </form>
+      <div class="grid gap-3">
+        <h2 class="text-sm font-bold" data-i18n="gift.your">Your Vouchers</h2>
+        <div class="flex gap-2 text-[11px] font-semibold">
+          <button type="button" data-gift-filter="all" class="px-3 py-1 rounded-full ring-1 ring-gray-300 data-[active=true]:bg-blue-600 data-[active=true]:text-white" data-active="true" data-i18n="gift.filter.all">All</button>
+          <button type="button" data-gift-filter="active" class="px-3 py-1 rounded-full ring-1 ring-gray-300 data-[active=true]:bg-blue-600 data-[active=true]:text-white" data-i18n="gift.filter.active">Active</button>
+          <button type="button" data-gift-filter="redeemed" class="px-3 py-1 rounded-full ring-1 ring-gray-300 data-[active=true]:bg-blue-600 data-[active=true]:text-white" data-i18n="gift.filter.redeemed">Redeemed</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center" data-gift-stats>
+          <div class="p-2 rounded-lg bg-gray-50 dark:bg-slate-700/40 border border-gray-200 dark:border-slate-600">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400" data-i18n="gift.stat.totalValue">Total Value</div>
+            <div class="text-sm font-bold" data-gift-total-value>RM0.00</div>
+          </div>
+          <div class="p-2 rounded-lg bg-gray-50 dark:bg-slate-700/40 border border-gray-200 dark:border-slate-600">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400" data-i18n="gift.stat.redeemedValue">Redeemed</div>
+            <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400" data-gift-redeemed-value>RM0.00</div>
+          </div>
+            <div class="p-2 rounded-lg bg-gray-50 dark:bg-slate-700/40 border border-gray-200 dark:border-slate-600">
+            <div class="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400" data-i18n="gift.stat.points">Points Earned</div>
+            <div class="text-sm font-bold text-primary" data-gift-points>0</div>
+          </div>
+        </div>
+        <div data-gift-empty class="text-[13px] text-slate-500 dark:text-slate-400" data-i18n="gift.empty">No vouchers yet. Add a code above.</div>
+        <ul data-gift-list class="grid gap-2"></ul>
+      </div>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400" data-i18n="gift.note">Redeeming a voucher converts its RM value into loyalty points.</p>
+    </section>
+  </main>
+  <!-- Unified Tab bar -->
+  <nav aria-label="Primary" class="fixed bottom-3 inset-x-0 mx-auto max-w-sm bg-white/90 dark:bg-slate-800/80 backdrop-blur rounded-2xl border border-ring dark:border-slate-600 shadow-soft p-2 grid grid-cols-5 md:grid-cols-7 gap-1">
+  <a data-tab="home" href="./index.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏠<span class="text-xs" data-i18n="nav.home">Home</span></a>
+  <a data-tab="menu" href="./menu.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🍽️<span class="text-xs" data-i18n="nav.menu">Menu</span></a>
+  <a data-tab="checkout" href="#/checkout" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">✅<span class="text-xs">Checkout</span></a>
+  <a data-tab="orders" href="#/orders" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">📦<span class="text-xs">My Orders</span></a>
+  <a data-tab="cart" href="./cart.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🛒<span class="text-xs" data-i18n="nav.cart">Cart</span></a>
+  <a data-tab="gift" href="./gift.html" class="flex flex-col items-center gap-1 py-2 rounded-xl" aria-current="page">🎁<span class="text-xs" data-i18n="nav.gift">Gift</span></a>
+  <a data-tab="rewards" href="./rewards.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏆<span class="text-xs" data-i18n="nav.rewards">Rewards</span></a>
+  <a data-tab="account" href="./account.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">👤<span class="text-xs" data-i18n="nav.account">Account</span></a>
+  </nav>
+  <script src="./assets/js/min.js"></script>
+</body>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(console.error);
+  });
+}
+</script>
+</html>

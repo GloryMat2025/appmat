@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Products – i18n Loader</title>
+<style>
+  :root{ --bg:#0f172a; --card:#111827; --muted:#94a3b8; --fg:#e5e7eb; --brand:#3a6d9b; --brand2:#2E7AA6; --ok:#22c55e; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(120deg,#0b1222,#0f172a);color:var(--fg)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1f2937;background:linear-gradient(180deg,#0f172a,#0c1422)}
+  h1{margin:0;font-size:1.05rem;letter-spacing:.2px}
+  .right{display:flex;gap:10px;align-items:center}
+  .pill{border:1px solid #223045;border-radius:999px;padding:6px 10px;background:#0c1627;color:#cfe7ff;cursor:pointer;user-select:none}
+  .pill.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+  .cart{position:relative;display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid #223045;border-radius:10px;background:#0c1627}
+  .badge{min-width:22px;height:22px;border-radius:999px;background:linear-gradient(90deg,var(--brand),var(--brand2));display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#07131c;font-size:.85rem}
+  .wrap{max-width:1080px;margin:20px auto;padding:0 16px}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .search{flex:1;min-width:240px}
+  .search input{width:100%;padding:10px 12px;border:1px solid #223045;border-radius:10px;background:#0c1627;color:#e5e7eb}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .card{background:linear-gradient(180deg,#0f172a,#0b1020);border:1px solid #1f2937;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .img{background:#0b1424;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;color:#7aa2c9;font-size:.9rem}
+  .content{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .name{font-weight:800}
+  .price{font-weight:800}
+  .muted{color:var(--muted);font-size:.92rem}
+  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .qty{display:inline-flex;align-items:center;border:1px solid #243041;border-radius:10px;overflow:hidden}
+  .qty button{background:#0a1322;color:#dbeafe;border:0;width:36px;height:36px;font-weight:800;cursor:pointer}
+  .qty input{width:48px;text-align:center;background:#0a1322;border:0;color:#e5e7eb;height:36px}
+  .btn{border:1px solid #223045;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;background:#0c1627;color:#dbeafe}
+  .btn.buy{background:linear-gradient(90deg, var(--ok), #a7f3d0);color:#06240f;border:0}
+  details{border:1px dashed #25334a;border-radius:10px;padding:8px}
+  details summary{cursor:pointer;color:#c7d2fe}
+  footer{padding:14px;color:var(--muted);font-size:.9rem;text-align:center}
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="checkout.title">Checkout</h1>
+    <div class="right">
+      <div class="pill active" id="langEN">EN</div>
+      <div class="pill" id="langBM">BM</div>
+      <div class="cart" aria-label="Cart"><span data-i18n="common.cart">Cart</span><span class="badge" id="cartBadge">0</span></div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <div class="search"><input id="q" data-i18n-placeholder="common.search_placeholder" placeholder="Search products…" /></div>
+    </div>
+    <div id="products" class="grid" aria-live="polite"></div>
+  </div>
+
+  <footer>Powered by <code>i18n.loader.js</code> + <code>i18n/en.json</code> / <code>i18n/bm.json</code>.</footer>
+
+<script src="i18n.loader.js"></script>
+<script>
+I18NLoader.init({ defaultLang: 'en', fallback: 'en', sources: { en: 'i18n/en.json', bm: 'i18n/bm.json' } });
+
+const DATA_URL = 'products_min.json';
+const CART_KEY = "demo.cart";
+const Cart = {
+  _r(){ try { return JSON.parse(localStorage.getItem(CART_KEY) || "[]"); } catch { return []; } },
+  _w(v){ localStorage.setItem(CART_KEY, JSON.stringify(v)); badge(); },
+  add(id, qty=1){ const list=this._r(); const i=list.findIndex(x=>x.id===id); if(i>=0) list[i].qty=Math.min(999,list[i].qty+qty); else list.push({id,qty}); this._w(list); },
+  count(){ return this._r().reduce((n,x)=>n+(Number(x.qty)||0),0); }
+};
+function badge(){ document.getElementById('cartBadge').textContent = Cart.count(); }
+
+let PRODUCTS = [];
+const $ = s => document.querySelector(s);
+const fmtMYR = n => new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(n||0);
+function shortTxt(s){ if(!s) return ''; const t=String(s).trim(); const d=t.indexOf('.'); return d>0&&d<120? t.slice(0,d+1): (t.length>120? t.slice(0,117)+'…': t); }
+
+function card(p){
+  const isBM = I18NLoader.lang==='bm';
+  const name = p[isBM?'name_bm':'name_en'] || p.name || '';
+  const short = p[isBM?'short_desc_bm':'short_desc_en'] || p.short_desc || p[isBM?'desc_bm':'desc_en'] || '';
+  const long = p[isBM?'long_desc_bm':'long_desc_en'] || p.long_desc || p[isBM?'desc_bm':'desc_en'] || '';
+  const img = p.image || (p.images && p.images[0]);
+  const imgEl = img ? `<img alt="${name}" src="${img}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='<div class=&quot;img&quot;>No Image</div>'">` : `<div class="img">No Image</div>`;
+  return `
+  <article class="card" data-id="${p.id}">
+    ${imgEl}
+    <div class="content">
+      <div class="name">${name}</div>
+      <div class="price">${fmtMYR(p.price || p.base_price || 0)}</div>
+      <p class="muted">${shortTxt(short)}</p>
+      ${long ? `<details><summary data-i18n="common.more_details">${I18NLoader.t('common.more_details')}</summary><div class="muted" style="margin-top:6px">${long}</div></details>`:''}
+      <div class="actions">
+        <div class="qty" aria-label="Quantity">
+          <button class="qminus" aria-label="Decrease">−</button>
+          <input class="qinput" type="number" value="1" min="1" max="99" inputmode="numeric" />
+          <button class="qplus" aria-label="Increase">+</button>
+        </div>
+        <button class="btn" data-action="add" data-i18n="common.add_to_cart">${I18NLoader.t('common.add_to_cart')}</button>
+        <button class="btn buy" data-action="buy" data-i18n="common.buy_now">${I18NLoader.t('common.buy_now')}</button>
+      </div>
+    </div>
+  </article>`;
+}
+function render(list){ const host=$('#products'); host.innerHTML=(list||[]).map(card).join(''); I18NLoader.apply(); badge(); }
+(async function init(){
+  try{ const r=await fetch(DATA_URL); const data=await r.json();
+    PRODUCTS = data.map(p => ({
+      id:p.id, name_en:p.name_en||p.name, name_bm:p.name_bm||p.name,
+      short_desc_en:p.short_desc_en||p.short_desc, short_desc_bm:p.short_desc_bm||p.short_desc,
+      long_desc_en:p.long_desc_en||p.long_desc||p.desc_en, long_desc_bm:p.long_desc_bm||p.long_desc||p.desc_bm,
+      image:p.image, images:p.images, price:p.price, base_price:p.base_price, currency:p.currency||'MYR',
+      short_desc:p.short_desc, long_desc:p.long_desc, desc_en:p.desc_en, desc_bm:p.desc_bm
+    }));
+    render(PRODUCTS);
+  }catch(e){ console.error(e); $('#products').innerHTML = `<div class="muted" data-i18n="common.empty">${I18NLoader.t('common.empty')}</div>`; }
+})();
+document.getElementById('q').addEventListener('input', e => {
+  const s = e.target.value.trim().toLowerCase();
+  const filtered = !s ? PRODUCTS : PRODUCTS.filter(p => [p.name_en,p.name_bm,p.short_desc_en,p.short_desc_bm,p.long_desc_en,p.long_desc_bm].join(' ').toLowerCase().includes(s));
+  render(filtered);
+});
+document.getElementById('products').addEventListener('click', (e)=>{
+  const card = e.target.closest('.card'); if(!card) return;
+  const id = card.getAttribute('data-id');
+  const qtyInput = card.querySelector('.qinput');
+  const getQty = () => Math.max(1, Math.min(99, parseInt(qtyInput.value || '1', 10)));
+  if(e.target.classList.contains('qminus')) qtyInput.value = Math.max(1, getQty()-1);
+  if(e.target.classList.contains('qplus'))  qtyInput.value = Math.min(99, getQty()+1);
+  const action = e.target.getAttribute('data-action');
+  if(action === 'add'){ const q=getQty(); Cart.add(id,q); const name = card.querySelector('.name')?.textContent || 'item'; toast(I18NLoader.t('common.added_to_cart', { count: q, name })); }
+  if(action === 'buy'){ const q=getQty(); Cart.add(id,q); toast(I18NLoader.t('common.proceed_checkout'),'ok'); }
+});
+function toast(msg, type){
+  const t=document.createElement('div'); t.textContent=msg;
+  t.style.position='fixed'; t.style.right='14px'; t.style.bottom='14px'; t.style.maxWidth='70vw';
+  t.style.padding='10px 12px'; t.style.borderRadius='10px'; t.style.fontWeight='700'; t.style.border='1px solid #223045';
+  t.style.background = type==='ok' ? 'linear-gradient(90deg, var(--ok), #a7f3d0)' : 'linear-gradient(90deg, var(--brand), var(--brand2))';
+  t.style.color='#06131a'; t.style.boxShadow='0 8px 24px rgba(0,0,0,.35)';
+  document.body.appendChild(t); setTimeout(()=>{t.style.opacity='0'; t.style.transition='opacity .3s';}, 1200); setTimeout(()=>t.remove(), 1550);
+}
+window.addEventListener('i18n:change', () => render(PRODUCTS));
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Webhooks — Inbound & Replay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>.mono{font-family: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace}</style>
+</head>
+<body class="h-full text-slate-800">
+  <header class="border-b bg-white">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg font-semibold">Webhooks — Inbound & Replay</h1>
+      <div class="flex items-center gap-2">
+        <button id="btnRefresh" class="px-3 py-1.5 rounded-lg border">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Inbound</h2>
+      <div class="grid md:grid-cols-5 gap-2 items-end">
+        <select id="src" class="border rounded-lg px-3 py-2">
+          <option value="">(any)</option>
+          <option>stripe</option>
+          <option>github</option>
+          <option>slack</option>
+          <option>generic</option>
+        </select>
+        <input id="q" class="border rounded-lg px-3 py-2" placeholder="search payload/headers">
+        <button id="apply" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white">Apply</button>
+      </div>
+      <div id="inRows" class="mt-3 space-y-2"></div>
+      <button id="moreIn" class="mt-2 px-3 py-1.5 rounded-lg border">Load more</button>
+    </section>
+
+    <section class="bg-white rounded-2xl p-4 shadow-sm border">
+      <h2 class="text-sm font-semibold mb-2">Deliveries</h2>
+      <div class="grid md:grid-cols-4 gap-2 items-end">
+        <input id="inId" class="border rounded-lg px-3 py-2" placeholder="Filter by inbound id">
+        <select id="status" class="border rounded-lg px-3 py-2">
+          <option value="">(any)</option>
+          <option>queued</option>
+          <option>delivering</option>
+          <option>ok</option>
+          <option>error</option>
+          <option>dead</option>
+        </select>
+        <button id="applyD" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white">Apply</button>
+        <button id="proc" class="px-3 py-1.5 rounded-lg border">Process one</button>
+      </div>
+      <div id="delRows" class="mt-3 space-y-2"></div>
+      <button id="moreDel" class="mt-2 px-3 py-1.5 rounded-lg border">Load more</button>
+    </section>
+  </main>
+
+  <template id="inTpl">
+    <div class="border rounded-xl p-3">
+      <div class="flex items-center justify-between">
+        <div class="text-sm"><span class="mono id"></span> · <span class="src mono"></span> · <span class="time"></span></div>
+        <div class="text-xs"><span class="sig chip"></span></div>
+      </div>
+      <pre class="mono text-xs bg-slate-50 p-3 rounded mt-2 overflow-auto payload"></pre>
+      <div class="mt-2 flex gap-2">
+        <input class="border rounded px-2 py-1 text-sm mono target" placeholder="https://example.com/hook">
+        <button class="px-3 py-1.5 rounded-lg border text-sm create">Create delivery</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="delTpl">
+    <div class="border rounded-xl p-3">
+      <div class="flex items-center justify-between">
+        <div class="text-sm"><span class="mono id"></span> → <span class="mono url"></span></div>
+        <div class="text-xs status"></div>
+      </div>
+      <div class="text-xs text-slate-500">attempts <span class="att"></span> · next <span class="next"></span> · resp <span class="resp"></span> · <span class="err text-rose-600"></span></div>
+    </div>
+  </template>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let nextIn = null, nextDel = null;
+
+    function inRow(x){
+      const t = document.getElementById('inTpl').content.cloneNode(true);
+      t.querySelector('.id').textContent = x.id;
+      t.querySelector('.src').textContent = x.source;
+      t.querySelector('.time').textContent = new Date(x.received_at).toLocaleString();
+      const sig = t.querySelector('.sig'); sig.textContent = x.sig_ok ? 'verified' : (x.sig_detail || 'invalid'); sig.className = 'sig chip ' + (x.sig_ok?'text-emerald-700':'text-rose-700');
+      t.querySelector('.payload').textContent = JSON.stringify(x.json_body || {}, null, 2);
+      t.querySelector('.create').onclick = async ()=>{
+        const url = t.querySelector('.target').value.trim(); if (!url) return;
+        await fetch('/api/webhooks/deliver', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ in_id: x.id, target_url: url }) });
+        alert('Delivery queued');
+      };
+      return t;
+    }
+    function delRow(x){
+      const t = document.getElementById('delTpl').content.cloneNode(true);
+      t.querySelector('.id').textContent = x.id;
+      t.querySelector('.url').textContent = x.target_url;
+      t.querySelector('.status').textContent = x.status;
+      t.querySelector('.att').textContent = x.attempts;
+      t.querySelector('.next').textContent = x.next_at ? new Date(x.next_at).toLocaleString() : '—';
+      const resp = (x.response_status||'—') + ' ('+(x.response_ms||'—')+' ms)';
+      t.querySelector('.resp').textContent = resp;
+      t.querySelector('.err').textContent = x.last_error || '';
+      return t;
+    }
+
+    async function loadIn(reset=false){
+      const qs = new URLSearchParams();
+      const src = $('src').value; const q = $('q').value.trim();
+      if (src) qs.set('source', src); if (q) qs.set('q', q); if (!reset && nextIn) qs.set('cursor', nextIn);
+      const r = await fetch('/api/webhooks/in?'+qs.toString(), { credentials:'include' });
+      const j = await r.json(); nextIn = j.nextCursor || null;
+      if (reset) $('inRows').innerHTML = '';
+      (j.rows||[]).forEach(x => $('inRows').appendChild(inRow(x)));
+      $('moreIn').disabled = !nextIn;
+    }
+
+    async function loadDel(reset=false){
+      const qs = new URLSearchParams();
+      const inId = $('inId').value.trim(); const st = $('status').value;
+      if (inId) qs.set('in_id', inId); if (st) qs.set('status', st); if (!reset && nextDel) qs.set('cursor', nextDel);
+      const r = await fetch('/api/webhooks/deliveries?'+qs.toString(), { credentials:'include' });
+      const j = await r.json(); nextDel = j.nextCursor || null;
+      if (reset) $('delRows').innerHTML = '';
+      (j.rows||[]).forEach(x => $('delRows').appendChild(delRow(x)));
+      $('moreDel').disabled = !nextDel;
+    }
+
+    $('apply').addEventListener('click', ()=> loadIn(true));
+    $('applyD').addEventListener('click', ()=> loadDel(true));
+    $('proc').addEventListener('click', async ()=>{
+      await fetch('/api/webhooks/process_once', { method:'POST', credentials:'include' });
+      loadDel(true);
+    });
+    $('moreIn').addEventListener('click', ()=> loadIn(false));
+    $('moreDel').addEventListener('click', ()=> loadDel(false));
+    $('btnRefresh').addEventListener('click', ()=>{ loadIn(true); loadDel(true); });
+
+    loadIn(true); loadDel(true);
+  </script>
+</body>
+</html>

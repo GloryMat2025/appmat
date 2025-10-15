@@ -1,0 +1,29 @@
+﻿[
+  {
+    "id": "p001",
+    "name": { "en": "Asam Pedas", "bm": "Asam Pedas" },
+    "price": 10.0,
+    "img": "assets/images/products/placeholder.jpg",
+    "category": "johor",
+    "description": { "en": "A spicy tamarind fish stew.", "bm": "Ikan masak asam pedas." },
+    "tags": ["halal", "spicy"]
+  },
+  {
+    "id": "p002",
+    "name": { "en": "Laksa Johor", "bm": "Laksa Johor" },
+    "price": 9.5,
+    "img": "assets/images/products/placeholder.jpg",
+    "category": "johor",
+    "description": { "en": "Spaghetti with fish-based gravy.", "bm": "Spaghetti dengan kuah ikan." },
+    "tags": ["halal", "noodle"]
+  },
+  {
+    "id": "p003",
+    "name": { "en": "Mee Bandung", "bm": "Mee Bandung" },
+    "price": 8.0,
+    "img": "assets/images/products/placeholder.jpg",
+    "category": "johor",
+    "description": { "en": "Noodle in rich prawn broth.", "bm": "Mi dengan kuah udang yang kaya." },
+    "tags": ["halal"]
+  }
+]

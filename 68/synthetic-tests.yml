@@ -1,0 +1,55 @@
+name: Synthetic Slot Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'BASE_URL for the running server (e.g., https://staging.example.com)'
+        required: true
+      tenant:
+        description: 'Optional tenant override'
+        required: false
+  push:
+    paths:
+      - 'public/config/suites/**.json'
+      - 'server/tools/**.js'
+      - '.github/workflows/synthetic-tests.yml'
+
+jobs:
+  run-suites:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps (server)
+        working-directory: server
+        run: npm ci || npm install
+
+      - name: Run all suites
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url || secrets.SYNTHETIC_BASE_URL }}
+          AUTH_COOKIE: ${{ secrets.SYNTHETIC_AUTH_COOKIE }}
+          TENANT: ${{ github.event.inputs.tenant }}
+        run: node server/tools/run-suites-ci.js
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-test-results
+          path: artifacts/
+\
+      - name: Slack notify (optional)
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        env:
+          WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          payload='{"text":"Synthetic Slot Tests: *'$JOB_STATUS'*\n<'$RUN_URL'|View run>"}'
+          curl -X POST -H 'Content-type: application/json' --data "$payload" "$WEBHOOK"

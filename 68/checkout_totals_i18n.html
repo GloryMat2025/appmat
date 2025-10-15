@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checkout Totals – i18n</title>
+<style>
+  :root{ --bg:#0f172a; --card:#0b1020; --muted:#94a3b8; --fg:#e5e7eb; --brand:#3a6d9b; --brand2:#2E7AA6; --ok:#22c55e; --danger:#ef4444; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:var(--fg)}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1f2937;background:linear-gradient(180deg,#0f172a,#0c1422)}
+  h1{margin:0;font-size:1.05rem}
+  .right{display:flex;gap:10px;align-items:center}
+  .pill{border:1px solid #223045;border-radius:999px;padding:6px 10px;background:#0c1627;color:#cfe7ff;cursor:pointer;user-select:none}
+  .pill.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+  .wrap{max-width:980px;margin:20px auto;padding:0 16px;display:grid;grid-template-columns:2fr 1fr;gap:16px}
+  .section{background:var(--card);border:1px solid #1f2937;border-radius:14px;padding:14px}
+  .row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+  .muted{color:var(--muted)}
+  .items{display:flex;flex-direction:column;gap:10px}
+  .item{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid #1f2937;border-radius:10px;background:#0a1322}
+  .thumb{width:64px;height:48px;background:#0b1424;border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .name{font-weight:800}
+  .qty{display:inline-flex;align-items:center;border:1px solid #243041;border-radius:10px;overflow:hidden}
+  .qty button{background:#0a1322;color:#dbeafe;border:0;width:28px;height:28px;font-weight:800;cursor:pointer}
+  .qty input{width:40px;text-align:center;background:#0a1322;border:0;color:#e5e7eb;height:28px}
+  .price{font-weight:800}
+  .del{cursor:pointer;border:0;background:#1b2436;color:#fca5a5;border:1px solid #3b1e24;padding:6px 10px;border-radius:8px}
+  .summary{display:flex;flex-direction:column;gap:8px}
+  .summary .line{display:flex;justify-content:space-between;align-items:center}
+  .total{font-size:1.1rem;font-weight:900}
+  .btn.primary{width:100%;padding:12px;border-radius:10px;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+  .btn[disabled]{opacity:.55;cursor:not-allowed;filter:grayscale(.35)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid #223045;background:#0c1627;color:#cfe7ff;font-size:.8rem}
+  .warn{color:#fde68a}
+  .err{color:#fecaca}
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="checkout.title">Checkout</h1>
+    <div class="right">
+      <div class="pill active" id="langEN">EN</div>
+      <div class="pill" id="langBM">BM</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="section">
+      <div class="row">
+        <strong data-i18n="checkout.outlet_label">Outlet</strong>
+        <button id="editOutlet" class="pill" data-i18n="checkout.edit">Edit</button>
+      </div>
+      <div id="outletSummary" class="muted" data-i18n="checkout.no_outlet">No outlet selected</div>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <strong data-i18n="checkout.address_label">Delivery Address</strong>
+        <button id="editAddress" class="pill" data-i18n="checkout.edit">Edit</button>
+      </div>
+      <div id="addressSummary" class="muted" data-i18n="checkout.no_address">No delivery address yet</div>
+    </div>
+
+    <div class="section" style="grid-column: 1 / span 2;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong>Items</strong>
+        <span class="badge" id="cartCount">0</span>
+      </div>
+      <div id="items" class="items"></div>
+    </div>
+
+    <div class="section">
+      <div class="summary">
+        <div class="line"><span>Subtotal</span><span id="subTotal">—</span></div>
+        <div class="line"><span>Delivery</span><span id="deliveryFee">—</span></div>
+        <div class="line"><span>Discount</span><span id="discountAmt">—</span></div>
+        <div class="line total"><span>Total</span><span id="grandTotal">—</span></div>
+        <button id="payBtn" class="btn primary" disabled data-i18n="checkout.pay_now">Pay Now</button>
+      </div>
+    </div>
+  </div>
+
+<script src="i18n.loader.js"></script>
+<script>
+I18NLoader.init({ defaultLang: 'en', fallback: 'en', sources: { en: 'i18n/en.json', bm: 'i18n/bm.json' } });
+
+const PRODUCTS_URL = 'products_min.json';  // replace with your products.json
+const PRICEBOOK_URL = 'pricebook.csv';
+const INVENTORY_URL = 'inventory.csv';
+const CART_KEY = 'demo.cart';
+const DEFAULT_OUTLET = 'JOH01';
+
+const fmtMYR = n => new Intl.NumberFormat('ms-MY',{style:'currency',currency:'MYR'}).format(n||0);
+const $ = s => document.querySelector(s);
+
+function readJSON(key, fallback=null){ try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; } }
+function writeJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+/* ===== Data Stores ===== */
+let PRODUCTS = [];
+let PRICEBOOK = [];
+let INVENTORY = [];
+let CART = readJSON(CART_KEY, []);
+
+/* ===== CSV Parser ===== */
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(!lines.length) return [];
+  const hdrs = lines[0].split(',').map(h=>h.trim());
+  return lines.slice(1).filter(Boolean).map(line=>{
+    const cols = line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(s=>s.replace(/^"|"$/g,''));
+    const o = {};
+    hdrs.forEach((h,i)=> o[h] = (cols[i]??'').trim());
+    if('price' in o) o.price = Number(o.price||0);
+    if('on_hand' in o) o.on_hand = Number(o.on_hand||0);
+    if('safety_stock' in o) o.safety_stock = Number(o.safety_stock||0);
+    return o;
+  });
+}
+
+function outletId(){
+  try{ const o = JSON.parse(localStorage.getItem('app.outlet')||'null'); return o?.id || DEFAULT_OUTLET; }
+  catch{ return DEFAULT_OUTLET; }
+}
+function effectivePrice(productId, outlet){
+  const today = new Date().toISOString().slice(0,10);
+  const rows = PRICEBOOK.filter(r => r.outlet_id===outlet && r.product_id===productId);
+  for(const r of rows){
+    const start = r.start_date || '0000-01-01';
+    const end   = r.end_date   || '9999-12-31';
+    const avail = String(r.is_available||'true').toLowerCase() === 'true';
+    if(start <= today && today <= end) return { price:r.price, currency:r.currency||'MYR', available:avail };
+  }
+  if(rows[0]) return { price: rows[0].price, currency: rows[0].currency||'MYR', available:String(rows[0].is_available||'true').toLowerCase()==='true' };
+  return { price:null, currency:'MYR', available:true };
+}
+function stockInfo(productId, outlet){
+  const r = INVENTORY.find(x => x.outlet_id===outlet && x.product_id===productId);
+  if(!r) return { on_hand:null, safety_stock:null };
+  return { on_hand: Number(r.on_hand||0), safety_stock: Number(r.safety_stock||0) };
+}
+
+function findProduct(id){ return PRODUCTS.find(p => p.id===id); }
+
+/* ===== Render Items ===== */
+function renderOutletAddress(){
+  // Outlet
+  const outlet = readJSON('app.outlet');
+  const outEl = $('#outletSummary');
+  if(outlet){
+    outEl.textContent = `${outlet.name} (${outlet.id}${outlet.region? ' – '+outlet.region:''})`;
+    outEl.classList.remove('muted');
+  }else{
+    outEl.setAttribute('data-i18n','checkout.no_outlet'); outEl.textContent = I18NLoader.t('checkout.no_outlet');
+    outEl.classList.add('muted');
+  }
+  // Address
+  const addr = readJSON('app.addr');
+  const addrEl = $('#addressSummary');
+  if(addr){
+    const line = [addr.name, `(${addr.phone})`, [addr.addr1, addr.addr2].filter(Boolean).join(', '), addr.city, addr.postcode, addr.state].filter(Boolean).join(' · ');
+    addrEl.textContent = line;
+    addrEl.classList.remove('muted');
+  }else{
+    addrEl.setAttribute('data-i18n','checkout.no_address'); addrEl.textContent = I18NLoader.t('checkout.no_address');
+    addrEl.classList.add('muted');
+  }
+}
+function renderItems(){
+  const oId = outletId();
+  $('#outletSummary').dataset.outletId = oId;
+  $('#cartCount').textContent = CART.reduce((n,x)=>n+(Number(x.qty)||0),0);
+  const host = $('#items');
+  if(!CART.length){ host.innerHTML = `<div class="muted">${I18NLoader.t('common.empty')}</div>`; return; }
+  host.innerHTML = CART.map(({id, qty}) => {
+    const p = findProduct(id) || {};
+    const eprice = effectivePrice(id, oId);
+    const inv = stockInfo(id, oId);
+    const canBuy = eprice.available && (inv.on_hand==null || inv.on_hand>0);
+    const price = (eprice.price!=null? eprice.price : (p.price ?? p.base_price ?? 0));
+    const name = I18NLoader.lang==='bm' ? (p.name_bm || p.name_en || p.name || id) : (p.name_en || p.name_bm || p.name || id);
+    const img = p.image || (p.images && p.images[0]);
+    const stockBadge = (inv.on_hand==null) ? '' :
+      (inv.on_hand<=0 ? `<span class="badge err">${I18NLoader.t('common.out_of_stock')}</span>` :
+       (inv.safety_stock!=null && inv.on_hand<=inv.safety_stock ? `<span class="badge warn">${I18NLoader.t('common.low_stock')}</span>` :
+         `<span class="badge">${I18NLoader.t('common.in_stock')}</span>`));
+    const availBadge = eprice.available ? '' : `<span class="badge err">${I18NLoader.t('common.unavailable')}</span>`;
+    return `
+    <div class="item" data-id="${id}" data-canbuy="${canBuy}">
+      <div class="thumb">${img ? `<img alt="${name}" src="${img}" onerror="this.remove()">` : '<span>—</span>'}</div>
+      <div>
+        <div class="name">${name}</div>
+        <div class="muted">${stockBadge} ${availBadge}</div>
+        <div class="qty" style="margin-top:6px">
+          <button class="qminus">−</button>
+          <input class="qinput" type="number" value="${qty}" min="1" max="99" />
+          <button class="qplus">+</button>
+        </div>
+      </div>
+      <div>
+        <div class="price">${fmtMYR(price)}</div>
+        <div class="muted" style="text-align:right">x ${qty}</div>
+        <button class="del" style="margin-top:6px">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ===== Totals ===== */
+function computeTotals(){
+  const oId = outletId();
+  let subtotal = 0;
+  for(const {id, qty} of CART){
+    const p = findProduct(id) || {};
+    const eprice = effectivePrice(id, oId);
+    const price = (eprice.price!=null? eprice.price : (p.price ?? p.base_price ?? 0));
+    subtotal += price * (Number(qty)||0);
+  }
+  // Placeholder fees/discounts (customize as needed)
+  const delivery = subtotal > 0 ? 5.00 : 0.00;
+  const discount = 0.00;
+  const total = Math.max(0, subtotal + delivery - discount);
+  $('#subTotal').textContent = fmtMYR(subtotal);
+  $('#deliveryFee').textContent = fmtMYR(delivery);
+  $('#discountAmt').textContent = fmtMYR(discount);
+  $('#grandTotal').textContent = fmtMYR(total);
+  const outlet = readJSON('app.outlet'); const addr = readJSON('app.addr');
+  $('#payBtn').disabled = !(outlet && addr && CART.length);
+}
+
+function syncCart(){
+  writeJSON(CART_KEY, CART);
+  renderItems();
+  computeTotals();
+}
+
+/* ===== Events ===== */
+document.getElementById('items').addEventListener('click', (e)=>{
+  const item = e.target.closest('.item'); if(!item) return;
+  const id = item.getAttribute('data-id');
+  const idx = CART.findIndex(x => x.id===id);
+  const qtyInput = item.querySelector('.qinput');
+  const getQty = () => Math.max(1, Math.min(99, parseInt(qtyInput.value || '1', 10)));
+
+  if(e.target.classList.contains('qminus')){ qtyInput.value = Math.max(1, getQty()-1); CART[idx].qty = Number(qtyInput.value); syncCart(); }
+  if(e.target.classList.contains('qplus')) { qtyInput.value = Math.min(99, getQty()+1); CART[idx].qty = Number(qtyInput.value); syncCart(); }
+  if(e.target.classList.contains('del'))   { CART.splice(idx,1); syncCart(); }
+});
+document.getElementById('items').addEventListener('change', (e)=>{
+  const item = e.target.closest('.item'); if(!item) return;
+  if(e.target.classList.contains('qinput')){
+    const id = item.getAttribute('data-id');
+    const idx = CART.findIndex(x => x.id===id);
+    CART[idx].qty = Math.max(1, Math.min(99, parseInt(e.target.value || '1', 10)));
+    syncCart();
+  }
+});
+
+document.getElementById('editOutlet').addEventListener('click', ()=> location.href='modal_outlet_delivery.html');
+document.getElementById('editAddress').addEventListener('click', ()=> location.href='modal_outlet_delivery.html');
+window.addEventListener('i18n:change', ()=>{ renderOutletAddress(); renderItems(); computeTotals(); });
+document.addEventListener('DOMContentLoaded', async ()=>{
+  try{
+    const [pr, pb, inv] = await Promise.all([ fetch(PRODUCTS_URL), fetch(PRICEBOOK_URL), fetch(INVENTORY_URL) ]);
+    PRODUCTS = await pr.json();
+    PRICEBOOK = parseCSV(await pb.text());
+    INVENTORY = parseCSV(await inv.text());
+  }catch(e){ console.error(e); }
+  renderOutletAddress();
+  renderItems();
+  computeTotals();
+});
+</script>
+</body>
+</html>

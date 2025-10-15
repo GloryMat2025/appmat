@@ -1,0 +1,8 @@
+{
+  "categoryLeadMinutes": {
+    "cake": 2880,
+    "catering": 1440,
+    "custom": 720,
+    "hot-food": 120
+  }
+}

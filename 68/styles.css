@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Opsyenal: scrollbar cantik utk desktop preview */
+*::-webkit-scrollbar { width:8px; height:8px }
+*::-webkit-scrollbar-thumb { background:#d8dee9; border-radius:999px }
+
+/* Accessibility: Improve dark mode contrast for formerly slate-400 usages */
+.dark .text-slate-400 { --tw-text-opacity:1; color:rgb(203 213 225 / var(--tw-text-opacity)); }
+/* Provide a semantic alias for muted text in dark mode */
+.dark .text-muted, .dark [data-muted="true"] { color:rgb(203 213 225 / 1); }
+
+/* -------------------------------------------------------------------------- */
+/* Custom Reset & Layout Layer (placeholder)
+	 The user-provided custom reset / layout / hero / product grid CSS snippet
+	 will live inside this @layer base block so it merges cleanly with Tailwind
+	 preflight without being purged.
+	 TODO: Replace placeholder comments with actual snippet when supplied.      */
+@layer base {
+	/* Example structure (remove when real snippet added):
+	html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+	body { font-feature-settings: "kern"; }
+	.hero { @apply relative flex items-center justify-center min-h-[40vh]; }
+	.product-grid { @apply grid gap-4 grid-cols-2 sm:grid-cols-3; }
+	.translate-widget { @apply fixed bottom-4 right-4; }
+	*/
+}
+
+/* Skeleton animation utility */
+@layer utilities {
+	.animate-pulse-fast { animation: pulse-fast 1s ease-in-out infinite; }
+	@keyframes pulse-fast { 0%,100% { opacity:.55 } 50% { opacity:1 } }
+}
+
+/* Toast container layering */
+@layer components {
+	.toast-container { @apply fixed z-50 inset-x-0 bottom-4 flex flex-col items-center gap-2 pointer-events-none; }
+	.toast { @apply pointer-events-auto select-none px-4 py-3 rounded-xl shadow-lg text-sm font-medium flex items-center gap-3 bg-slate-900 text-white dark:bg-slate-800/90 backdrop-blur; }
+	.toast-success { @apply bg-emerald-600 dark:bg-emerald-600 text-white; }
+	.toast-error { @apply bg-red-600 dark:bg-red-600 text-white; }
+	.toast-info { @apply bg-sky-600 dark:bg-sky-600 text-white; }
+}
+
+/* ETA Progress Bar Styles */
+@layer components {
+	.eta-progress-bar {
+		@apply w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden shadow-inner;
+		position: relative;
+	}
+	.eta-progress-bar-inner {
+		@apply h-full rounded-full transition-all duration-500;
+		background: linear-gradient(90deg, #38bdf8 0%, #06b6d4 100%);
+		width: 0%;
+	}
+	.eta-progress-label {
+		@apply absolute left-1/2 top-1/2 text-xs font-semibold text-slate-700 dark:text-slate-200;
+		transform: translate(-50%, -50%);
+		pointer-events: none;
+	}
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "kb",
+    "name": "Outlet Kota Bharu",
+    "address": "Lot 12, Jalan Sultanah Zainab, 15000 Kota Bharu, Kelantan",
+    "state": "Kelantan",
+    "lat": 6.125,
+    "lng": 102.238,
+    "openHours": "10:00–22:00"
+  },
+  {
+    "id": "kj",
+    "name": "Outlet Kubang Kerian",
+    "address": "PT 88, Kubang Kerian, 16150 Kota Bharu, Kelantan",
+    "state": "Kelantan",
+    "lat": 6.094,
+    "lng": 102.286,
+    "openHours": "10:00–22:00"
+  },
+  {
+    "id": "tm",
+    "name": "Outlet Tumpat",
+    "address": "Jalan Hamzah, 16200 Tumpat, Kelantan",
+    "state": "Kelantan",
+    "lat": 6.198,
+    "lng": 102.170,
+    "openHours": "10:00–21:00"
+  }
+]

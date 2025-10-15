@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checkout – i18n Loader</title>
+<style>
+  :root{ --bg:#0f172a; --card:#111827; --muted:#94a3b8; --fg:#e5e7eb; --brand:#3a6d9b; --brand2:#2E7AA6; --ok:#22c55e; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#e5e7eb}
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #1f2937;background:linear-gradient(180deg,#0f172a,#0c1422)}
+  h1{margin:0;font-size:1.05rem}
+  .right{display:flex;gap:10px;align-items:center}
+  .pill{border:1px solid #223045;border-radius:999px;padding:6px 10px;background:#0c1627;color:#cfe7ff;cursor:pointer;user-select:none}
+  .pill.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+  .wrap{max-width:980px;margin:20px auto;padding:0 16px}
+  .section{background:#0b1020;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:14px}
+  .row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .muted{color:var(--muted)}
+  .actions{display:flex;justify-content:flex-end;margin-top:10px}
+  .btn.primary{padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,var(--brand),var(--brand2));color:#07131c;border:0;font-weight:800}
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="checkout.title">Checkout</h1>
+    <div class="right">
+      <div class="pill active" id="langEN">EN</div>
+      <div class="pill" id="langBM">BM</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="section">
+      <div class="row">
+        <strong data-i18n="checkout.outlet_label">Outlet</strong>
+        <button id="editOutlet" class="pill" data-i18n="checkout.edit">Edit</button>
+      </div>
+      <div id="outletSummary" class="muted" data-i18n="checkout.no_outlet">No outlet selected</div>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <strong data-i18n="checkout.address_label">Delivery Address</strong>
+        <button id="editAddress" class="pill" data-i18n="checkout.edit">Edit</button>
+      </div>
+      <div id="addressSummary" class="muted" data-i18n="checkout.no_address">No delivery address yet</div>
+    </div>
+
+    <div class="section">
+      <strong>Order</strong>
+      <div id="orderSummary" class="muted">—</div>
+      <div class="actions">
+        <button id="payBtn" class="btn primary" disabled data-i18n="checkout.pay_now">Pay Now</button>
+      </div>
+    </div>
+  </div>
+
+<script src="i18n.loader.js"></script>
+<script>
+I18NLoader.init({ defaultLang: 'en', fallback: 'en', sources: { en: 'i18n/en.json', bm: 'i18n/bm.json' } });
+
+function read(key, fallback=null){ try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; } }
+function render(){
+  const outlet = read('app.outlet');
+  const addr = read('app.addr');
+  const cart = read('demo.cart', []);
+
+  const outEl = document.getElementById('outletSummary');
+  if(outlet){
+    outEl.textContent = `${outlet.name} (${outlet.id}${outlet.region? ' – '+outlet.region:''})`;
+    outEl.classList.remove('muted');
+  }else{
+    outEl.setAttribute('data-i18n','checkout.no_outlet'); outEl.textContent = I18NLoader.t('checkout.no_outlet');
+    outEl.classList.add('muted');
+  }
+
+  const addrEl = document.getElementById('addressSummary');
+  if(addr){
+    const line = [addr.name, `(${addr.phone})`, [addr.addr1, addr.addr2].filter(Boolean).join(', '), addr.city, addr.postcode, addr.state].filter(Boolean).join(' · ');
+    addrEl.textContent = line;
+    addrEl.classList.remove('muted');
+  }else{
+    addrEl.setAttribute('data-i18n','checkout.no_address'); addrEl.textContent = I18NLoader.t('checkout.no_address');
+    addrEl.classList.add('muted');
+  }
+
+  const orderEl = document.getElementById('orderSummary');
+  if(cart && cart.length){
+    const totalQty = cart.reduce((n,x)=>n+(Number(x.qty)||0),0);
+    orderEl.textContent = `${totalQty} ${I18NLoader.lang==='bm' ? 'item dalam troli' : 'items in cart'}`;
+  }else{
+    orderEl.textContent = I18NLoader.t('common.empty');
+  }
+
+  document.getElementById('payBtn').disabled = !(outlet && addr && cart && cart.length);
+}
+document.getElementById('editOutlet').addEventListener('click', ()=> location.href='modal_outlet_delivery.html');
+document.getElementById('editAddress').addEventListener('click', ()=> location.href='modal_outlet_delivery.html');
+window.addEventListener('i18n:change', render);
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>

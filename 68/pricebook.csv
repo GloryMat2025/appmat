@@ -1,0 +1,3 @@
+outlet_id,product_id,price,currency,is_available,start_date,end_date
+JOH01,prd-001,10.00,MYR,true,2025-01-01,
+JOH01,prd-002,6.00,MYR,false,2025-10-01,2025-10-20

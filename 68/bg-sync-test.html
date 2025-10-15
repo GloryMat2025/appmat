@@ -1,0 +1,63 @@
+<!doctype html><html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BG Sync Test</title>
+  <link rel="stylesheet" href="/assets/tailwind.css">
+</head>
+<body class="min-h-screen bg-gray-50 p-4">
+  <h1 class="text-lg font-semibold">Background Sync test</h1>
+  <form id="f" class="mt-3 grid gap-2 max-w-md">
+    <input id="msg" class="rounded-lg ring-1 ring-gray-300 px-3 py-2" placeholder="Type any message">
+    <button class="rounded-xl bg-black text-white px-4 py-2">Send</button>
+  </form>
+  <p id="out" class="mt-3 text-sm text-gray-700"></p>
+
+  <script>
+    async function postJSON(url, data){
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
+      const isQueued = res.status === 202;
+      return { isQueued, json: await res.json().catch(()=>({})) };
+    }
+
+    const f = document.getElementById("f");
+    const out = document.getElementById("out");
+    f.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      const msg = document.getElementById("msg").value || "(empty)";
+      const { isQueued } = await postJSON("/api/feedback", { message: msg, ts: Date.now() });
+      out.textContent = isQueued
+        ? "🟡 Offline: request queued; it will auto-send when back online."
+        : "🟢 Online: sent immediately.";
+    });
+
+    // manual retry button (optional)
+    if (navigator.serviceWorker?.controller) {
+      const b = document.createElement("button");
+      b.className = "mt-3 text-[12px] underline";
+      b.textContent = "Force retry queued requests";
+      b.onclick = () => navigator.serviceWorker.controller.postMessage("retry-sync");
+      document.body.appendChild(b);
+    }
+
+    // Listen for background sync flush notifications
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", (e) => {
+        if (e.data?.type === "bg-sync:flushed") {
+          out.textContent = `✅ Flushed ${e.data.count} queued request(s) to the server.`;
+        }
+      });
+    }
+
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("message", (e) => {
+        if (e.data?.type === "bg-sync:flushed") {
+          out.textContent = `✅ Flushed ${e.data.count} queued request(s) to the server.`;
+        }
+      });
+    }
+  </script>
+</body></html>

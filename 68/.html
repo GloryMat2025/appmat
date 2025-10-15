@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — Category Prep Buffers</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+<style>
+textarea.code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Admin — Category Prep Buffers</div>
+    <nav class="text-sm">
+      <a href="/assets/pages/dev/business-hours-settings.html" class="text-blue-600">Settings</a>
+      <span class="mx-2">•</span>
+      <a href="/assets/pages/dev/category-buffers-demo.html" class="text-blue-600">Demo</a>
+    </nav>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="rounded-xl border bg-white p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h1 class="font-semibold">category-rules.json</h1>
+        <div id="roleBadge"></div>
+      </div>
+
+      <p class="text-sm text-gray-600 mb-3">Define extra lead minutes per category. Example:
+      <code class="bg-gray-50 border rounded px-1">{"categoryLeadMinutes":{"cake":2880,"catering":1440}}</code></p>
+
+      <div class="grid md:grid-cols-2 gap-3 mb-3">
+  <div class="border rounded-lg p-3">
+    <div class="text-sm font-medium mb-2">Quick Edit — Outlet override</div>
+    <div class="flex items-center gap-2 mb-2">
+      <input id="outletId" class="border rounded px-2 py-1 text-sm w-full" placeholder="outlet id (e.g., damansara)">
+      <button id="loadOutlet" class="px-2 py-1 rounded border text-sm">Load</button>
+    </div>
+    <div class="grid grid-cols-2 gap-2 text-sm">
+      <label class="flex items-center gap-2"><span class="w-24">cake</span><input id="ov-cake" type="number" class="border rounded px-2 py-1 w-full" placeholder="minutes"></label>
+      <label class="flex items-center gap-2"><span class="w-24">catering</span><input id="ov-catering" type="number" class="border rounded px-2 py-1 w-full" placeholder="minutes"></label>
+      <label class="flex items-center gap-2"><span class="w-24">custom</span><input id="ov-custom" type="number" class="border rounded px-2 py-1 w-full" placeholder="minutes"></label>
+      <label class="flex items-center gap-2"><span class="w-24">hot-food</span><input id="ov-hot" type="number" class="border rounded px-2 py-1 w-full" placeholder="minutes"></label>
+    </div>
+    <div class="mt-2 flex items-center gap-2">
+      <button id="applyOutlet" class="px-2 py-1 rounded bg-gray-900 text-white text-sm">Apply to JSON</button>
+      <button id="clearOutlet" class="px-2 py-1 rounded border text-sm">Remove override</button>
+    </div>
+    <div class="text-xs text-gray-500 mt-1">This panel edits <code>outletOverrides[&lt;outletId&gt;].categoryLeadMinutes</code> in the JSON below.</div>
+  </div>
+  <div>
+    <textarea id="editor" rows="16" class="code w-full border rounded-lg p-3" spellcheck="false"></textarea>
+  </div>
+</div>
+
+      <div class="mt-3 flex items-center gap-2">
+        <button id="save" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Save to Server</button>
+        <button id="format" class="px-3 py-2 rounded-lg border">Format</button>
+        <a id="historyLink" href="#" class="px-3 py-2 rounded-lg border admin-only">History</a>
+        <div id="msg" class="text-sm text-gray-600 ml-2"></div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border bg-white p-4 admin-only">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold">History</h2>
+        <button id="refresh" class="px-3 py-2 rounded-lg border">Refresh</button>
+      </div>
+      <div id="list" class="space-y-2"></div>
+    </div>
+  </main>
+
+<script type="module">
+import { applyRoleGate } from "/assets/js/role-gate.js";
+import { postJSON } from "/assets/js/audit-client.js";
+
+async function getRules(){
+  const r = await fetch('/api/config/category-rules', { credentials:'include', cache:'no-store' });
+  return r.json();
+}
+async function backups(){
+  const r = await fetch('/api/config/category-rules/backups', { credentials:'include', cache:'no-store' });
+  return r.json();
+}
+async function restore(file){
+  if (!confirm('Restore ' + file + ' ? This will overwrite category-rules.json')) return;
+  const r = await postJSON('/api/config/category-rules/restore', { file });
+  if (r.ok){ await load(); } else { alert('Restore failed'); }
+}
+
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs)) (k==='class') ? x.className=v : x.setAttribute(k,v);
+  for (const c of children) x.appendChild(typeof c==='string' ? document.createTextNode(c) : c);
+  return x;
+}
+
+async function renderBackups(){
+  const mount = document.getElementById('list');
+  mount.innerHTML = '';
+  const data = await backups();
+  if (!data.ok){ mount.textContent = 'Failed to load backups.'; return; }
+  data.backups.forEach(b => {
+    const row = el('div',{class:'flex items-center justify-between border rounded-lg p-3'});
+    row.append(
+      el('div',{},
+        el('div',{class:'font-mono text-sm'}, b.file),
+        el('div',{class:'text-xs text-gray-500'}, `${(b.bytes/1024).toFixed(1)} KB • ${new Date(b.ts).toLocaleString()}`)
+      ),
+      el('div',{},
+        (()=>{ const btn = el('button',{class:'px-3 py-1.5 rounded-lg border bg-white admin-only restore-link'},'Restore'); btn.onclick=()=>restore(b.file); return btn; })()
+      )
+    );
+    mount.append(row);
+  });
+}
+
+async function load(){
+  const badge = await applyRoleGate({ roleBadge: '#roleBadge', adminSelectors: ['#save', '.admin-only'] });
+  const res = await getRules();
+  const ed = document.getElementById('editor');
+  ed.value = JSON.stringify(res.data || { categoryLeadMinutes: {} }, null, 2);
+  await renderBackups();
+}
+
+document.getElementById('format').onclick = ()=>{
+  const ed = document.getElementById('editor');
+  try{ ed.value = JSON.stringify(JSON.parse(ed.value), null, 2); }catch(e){ alert('Invalid JSON'); }
+};
+
+document.getElementById('save').onclick = async ()=>{
+  const msg = document.getElementById('msg');
+  msg.textContent = '';
+  let obj = null;
+  try{ obj = JSON.parse(document.getElementById('editor').value); }catch(e){ alert('Invalid JSON'); return; }
+  const res = await postJSON('/api/config/category-rules', obj);
+  if (res.ok) msg.textContent = 'Saved.'; else msg.textContent = 'Save failed';
+};
+
+document.getElementById('refresh').onclick = renderBackups;
+
+const ed = () => document.getElementById('editor');
+function readObj(){ try{ return JSON.parse(ed().value); }catch{return null;} }
+function writeObj(obj){ ed().value = JSON.stringify(obj, null, 2); }
+
+document.getElementById('loadOutlet').onclick = ()=>{
+  const id = document.getElementById('outletId').value.trim();
+  if (!id) return;
+  const obj = readObj(); if (!obj) return alert('Invalid JSON');
+  const base = (obj.outletOverrides && obj.outletOverrides[id] && obj.outletOverrides[id].categoryLeadMinutes) || {};
+  document.getElementById('ov-cake').value = base.cake ?? '';
+  document.getElementById('ov-catering').value = base.catering ?? '';
+  document.getElementById('ov-custom').value = base.custom ?? '';
+  document.getElementById('ov-hot').value = base['hot-food'] ?? '';
+};
+
+document.getElementById('applyOutlet').onclick = ()=>{
+  const id = document.getElementById('outletId').value.trim();
+  if (!id) return;
+  const obj = readObj(); if (!obj) return alert('Invalid JSON');
+  obj.outletOverrides = obj.outletOverrides || {};
+  const m = {};
+  const cake = parseInt(document.getElementById('ov-cake').value||''); if (!isNaN(cake)) m.cake = cake;
+  const catering = parseInt(document.getElementById('ov-catering').value||''); if (!isNaN(catering)) m.catering = catering;
+  const custom = parseInt(document.getElementById('ov-custom').value||''); if (!isNaN(custom)) m.custom = custom;
+  const hot = parseInt(document.getElementById('ov-hot').value||''); if (!isNaN(hot)) m['hot-food'] = hot;
+  if (Object.keys(m).length === 0){ return alert('Enter at least one value'); }
+  obj.outletOverrides[id] = { categoryLeadMinutes: m };
+  writeObj(obj);
+};
+
+document.getElementById('clearOutlet').onclick = ()=>{
+  const id = document.getElementById('outletId').value.trim();
+  if (!id) return;
+  const obj = readObj(); if (!obj) return alert('Invalid JSON');
+  if (obj.outletOverrides) delete obj.outletOverrides[id];
+  writeObj(obj);
+};
+load();
+</script>
+</body>
+</html>

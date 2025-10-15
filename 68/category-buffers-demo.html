@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Category Lead Buffers — Demo</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+</head>
+<body class="min-h-screen bg-gray-50">
+  <header class="bg-white border-b p-3 flex items-center justify-between">
+    <div class="font-semibold">Category Buffers Demo</div>
+    <div class="flex items-center gap-3">
+      <select id="outletSelect" class="border rounded-lg px-2 py-1 text-sm"></select>
+      <select id="modeSelect" class="border rounded-lg px-2 py-1 text-sm">
+        <option value="pickup">Pickup</option>
+        <option value="delivery">Delivery</option>
+      </select>
+      <input id="dateInput" type="date" class="border rounded-lg px-2 py-1 text-sm">
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-4 space-y-4">
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="rounded-xl border bg-white p-4 space-y-2">
+        <h2 class="font-semibold">Cart Categories</h2>
+        <label class="flex items-center gap-2"><input type="checkbox" class="cat" value="cake"> Cake (+48h)</label>
+        <label class="flex items-center gap-2"><input type="checkbox" class="cat" value="catering"> Catering (+24h)</label>
+        <label class="flex items-center gap-2"><input type="checkbox" class="cat" value="custom"> Custom (+12h)</label>
+        <label class="flex items-center gap-2"><input type="checkbox" class="cat" value="hot-food"> Hot food (+2h)</label>
+        <div class="text-xs text-gray-500">These simulate items in the cart that need extra prep lead time.</div>
+      </div>
+      <div class="rounded-xl border bg-white p-4">
+        <h2 class="font-semibold mb-2">Available Days</h2>
+        <div id="calendar"></div>
+      </div>
+      <div class="rounded-xl border bg-white p-4">
+        <h2 class="font-semibold mb-2">Slots</h2>
+        <div id="slotMount"></div>
+        <div id="validateBanner" class="mt-2"></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initOutletHoursUI } from "/assets/js/outlet-hours-integration.js";
+    import { initSlotPicker } from "/assets/js/slot-picker.js";
+    import { initDateGuard } from "/assets/js/date-guard.js";
+    import { setCartCategories } from "/assets/js/cart-categories.js";
+    import { bindValidationToCheckout } from "/assets/js/slot-validation-client.js";
+
+    initOutletHoursUI({ outletSelect: "#outletSelect" });
+    document.getElementById("dateInput").valueAsDate = new Date();
+
+    function syncCats(){
+      const cats = Array.from(document.querySelectorAll('.cat:checked')).map(i=>i.value);
+      setCartCategories(cats);
+      document.getElementById("dateInput").dispatchEvent(new Event("change"));
+    }
+    document.querySelectorAll('.cat').forEach(cb => cb.addEventListener('change', syncCats));
+    syncCats();
+
+    initDateGuard({
+      outletSelect: "#outletSelect",
+      modeSelect: "#modeSelect",
+      dateInput: "#dateInput",
+      calendarMount: "#calendar",
+      months: 2
+    });
+
+    initSlotPicker({
+      mount: "#slotMount",
+      outletSelect: "#outletSelect",
+      modeSelect: "#modeSelect",
+      dateInput: "#dateInput"
+    });
+
+    const fakeBtn = document.createElement('button');
+    fakeBtn.id = 'validateBtn';
+    document.body.appendChild(fakeBtn);
+    bindValidationToCheckout({ btnSelector: "#validateBtn", bannerSelector: "#validateBanner" });
+  </script>
+</body>
+</html>

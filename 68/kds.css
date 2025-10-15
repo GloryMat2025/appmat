@@ -1,0 +1,13 @@
+.kds-wrap { display:grid; gap:12px }
+.kds-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+.kds-cols { display:grid; gap:12px; grid-template-columns:repeat(3, 1fr) }
+.kds-col { border:1px solid var(--border); border-radius:12px; padding:8px; min-height:260px; background:var(--card) }
+.kds-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-weight:800 }
+.kds-list { display:grid; gap:8px; min-height:180px }
+.kds-card { border:1px solid var(--border); border-radius:10px; padding:8px; background: var(--surface,#fff); cursor:grab }
+.kds-card:active { cursor:grabbing }
+.kds-badge { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border:1px solid var(--border); border-radius:999px; font-variant-numeric:tabular-nums }
+.kds-eta-late { background: rgba(239,68,68,.12); border-color:#ef4444 }
+.kds-drop { outline:2px dashed #3b82f6; outline-offset: -6px }
+.kds-cancel { border:1px dashed #ef4444; color:#ef4444; background: rgba(239,68,68,.04) }
+.kds-footer { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px }

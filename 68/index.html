@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#ff5a5f" />
+  <title>Pickup Order</title>
+  <link rel="stylesheet" href="/assets/tailwind.min.css" />
+</head>
+<body class="min-h-screen bg-gray-100 text-gray-900 flex flex-col items-center justify-center p-4">
+  <nav class="flex justify-center gap-4 mt-4 mb-6">
+    <a href="/assets/popups/set-your-address.html" class="text-blue-600 hover:underline font-semibold" id="pickupNavDelivery">Penghantaran</a>
+    <a href="/assets/popups/select-your-outlet.html" class="text-blue-600 hover:underline font-semibold" id="pickupNavPickup">Pengambilan</a>
+  </nav>
+  <main class="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 mt-8">
+    <h1 class="text-2xl font-bold mb-4 text-center">Pickup Order</h1>
+    <form class="space-y-4" autocomplete="off">
+      <div>
+        <label for="pickup-location" class="block text-sm font-medium mb-1">Pickup Location</label>
+        <select id="pickup-location" name="pickup-location" class="w-full rounded border-gray-300 focus:ring-blue-500">
+          <option value="">Select a location</option>
+          <option value="main">Main Outlet</option>
+          <option value="mall">Mall Branch</option>
+          <option value="drive">Drive-Thru</option>
+        </select>
+      </div>
+      <div>
+        <label for="pickup-time" class="block text-sm font-medium mb-1">Pickup Time</label>
+        <input type="time" id="pickup-time" name="pickup-time" class="w-full rounded border-gray-300 focus:ring-blue-500" required />
+      </div>
+      <div>
+        <label for="pickup-name" class="block text-sm font-medium mb-1">Your Name</label>
+        <input type="text" id="pickup-name" name="pickup-name" class="w-full rounded border-gray-300 focus:ring-blue-500" placeholder="Enter your name" required />
+      </div>
+      <button type="submit" class="w-full py-2 rounded bg-blue-600 text-white font-semibold mt-2">Confirm Pickup</button>
+    </form>
+    <div class="mt-6 text-center">
+      <a href="/menu.html" class="text-blue-600 hover:underline">&larr; Back to Menu</a>
+    </div>
+  </main>
+  <script>
+
+    // Top nav click handlers for Penghantaran and Pengambilan
+    document.getElementById('pickupNavDelivery')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.open('/assets/popups/set-your-address.html', 'setAddress', 'width=400,height=600,modal=yes,alwaysRaised=yes');
+    });
+    document.getElementById('pickupNavPickup')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.open('/assets/popups/select-your-outlet.html', 'selectOutlet', 'width=400,height=600,modal=yes,alwaysRaised=yes');
+    });
+    document.querySelector('form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const loc = document.getElementById('pickup-location').value;
+      const time = document.getElementById('pickup-time').value;
+      const name = document.getElementById('pickup-name').value;
+      // Store in localStorage for later use
+      localStorage.setItem('pickupDetails', JSON.stringify({ location: loc, time, name, ts: Date.now() }));
+      const main = document.querySelector('main');
+      main.innerHTML = `
+        <div class="flex flex-col items-center justify-center min-h-[300px]">
+          <svg class="w-16 h-16 text-green-500 mb-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/><path d="M8 12l2 2 4-4" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+          <h2 class="text-xl font-bold mb-2">Pickup Confirmed!</h2>
+          <div class="bg-gray-50 rounded-xl p-4 w-full max-w-xs text-left mb-4">
+            <div class="mb-1"><span class="font-semibold">Name:</span> ${name}</div>
+            <div class="mb-1"><span class="font-semibold">Location:</span> ${loc ? (loc.charAt(0).toUpperCase() + loc.slice(1).replace('-', ' ')) : '-'}</div>
+            <div class="mb-1"><span class="font-semibold">Time:</span> ${time || '-'}</div>
+          </div>
+          <a href="/menu.html" class="text-blue-600 hover:underline">&larr; Back to Menu</a>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>

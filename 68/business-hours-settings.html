@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Hours — Settings (Admin)</title>
+<link rel="stylesheet" href="/assets/tailwind.min.css">
+<style>
+  body{ background:#f7f7f8; }
+  .card{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:16px; }
+  .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid #e5e7eb; }
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .grid-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .grid-4{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input, select, textarea{ padding:8px 10px; border:1px solid #e5e7eb; border-radius:10px; width:100%; }
+  label{ font-size:12px; color:#6b7280; }
+  .btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; cursor:pointer; }
+  .btn.primary{ background:#111827; color:#fff; border-color:#111827; }
+  .btn.warn{ border-color:#ef4444; color:#ef4444; }
+  table{ width:100%; border-collapse:separate; border-spacing:0 6px; }
+  th{ text-align:left; font-size:12px; color:#6b7280; padding:6px 8px; }
+  td{ background:#fff; border:1px solid #e5e7eb; padding:8px; }
+  .chip{ font-size:12px; padding:2px 8px; border:1px solid #e5e7eb; border-radius:999px; }
+  .mini{ width:110px; }
+  .small{ width:160px; }
+</style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-xl font-bold">Business Hours — Settings (Admin)</h1>
+      <div class="row">
+        <button id="download" class="btn">Download JSON</button>
+        <button id="copy" class="btn">Copy JSON</button>
+        <button id="saveServer" class="btn primary">Save to Server</button>
+        <a href="/assets/pages/dev/business-hours-outlets.html" class="btn">Preview Outlets</a>
+      </div>
+    </div>
+
+    <div class="card grid-3">
+      <div>
+        <label>Timezone</label>
+        <input id="tz" placeholder="Asia/Kuala_Lumpur">
+      </div>
+      <div>
+        <label>Slot minutes</label>
+        <input id="slotMinutes" type="number" min="5" step="5">
+      </div>
+      <div class="row" style="align-items:flex-end;">
+        <button id="resetGlobal" class="btn">Reset Global to 10:00–23:00</button>
+      </div>
+      <div class="col-span-3">
+        <label>Global weekly hours</label>
+        <div id="globalHours" class="grid-4"></div>
+      </div>
+      <div class="col-span-3">
+        <label>Global exceptions</label>
+        <div id="globalEx" class="space-y-2"></div>
+        <button id="addGlobalEx" class="btn">+ Add exception</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <h2 class="font-semibold text-lg">Outlets</h2>
+        <button id="addOutlet" class="btn primary">+ Add Outlet</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="w-40">ID</th>
+            <th class="w-64">Label</th>
+            <th>Weekly Hours</th>
+            <th>Exceptions</th>
+            <th class="w-24">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="outletRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <label>schedule.json</label>
+      <textarea id="jsonOut" rows="10" readonly></textarea>
+    </div>
+  </div>
+
+<script type="module">
+import { loadSchedule } from "/assets/js/schedule-utils.v2.js";
+import { jsonDiff, postJSON, emitAudit } from "/assets/js/audit-client.js";
+
+const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+function el(tag, attrs={}, ...children){
+  const x = document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)) {
+    if (k === "class") x.className = v; else x.setAttribute(k,v);
+  }
+  for(const c of children) x.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  return x;
+}
+
+function timeInput(value="10:00"){ const i = el("input",{type:"time"}); i.value = value; i.className="mini"; return i; }
+function boolSelect(val=true){ const s = el("select",{},
+  el("option",{value:"true"},"Open"),
+  el("option",{value:"false"},"Closed")
+); s.value = String(val); return s; }
+
+function hoursRow(obj={}, label){
+  const row = el("div",{class:"row"});
+  row.append(el("span",{class:"chip small"}, label));
+  const open = boolSelect(obj.open ?? true); open.className="small";
+  const start = timeInput(obj.start ?? "10:00");
+  const end = timeInput(obj.end ?? "23:00");
+  row.append(open, start, end);
+  return { row, open, start, end };
+}
+
+function exceptionRow(ex={} ){
+  const wrap = el("div",{class:"row"});
+  const date = el("input",{type:"date", value: ex.date || ""});
+  const openSel = boolSelect(ex.open !== false); // default true
+  const start = timeInput(ex.start || "10:00");
+  const end = timeInput(ex.end || "23:00");
+  const reason = el("input",{placeholder:"Reason", value: ex.reason || ""});
+  const del = el("button",{class:"btn warn"},"Delete");
+  wrap.append(el("span",{class:"chip"},"Date"), date, el("span",{class:"chip"},"Open?"), openSel, start, end, reason, del);
+  del.onclick = () => wrap.remove();
+  return { wrap, date, openSel, start, end, reason };
+}
+
+function readHours(container){
+  const groups = container.querySelectorAll(".row");
+  return Array.from(groups).map(g => {
+    const sel = g.querySelector("select");
+    const times = g.querySelectorAll('input[type="time"]');
+    const label = g.querySelector(".chip").textContent;
+    return { day: label, open: sel.value === "true", start: times[0].value || "10:00", end: times[1].value || "23:00" };
+  });
+}
+
+function readExceptions(container){
+  const rows = container.querySelectorAll(".row");
+  const out = [];
+  rows.forEach(r => {
+    const date = r.querySelector('input[type="date"]').value;
+    const openSel = r.querySelector('select').value === "true";
+    const [start, end] = r.querySelectorAll('input[type="time"]');
+    const reason = r.querySelector('input[placeholder="Reason"]').value.trim();
+    const ex = { date, open: openSel };
+    if (openSel){ ex.start = start.value || "10:00"; ex.end = end.value || "23:00"; }
+    if (reason) ex.reason = reason;
+    if (date) out.push(ex);
+  });
+  return out;
+}
+
+function renderGlobal(cfg){
+  document.getElementById("tz").value = cfg.timezone || "";
+  document.getElementById("slotMinutes").value = cfg.slotMinutes || 30;
+  const gh = document.getElementById("globalHours"); gh.innerHTML = "";
+  (cfg.weeklyHours || dayNames.map(d => ({day:d, open:true, start:"10:00", end:"23:00"}))).forEach(h => {
+    const {row, open, start, end} = hoursRow(h, h.day);
+    gh.appendChild(row);
+  });
+  const ge = document.getElementById("globalEx"); ge.innerHTML = "";
+  (cfg.exceptions || []).forEach(ex => {
+    const x = exceptionRow(ex); ge.appendChild(x.wrap);
+  });
+}
+
+function renderOutlets(cfg){
+  const tb = document.getElementById("outletRows"); tb.innerHTML = "";
+  const outlets = cfg.outlets || {};
+  Object.keys(outlets).forEach(id => {
+    tb.appendChild(renderOutletRow(cfg, id, outlets[id]));
+  });
+}
+
+function renderOutletRow(cfg, id, o){
+  const tr = el("tr",{});
+  const tdId = el("td",{}, id);
+  const tdLabel = el("td",{});
+  const labelInp = el("input",{value: o.label || id});
+  tdLabel.appendChild(labelInp);
+
+  // weekly hours
+  const tdWH = el("td",{});
+  const grid = el("div",{class:"grid-4"});
+  const controls = {};
+  dayNames.forEach(d => {
+    const base = (o.weeklyHours || [])[dayNames.indexOf(d)] || {day:d, open:true, start:"10:00", end:"23:00"};
+    const {row, open, start, end} = hoursRow(base, d);
+    controls[d] = {open, start, end};
+    grid.appendChild(row);
+  });
+  tdWH.appendChild(grid);
+
+  // exceptions
+  const tdEx = el("td",{});
+  const exWrap = el("div",{class:"space-y-2"});
+  (o.exceptions || []).forEach(ex => {
+    exWrap.appendChild(exceptionRow(ex).wrap);
+  });
+  const addEx = el("button",{class:"btn"},"+ Add exception");
+  addEx.onclick = () => exWrap.appendChild(exceptionRow({}).wrap);
+  tdEx.append(exWrap, addEx);
+
+  const tdActions = el("td",{});
+  const del = el("button",{class:"btn warn"},"Delete");
+  del.onclick = () => tr.remove();
+  tdActions.appendChild(del);
+
+  tr.append(tdId, tdLabel, tdWH, tdEx, tdActions);
+  // Attach a helper to read values later
+  tr._read = () => {
+    const weekly = dayNames.map(d => ({
+      day: d,
+      open: controls[d].open.value === "true",
+      start: controls[d].start.value || "10:00",
+      end: controls[d].end.value || "23:00"
+    }));
+    const exceptions = readExceptions(exWrap);
+    return {
+      id,
+      label: labelInp.value.trim() || id,
+      weeklyHours: weekly,
+      exceptions
+    };
+  };
+  return tr;
+}
+
+function collect(){
+  const cfg = {};
+  cfg.version = 2;
+  cfg.timezone = document.getElementById("tz").value || "Asia/Kuala_Lumpur";
+  cfg.slotMinutes = Math.max(5, parseInt(document.getElementById("slotMinutes").value) || 30);
+  cfg.weeklyHours = readHours(document.getElementById("globalHours"));
+  cfg.exceptions = readExceptions(document.getElementById("globalEx"));
+  // outlets
+  const rows = Array.from(document.querySelectorAll("#outletRows > tr"));
+  if (rows.length){
+    cfg.outlets = {};
+    rows.forEach(r => {
+      const v = r._read();
+      cfg.outlets[v.id] = { label: v.label, weeklyHours: v.weeklyHours, exceptions: v.exceptions };
+    });
+  }
+  document.getElementById("jsonOut").value = JSON.stringify(cfg, null, 2);
+  return cfg;
+}
+
+function downloadJSON(){
+  const blob = new Blob([document.getElementById("jsonOut").value], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "schedule.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyJSON(){ navigator.clipboard.writeText(document.getElementById("jsonOut").value); }
+
+(async () => {
+  const cfg = await loadSchedule("/config/schedule.json");
+  renderGlobal(cfg);
+  renderOutlets(cfg);
+  // Initial collect
+  collect();
+
+  
+  async function saveToServer(){
+    try{
+      // Load current server config for diff
+      const currentRes = await fetch('/config/schedule.json', { cache:'no-store', credentials:'include' });
+      const current = await currentRes.json().catch(()=>null);
+
+      const payload = collect(); // current editor JSON
+      const diff = jsonDiff(current, payload);
+
+      // POST to server (requires auth + admin)
+      await postJSON('/api/schedule', payload);
+
+      // Emit audit
+      await emitAudit({
+        type: 'settings.save',
+        message: `Saved schedule.json (${diff.length} changes)`,
+        meta: { changes: diff.slice(0, 100) } // truncate in case of huge diff
+      });
+
+      alert('Saved successfully.');
+    }catch(e){
+      console.error(e);
+      alert('Save failed: ' + e.message);
+    }
+  }
+  document.getElementById("saveServer").onclick = saveToServer;
+
+  // Wire handlers
+  document.getElementById("addGlobalEx").onclick = () => { 
+    const ge = document.getElementById("globalEx");
+    ge.appendChild(exceptionRow({}).wrap);
+    collect();
+  };
+  document.getElementById("resetGlobal").onclick = () => {
+    const gh = document.getElementById("globalHours");
+    gh.innerHTML = "";
+    ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].forEach(d => {
+      gh.appendChild(hoursRow({open:true,start:"10:00",end:"23:00"}, d).row);
+    });
+    collect();
+  };
+  document.getElementById("addOutlet").onclick = () => {
+    const id = prompt("New outlet ID (slug):", "new_outlet");
+    if (!id) return;
+    const row = renderOutletRow(cfg, id, { label: id, weeklyHours: null, exceptions: [] });
+    document.getElementById("outletRows").appendChild(row);
+    collect();
+  };
+  document.addEventListener("input", (e) => {
+    if (e.target.matches("input, select, textarea")) collect();
+  });
+  document.getElementById("download").onclick = downloadJSON;
+  document.getElementById("copy").onclick = copyJSON;
+})();
+</script>
+</body>
+</html>

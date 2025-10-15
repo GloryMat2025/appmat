@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>appmat – Bilingual Site Map (BM/EN)</title>
+<style>
+  :root{--brand:#3a6d9b;--brand2:#2E7AA6;--bg:#0e1422;--card:#0f172a;--fg:#e6edf3;--muted:#94a3b8;--stroke:#203044;}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(120deg,#0b1222,#0e1422);color:var(--fg)}
+  .wrap{max-width:1100px;margin:24px auto;padding:16px}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  h1{margin:0;font-weight:800;letter-spacing:.2px}
+  .lang{display:flex;gap:8px}
+  button{border:1px solid var(--stroke);background:#0b1424;color:#cfe7ff;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+  button.active{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#05121a}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+  .card{background:linear-gradient(180deg,#101a2e,var(--card));border:1px solid var(--stroke);border-radius:14px;padding:14px}
+  h3{margin:0 0 8px;color:#cfe7ff}
+  a{color:#c7d2fe;text-decoration:none} a:hover{text-decoration:underline}
+  ul{margin:8px 0 0 18px}
+  .pill{display:inline-block;padding:4px 8px;border:1px solid var(--stroke);border-radius:999px;margin-left:8px;color:#cbd5e1}
+  .footer{margin-top:18px;color:var(--muted);font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">appmat – Site Map</h1>
+    <div class="lang">
+      <button id="btnEN" class="active">EN</button>
+      <button id="btnBM">BM</button>
+    </div>
+  </header>
+  <p id="subtitle" class="sub">Click to open pages. Use the language toggle to change labels.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3 id="coreHead">Core Pages</h3>
+      <ul>
+        <li><a href="public/menu.html" data-en="Menu" data-bm="Menu">Menu</a></li>
+        <li><a href="public/cart.html" data-en="Cart" data-bm="Troli">Cart</a></li>
+        <li><a href="public/checkout.html" data-en="Checkout" data-bm="Checkout">Checkout</a></li>
+        <li><a href="public/orders.html" data-en="Orders" data-bm="Pesanan">Orders</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 id="userHead">User & Rewards</h3>
+      <ul>
+        <li><a href="public/rewards.html" data-en="Rewards" data-bm="Ganjaran">Rewards</a></li>
+        <li><a href="public/account.html" data-en="Account" data-bm="Akaun">Account</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 id="opsHead">Operations</h3>
+      <ul>
+        <li><a href="public/reports.html" data-en="Reports" data-bm="Laporan">Reports</a></li>
+        <li><a href="public/offline.html">Offline Page</a> <span class="pill">PWA</span></li>
+        <li><a href="public/manifest.webmanifest">Web Manifest</a> <span class="pill">PWA</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3 id="flowHead">Popups & Flows</h3>
+      <ul>
+        <li><a href="public/popups/select-your-outlet.html" data-en="Select Your Outlet (Popup)" data-bm="Pilih Cawangan (Popup)">Select Your Outlet (Popup)</a></li>
+        <li><a href="public/pickup/index.html" data-en="Pickup – Select Outlet" data-bm="Pickup – Pilih Cawangan">Pickup – Select Outlet</a></li>
+        <li><a href="public/delivery/index.html" data-en="Delivery – Address" data-bm="Delivery – Alamat">Delivery – Address</a></li>
+        <li><a href="public/delivery/confirm.html" data-en="Delivery – Confirm" data-bm="Delivery – Sahkan">Delivery – Confirm</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer" id="footer">Save this as sitemap_appmat_bilingual.html at your project root.</p>
+</div>
+
+<script>
+  const en = {
+    title:"appmat – Site Map",
+    subtitle:"Click to open pages. Use the language toggle to change labels.",
+    core:"Core Pages",
+    user:"User & Rewards",
+    ops:"Operations",
+    flow:"Popups & Flows",
+    footer:"Save this as sitemap_appmat_bilingual.html at your project root."
+  };
+  const bm = {
+    title:"appmat – Peta Halaman",
+    subtitle:"Klik untuk membuka halaman. Guna togol bahasa untuk tukar label.",
+    core:"Halaman Teras",
+    user:"Pengguna & Ganjaran",
+    ops:"Operasi",
+    flow:"Popups & Aliran",
+    footer:"Simpan sebagai sitemap_appmat_bilingual.html di root projek anda."
+  };
+
+  const btnEN = document.getElementById('btnEN');
+  const btnBM = document.getElementById('btnBM');
+
+  const title = document.getElementById('title');
+  const subtitle = document.getElementById('subtitle');
+  const coreHead = document.getElementById('coreHead');
+  const userHead = document.getElementById('userHead');
+  const opsHead = document.getElementById('opsHead');
+  const flowHead = document.getElementById('flowHead');
+  const footer = document.getElementById('footer');
+
+  const setLang = (lang) => {
+    const dict = lang === 'bm' ? bm : en;
+    title.textContent = dict.title;
+    subtitle.textContent = dict.subtitle;
+    coreHead.textContent = dict.core;
+    userHead.textContent = dict.user;
+    opsHead.textContent = dict.ops;
+    flowHead.textContent = dict.flow;
+    footer.textContent = dict.footer;
+
+    document.querySelectorAll('a[data-en]').forEach(a => {
+      a.textContent = lang === 'bm' ? a.getAttribute('data-bm') : a.getAttribute('data-en');
+    });
+
+    if(lang === 'bm'){
+      btnBM.classList.add('active'); btnEN.classList.remove('active');
+      document.documentElement.lang = 'ms';
+    }else{
+      btnEN.classList.add('active'); btnBM.classList.remove('active');
+      document.documentElement.lang = 'en';
+    }
+  };
+
+  btnEN.addEventListener('click', ()=> setLang('en'));
+  btnBM.addEventListener('click', ()=> setLang('bm'));
+</script>
+</body>
+</html>
