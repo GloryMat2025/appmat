@@ -1,0 +1,25 @@
+
+<div id="modal-pickup" class="modal" aria-hidden="true">
+  <div class="sheet">
+    <div class="container">
+      <h3>Select Pickup Outlet</h3>
+      <div class="grid grid-2" id="pickup-outlets"></div>
+      <p><a href="#" class="btn" data-close="#modal-pickup">Close</a></p>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const outlets = [
+    {id:'KB', name:'Kota Bharu'},
+    {id:'DAB', name:'Dabong'},
+    {id:'MCH', name:'Machang'}
+  ];
+  const list = document.getElementById('pickup-outlets');
+  if(list){
+    list.innerHTML = outlets.map(o=>\`
+      <div class="card"><strong>\${o.name}</strong><br/><button class="btn btn-primary" data-close="#modal-pickup">Select</button></div>
+    \`).join('');
+  }
+});
+</script>

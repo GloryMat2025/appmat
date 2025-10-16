@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Menu — appmat</title>
+<link rel="stylesheet" href="/assets/css/base.css" />
+<script defer src="/assets/js/app.js"></script>
+</head>
+<body>
+<header site-part class="site"></header>
+<main class="container">
+
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>Menu</h1>
+    <div><a href="#" class="btn" data-open="#modal-delivery">Delivery</a> <a href="#" class="btn" data-open="#modal-pickup">Pickup</a></div>
+  </div>
+  <nav class="tabs">
+    <a href="#" class="active">Drinks</a>
+    <a href="#">Foods</a>
+  </nav>
+  <div class="grid grid-3" id="menu-grid"></div>
+  <script>
+  (async function(){
+    const res = await fetch('/data/products.json'); const items = await res.json();
+    const grid = document.getElementById('menu-grid');
+    grid.innerHTML = items.map(p=>\`
+      <a href="#" class="card" data-open="#modal-product" onclick="document.getElementById('pd-name').textContent='\${p.name}';document.getElementById('pd-price').textContent='RM'+p.price.toFixed(2)">
+        <div style="height:120px;background:#f8fafc;border-radius:12px;margin-bottom:8px"></div>
+        <strong>\${p.name}</strong><br/><span class="badge">RM \${p.price.toFixed(2)}</span>
+      </a>\`
+    ).join('');
+  })();
+  </script>
+  
+</main>
+<footer site-part class="site"></footer>
+<div id="modals"></div>
+  <script>
+    (async function(){
+      const host = '/components/modals/';
+      const names = ['delivery.html','pickup.html','product-detail.html'];
+      const res = await Promise.all(names.map(n=>fetch(host+n).then(r=>r.text())));
+      document.getElementById('modals').innerHTML = res.join('\n');
+    })();
+  </script>
+</body>
+</html>

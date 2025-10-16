@@ -1,0 +1,23 @@
+[
+  {
+    "id": "D01",
+    "name": "Iced Latte",
+    "price": 9.9,
+    "img": "/assets/img/latte.webp",
+    "cat": "Drinks"
+  },
+  {
+    "id": "D02",
+    "name": "Americano",
+    "price": 7.9,
+    "img": "/assets/img/americano.webp",
+    "cat": "Drinks"
+  },
+  {
+    "id": "F01",
+    "name": "Croissant",
+    "price": 6.5,
+    "img": "/assets/img/croissant.webp",
+    "cat": "Foods"
+  }
+]
