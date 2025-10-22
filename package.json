@@ -4,6 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "vite",
     "capture": "node tools/capture.mjs",
     "capture:skip": "node tools/capture.mjs --skip-on-error",
     "capture:persistent": "node tools/capture.mjs --persistent",
@@ -14,39 +15,47 @@
     "report:latest:zip": "node tools/report-latest-shots.mjs --zip",
     "report:latest:all": "node tools/report-latest-shots.mjs --make-html --zip",
 
-  "compare:latest": "node tools/compare-runs.mjs",
-  "compare:runs": "node tools/compare-runs.mjs --runs=",
+    "compare:latest": "node tools/compare-runs.mjs",
+    "compare:runs": "node tools/compare-runs.mjs --runs=",
 
     "shots:newest": "node scripts/newest-shots.mjs",
     "shots:mock": "node scripts/mock-shots.mjs --label=local --count=3",
-  "shots:report": "node tools/report-latest-shots.mjs",
-  "shots:zip": "node scripts/zip-latest.mjs",
-  "shots:merge": "node tools/merge-reports.mjs",
+    "shots:report": "node tools/report-latest-shots.mjs",
+    "shots:zip": "node scripts/zip-latest.mjs",
+    "shots:merge": "node tools/merge-reports.mjs",
     "shots:comment": "node scripts/pr-comment-latest.mjs",
     "hc": "node scripts/health-check.mjs",
     "shots:all": "node tools/report-latest-shots.mjs --make-html --zip",
+
     "traces:latest": "node tools/traces-latest.mjs",
-  "capture:shard": "node tools/capture.mjs --skip-on-error --shards=$SHARDS --shard=$SHARD --concurrency=$CONCURRENCY",
-  "merge:reports": "node tools/merge-reports.mjs",
-  "fast:local": "CONCURRENCY=2 node tools/capture.mjs --skip-on-error",
+    "capture:shard": "node tools/capture.mjs --skip-on-error --shards=$SHARDS --shard=$SHARD --concurrency=$CONCURRENCY",
+    "merge:reports": "node tools/merge-reports.mjs",
+    "fast:local": "CONCURRENCY=2 node tools/capture.mjs --skip-on-error",
+
     "traces:prune:newest": "TRACE_SCOPE=newest TRACE_KEEP_PER_RUN=40 TRACE_MAX_MB=150 node tools/traces-prune.mjs",
     "traces:prune:all": "TRACE_SCOPE=all TRACE_KEEP_PER_RUN=20 TRACE_MAX_MB=100 node tools/traces-prune.mjs",
-  "shots:prune": "KEEP_LAST=10 node tools/shots-prune.mjs",
+    "shots:prune": "KEEP_LAST=10 node tools/shots-prune.mjs",
+
     "rerun:failed": "node tools/rerun-failed.mjs",
-    "rerun:failed:stable": "REUSE_PERSISTENT=1 DEFAULT_TIMEOUT_MS=15000 NAV_TIMEOUT_MS=45000 IDLE_WAIT_MS=12000 node tools/rerun-failed.mjs"
-  ,"notify:latest": "node tools/notify-latest.mjs",
-  "notify:latest:dry": "DRY_RUN=1 node tools/notify-latest.mjs",
-  "s3:latest": "node tools/s3-upload-latest.mjs",
-  "s3:latest:dry": "DRY_RUN=1 node tools/s3-upload-latest.mjs",
-  "summary:latest": "node tools/summary-latest.mjs"
-    ,"delta:latest": "node tools/delta-report.mjs",
+    "rerun:failed:stable": "REUSE_PERSISTENT=1 DEFAULT_TIMEOUT_MS=15000 NAV_TIMEOUT_MS=45000 IDLE_WAIT_MS=12000 node tools/rerun-failed.mjs",
+
+    "notify:latest": "node tools/notify-latest.mjs",
+    "notify:latest:dry": "DRY_RUN=1 node tools/notify-latest.mjs",
+
+    "s3:latest": "node tools/s3-upload-latest.mjs",
+    "s3:latest:dry": "DRY_RUN=1 node tools/s3-upload-latest.mjs",
+
+    "summary:latest": "node tools/summary-latest.mjs",
+
+    "delta:latest": "node tools/delta-report.mjs",
     "delta:guard": "MAX_CHANGED=999 MAX_SIZE_PCT=25 node tools/delta-report.mjs",
     "delta:warn": "cross-env WARN_ONLY=1 node tools/delta-report.mjs",
     "delta:policy": "cross-env POLICY_FILE=tools/delta-policy.json node tools/delta-report.mjs",
     "delta:baseline": "cross-env BASELINE_RUN=CHANGE_ME node tools/delta-report.mjs",
-  "baseline:get": "node tools/baseline-get.mjs",
-  "baseline:set": "node tools/baseline-set.mjs",
-  "baseline:set:latest": "node tools/baseline-set-latest.mjs"
+
+    "baseline:get": "node tools/baseline-get.mjs",
+    "baseline:set": "node tools/baseline-set.mjs",
+    "baseline:set:latest": "node tools/baseline-set-latest.mjs"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
