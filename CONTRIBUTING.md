@@ -48,3 +48,29 @@ PR checklist
 - [ ] If you changed any script that previously used `child_process`, did you migrate it to `scripts/lib/run.mjs`?
 
 If you need help migrating scripts or want an automated migration PR, open an issue or ping the maintainers.
+
+How to run captures locally
+
+- Ensure the dev server is running (default: http://localhost:5173):
+
+```bash
+pnpm run dev
+```
+
+- Run the minimal capture script (saves output under the ignored `shots/` directory):
+
+```bash
+node tools/capture.mjs
+# optional flags: --skip-on-error, --persistent
+```
+
+Release changelog
+
+- The release workflow (`.github/release.yml`) runs the `metcalfc/changelog-generator` step on tag pushes and wires the generated changelog into the GitHub Release body automatically. To trigger it, push a tag like:
+
+```bash
+git tag v1.2.3
+git push origin --tags
+```
+
+- If you want the changelog included as an asset instead of the body, ask and I can add an upload step to the workflow.
