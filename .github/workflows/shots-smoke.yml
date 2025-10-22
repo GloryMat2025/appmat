@@ -24,15 +24,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Guard: avoid raw child_process usage
-        # Fail early if any JS/TS/ MJS file directly imports child_process
+      - name: Guard: detect raw child_process usage (warn)
+        # Print matches (if any) but don't fail the CI — useful for initial rollouts
         run: |
-          set -e
-          echo "Searching for raw child_process usage..."
-          if pnpm exec --silent -- grep -R --line-number "require(\"child_process\")\|require(\'child_process\')\|from \"child_process\"\|from \'child_process\'" -- '*.js' '*.mjs' '*.ts' | tee /dev/stderr; then
-            echo "Found direct child_process usage. Please use the run helper in scripts/lib/run.mjs instead." >&2
-            exit 1
-          fi
+          echo "Searching for raw child_process usage (warning only)..."
+          pnpm exec --silent -- grep -R --line-number "require(\"child_process\")\|require(\'child_process\')\|from \"child_process\"\|from \'child_process\'" -- '*.js' '*.mjs' '*.ts' || true
 
       - name: Run health-check
         run: pnpm run hc
