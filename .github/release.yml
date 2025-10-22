@@ -26,6 +26,15 @@ jobs:
           fi
           echo "✅ Shots artifacts verified."
 
+      - name: Check commit message for release keyword
+        run: |
+          last_msg=$(git log -1 --pretty=%B)
+          echo "Last commit: $last_msg"
+          if [[ "$last_msg" != *"release:"* ]]; then
+            echo "⏹️ Commit does not contain 'release:' keyword, skipping release."
+            exit 0
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
