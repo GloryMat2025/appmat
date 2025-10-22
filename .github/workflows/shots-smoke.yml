@@ -1,0 +1,38 @@
+name: Shots smoke
+
+on:
+  pull_request:
+  push:
+    branches: [ main, shots-final-no-patches ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Guard: avoid raw child_process usage
+        # Fail early if any JS/TS/ MJS file directly imports child_process
+        run: |
+          set -e
+          echo "Searching for raw child_process usage..."
+          if pnpm exec --silent -- grep -R --line-number "require(\"child_process\")\|require(\'child_process\')\|from \"child_process\"\|from \'child_process\'" -- '*.js' '*.mjs' '*.ts' | tee /dev/stderr; then
+            echo "Found direct child_process usage. Please use the run helper in scripts/lib/run.mjs instead." >&2
+            exit 1
+          fi
+
+      - name: Run health-check
+        run: pnpm run hc
