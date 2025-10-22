@@ -48,6 +48,10 @@ jobs:
         with:
           mytoken: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Persist changelog to file
+        run: |
+          echo "${{ steps.changelog.outputs.changelog }}" > CHANGELOG.md || true
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
