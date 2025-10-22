@@ -60,11 +60,28 @@ jobs:
             echo "❌ Gallery missing. Release aborted."
             exit 1
           fi
-          if ! ls shots/*.zip > /dev/null 2>&1; then
-            echo "❌ No zip artifacts found. Release aborted."
+          # Ensure gallery has at least one <img>
+          if ! grep -qi '<img' shots/gallery.html; then
+            echo "❌ Gallery exists but contains no <img> tags. Release aborted."
             exit 1
           fi
-          echo "✅ Shots artifacts verified."
+
+          # Ensure there is at least one non-trivial zip (>= 1KB)
+          found_large_zip=0
+          for f in shots/*.zip; do
+            [ -f "$f" ] || continue
+            size=$(stat -c%s "$f" 2>/dev/null || echo 0)
+            echo "zip: $f -> ${size} bytes"
+            if [ "$size" -ge 1024 ]; then
+              found_large_zip=1
+              break
+            fi
+          done
+          if [ "$found_large_zip" -ne 1 ]; then
+            echo "❌ No zip artifacts >= 1KB found. Release aborted."
+            exit 1
+          fi
+          echo "✅ Shots artifacts verified (gallery contains images and zip size OK)."
 
       - name: Generate changelog
         id: changelog
