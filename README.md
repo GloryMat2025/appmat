@@ -104,6 +104,153 @@ Runs on every push/PR to `main` or `shots-final`.
   ```
 
 ### **2️⃣ Version bump – `version-bump.yml`**
+- Runs on pushes to `main`. Uses `standard-version`/`standard-version` style bumping to update `package.json` and `CHANGELOG.md`, commit the changes and push a `vX.Y.Z` tag.
+
+### **3️⃣ Release – `release.yml`**
+Runs automatically whenever a tag is pushed (v1.1.0, etc.)
+
+**Features:**
+
+- Validates `shots/` artifacts exist (gallery + zip)
+- Optionally checks for `release:` keyword in the last commit message to gate releases
+- Generates changelog (using `metcalfc/changelog-generator`)
+- Publishes a GitHub Release and uploads HTML + ZIP files
+
+---
+
+## 🔖 Version Bump & Auto CHANGELOG
+
+The `version-bump.yml` workflow automates semantic version increments and changelog updates.
+
+Commit prefix -> version bump mapping:
+
+| Commit prefix | Version bump |
+|---------------|--------------|
+| `fix:`        | Patch        |
+| `feat:`       | Minor        |
+| `BREAKING CHANGE:` | Major   |
+
+What the workflow does:
+
+1. Scans recent commit messages on `main`.
+2. Determines the appropriate bump level (major/minor/patch) from prefixes.
+3. Runs `standard-version` (or equivalent) to update `package.json` and `CHANGELOG.md`.
+4. Commits the updated files and pushes a tag `vX.Y.Z`.
+5. The tag push triggers the `release.yml` workflow which performs release generation and artifact upload.
+
+Notes:
+- Ensure commit messages follow the prefix convention above; otherwise, no bump will be performed.
+- You can override automatic bumps by creating a PR with the desired version changes, but the CI flow expects the tag push to trigger releases.
+
+---
+
+If you'd like, I can add a short `CONTRIBUTING.md` explaining commit message conventions and how to trigger a release (e.g., commit message examples and tag push instructions).
+# 🚀 Appmat Automation
+
+[![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
+[![Release Workflow](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml)
+[![Version Bump](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml)
+
+---
+
+## 🧭 Overview
+
+**Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
+It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
+
+---
+
+## 🧩 Features
+
+- 🧪 **Automated Shots & Reports** via Playwright or mock runs  
+- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions  
+- 🧱 **Auto Version Bump** (based on commit messages)  
+- 🧾 **Auto CHANGELOG.md** generation  
+- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts  
+- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes  
+
+---
+
+## 🗂 Folder Structure
+
+```
+index.html
+package.json
+pnpm-lock.yaml
+README.md
+tailwind.config.js
+appmat/
+    index.html
+    package.json
+    public/
+    src/
+        counter.js
+        main.js
+        style.css
+assets/
+    css/
+        base.css
+    js/
+        app.js
+components/
+    footer.html
+    header.html
+    modals/
+        delivery.html
+        pickup.html
+        product-detail.html
+data/
+    outlets.json
+    products.json
+pages/
+    account.html
+    cart.html
+    checkout.html
+    home.html
+    menu.html
+    rewards.html
+scripts/
+    fix-all.js
+src/
+    index.css
+```
+
+---
+
+## ▶️ Usage
+
+Run a mock capture locally (fast):
+
+```bash
+pnpm run shots:mock
+```
+
+Run the full capture/report pipeline (requires Playwright browsers & dev server):
+
+```bash
+pnpm run capture  # uses tools/capture.mjs to produce screenshots/traces
+pnpm run shots:report
+pnpm run shots:zip
+```
+
+---
+
+## 🧪 CI/CD Workflows
+
+### **1️⃣ Smoke Test – `shots-smoke.yml`**
+Runs on every push/PR to `main` or `shots-final`.
+
+**Steps:**
+- Install dependencies via `pnpm install --frozen-lockfile`
+- Run:
+  ```bash
+  pnpm run shots:mock
+  pnpm run shots:report
+  pnpm run shots:zip
+  pnpm run shots:merge
+  ```
+
+### **2️⃣ Version bump – `version-bump.yml`**
 - Runs on merges to `main`. Uses `standard-version` style bumping based on commit messages and pushes a `vX.Y.Z` tag.
 
 ### **3️⃣ Release – `release.yml`**
