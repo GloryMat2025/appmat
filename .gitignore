@@ -1,2 +1,16 @@
-
+node_modules/
+.pw-profile/
+patches/
+backups/
+dist/
+*.tar.gz
+*.zip
+*.log
+/.vscode/
+/.idea/
+coverage/
+npm-debug.log*
+pnpm-debug.log*
+latest-mock-*.zip
+shots/
 node_modules/
