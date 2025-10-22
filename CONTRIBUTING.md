@@ -74,3 +74,40 @@ git push origin --tags
 ```
 
 - If you want the changelog included as an asset instead of the body, ask and I can add an upload step to the workflow.
+
+
+Contributing Quick Steps
+-----------------------
+
+Follow these quick steps to contribute:
+
+1. Fork the repository on GitHub and clone your fork locally.
+
+```bash
+git clone git@github.com:<your-username>/appmat.git
+cd appmat
+```
+
+2. Create a new branch for your work:
+
+```bash
+git checkout -b feature-xyz
+```
+
+3. Make changes and commit using Conventional Commits format (examples are in `CONTRIBUTING-EXTRA.md`):
+
+```bash
+git add .
+git commit -m "feat(cli): add mock-shots helper"
+```
+
+4. Push your branch and open a Pull Request:
+
+```bash
+git push origin feature-xyz
+# Then create a PR on GitHub from your fork -> upstream:feature-xyz
+```
+
+5. CI will automatically run tests, enforce conventional commits for versioning, and (on tag/release) publish artifacts.
+
+See `CONTRIBUTING-EXTRA.md` for extended examples, commit message templates, and release-trigger notes.

@@ -10,7 +10,35 @@
 
 **Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
 It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
+ 
+### Project Architecture Diagram
 
+The diagram below shows how developer actions, the repository scripts, and GitHub workflows interact end-to-end.
+
+```mermaid
+flowchart LR
+    Dev[Developer] --> Fork[Fork / Clone]
+    Fork --> Branch[Create feature branch]
+    Branch --> Code[Edit code & scripts\n(e.g. tools/*.mjs, scripts/*.mjs)]
+    Code --> Commit[Commit with Conventional Commit message]
+    Commit --> PR[Push branch & Open PR]
+    PR --> CI[GitHub Actions (shots-smoke.yml)]
+    CI --> Mock[Run pnpm run shots:mock]
+    CI --> Capture[Run tools/capture.mjs or scripts mock]
+    Capture --> Report[Generate gallery (generate-gallery.mjs) => shots/gallery.html]
+    Report --> Zip[Zip latest (zip-latest.mjs) => shots/*.zip]
+    Zip --> Artifacts[Artifacts: shots/gallery.html + shots/*.zip]
+    Tagging[Push tag (vX.Y.Z)] --> ReleaseWorkflow[release.yml]
+    ReleaseWorkflow --> Verify[Verify gallery + zip exist & pass checks]
+    Verify --> Changelog[Generate / persist CHANGELOG.md]
+    Changelog --> GitHubRelease[Create GitHub Release + upload artifacts]
+    VersionBump[Push to main (merge PR)] --> VersionWorkflow[version-bump.yml]
+    VersionWorkflow --> Tagging
+<!-- Exported diagram for presentations -->
+![Project Architecture (refined)](docs/architecture-refined.svg)
+
+View the diagram in a standalone page: [docs/index.html](docs/index.html)
+```
 ---
 
 ## 🧩 Features
@@ -88,6 +116,17 @@ pnpm run shots:zip
 
 ---
 
+## ⚡ Quick commands
+
+| Command | Description |
+|---|---|
+| `pnpm run shots:mock` | Generate mock screenshots |
+| `pnpm run shots:report` | Create HTML gallery |
+| `pnpm run shots:zip` | Archive latest run |
+| `pnpm run shots:merge` | Merge and index results |
+| `npm version patch\|minor\|major` | Manual version bump (optional) |
+
+
 ## 🧪 CI/CD Workflows
 
 ### **1️⃣ Smoke Test – `shots-smoke.yml`**
@@ -145,6 +184,21 @@ Notes:
 ---
 
 If you'd like, I can add a short `CONTRIBUTING.md` explaining commit message conventions and how to trigger a release (e.g., commit message examples and tag push instructions).
+
+---
+
+## 🧾 Conventional Commits
+
+Use Conventional Commit prefixes to indicate intent and drive automated version bumps and changelog generation.
+
+Examples:
+
+- `feat: add new gallery layout`
+- `fix: correct zip path`
+- `docs: update README`
+- `chore: cleanup workflow cache`
+
+These prefixes feed the `version-bump.yml` workflow to decide whether to bump patch/minor/major.
 # 🚀 Appmat Automation
 
 [![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
