@@ -1,0 +1,34 @@
+name: Shots smoke
+
+on:
+  pull_request:
+  push:
+    branches: [ main, shots-final-no-patches ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@latest --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Guard: detect raw child_process usage (warn)
+        # Print matches (if any) but don't fail the CI — useful for initial rollouts
+        run: |
+          echo "Searching for raw child_process usage (warning only)..."
+          pnpm exec --silent -- grep -R --line-number "require(\"child_process\")\|require(\'child_process\')\|from \"child_process\"\|from \'child_process\'" -- '*.js' '*.mjs' '*.ts' || true
+
+      - name: Run health-check
+        run: pnpm run hc
