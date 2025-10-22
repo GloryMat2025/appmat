@@ -33,10 +33,12 @@ jobs:
           pnpm run shots:merge
 
       - name: Generate gallery
+        continue-on-error: true
         run: |
           node scripts/generate-gallery.mjs
 
       - name: Zip latest shots
+        continue-on-error: true
         run: |
           node scripts/zip-latest.mjs
 
@@ -64,5 +66,6 @@ jobs:
           files: |
             shots/gallery.html
             shots/*.zip
+            CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
