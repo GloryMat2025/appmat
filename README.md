@@ -35,24 +35,36 @@ tailwind.config.js
 appmat/
     index.html
     package.json
-    public/
-    src/
-        counter.js
-        main.js
-        style.css
-assets/
-    css/
-        base.css
-    js/
-        app.js
-components/
-    footer.html
-    header.html
-    modals/
-        delivery.html
-        pickup.html
-        product-detail.html
-data/
+## ▶️ Usage
+
+Run a mock capture locally (fast):
+
+```bash
+pnpm run shots:mock
+```
+
+Run the full capture/report pipeline (requires Playwright browsers & dev server):
+
+```bash
+pnpm run capture  # uses tools/capture.mjs to produce screenshots/traces
+pnpm run shots:report
+pnpm run shots:zip
+```
+
+## 📦 How releases work
+
+- The `version-bump.yml` workflow bumps the package version on `main` when commit messages follow conventional style (e.g. `feat:`, `fix:`, `chore:`) and pushes a tag like `v1.2.3`.
+- The `release.yml` workflow is triggered by a tag push (`v*`). It performs the following high-level steps:
+    1. Checkout full history (`fetch-depth: 0`) so commit message checks work.
+    2. Run smoke steps that can generate the latest `shots/` outputs (mock or real captures).
+    3. Generate an HTML gallery (`shots/gallery.html`) and zip the latest shots.
+    4. Verify the gallery contains images and at least one zip is non-trivial (>= 1 KB). If verification fails the release is aborted.
+    5. Generate a changelog and create a GitHub release with the changelog as the body.
+    6. Upload `shots/gallery.html`, `shots/*.zip`, and `CHANGELOG.md` as release artifacts.
+
+If you prefer artifacts to be pre-committed rather than generated in-job, the verify step can be moved to the start of the job (or made non-blocking).
+
+---
     outlets.json
     products.json
 pages/
