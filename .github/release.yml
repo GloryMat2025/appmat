@@ -13,6 +13,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify shots pipeline results
+        run: |
+          echo "Checking for successful shots outputs..."
+          if [ ! -f shots/gallery.html ]; then
+            echo "❌ Gallery missing. Release aborted."
+            exit 1
+          fi
+          if ! ls shots/*.zip > /dev/null 2>&1; then
+            echo "❌ No zip artifacts found. Release aborted."
+            exit 1
+          fi
+          echo "✅ Shots artifacts verified."
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
