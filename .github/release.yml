@@ -32,6 +32,14 @@ jobs:
           pnpm run shots:zip
           pnpm run shots:merge
 
+      - name: Generate gallery
+        run: |
+          node scripts/generate-gallery.mjs
+
+      - name: Zip latest shots
+        run: |
+          node scripts/zip-latest.mjs
+
       - name: Generate changelog
         id: changelog
         uses: metcalfc/changelog-generator@v4.1.0
