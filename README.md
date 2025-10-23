@@ -60,6 +60,35 @@ gh run download <run-id> --name architecture-png --dir tmp
 # then compute the SHA256 locally to verify
 certutil -hashfile tmp\\architecture-refined.png SHA256
 ```
+ 
+CI artifact verification (example)
+--------------------------------
+The workflow uploads the authoritative PNG artifact as `architecture-png`. Use the commands below to download and verify the artifact produced by run 18740367394 (DPR=1):
+
+PowerShell (recommended):
+
+```powershell
+gh run download 18740367394 --repo GloryMat2025/appmat --name architecture-png --dir tmp
+Expand-Archive -LiteralPath .\tmp\architecture-png.zip -DestinationPath .\tmp\architecture-png -Force
+Get-FileHash .\tmp\architecture-png\architecture-refined.png -Algorithm SHA256 | Format-List
+Get-Item .\tmp\architecture-png\architecture-refined.png | Select-Object Name, Length
+```
+
+cmd.exe:
+
+```
+gh run download 18740367394 --repo GloryMat2025/appmat --name architecture-png --dir tmp
+powershell -Command "Expand-Archive -LiteralPath .\\tmp\\architecture-png.zip -DestinationPath .\\tmp\\architecture-png -Force"
+certutil -hashfile tmp\\architecture-png\\architecture-refined.png SHA256
+for %I in (tmp\\architecture-refined.png) do @echo Size(bytes): %~zI
+```
+
+Authoritative CI values (from run 18740367394):
+
+- DPR: 1
+- PNG size (bytes): 50594
+- PNG sha256: 3e444b39c760bd8ebf483206b5a5fcc0bcf5bf494f5705fee7e4165dcf9f5c2e
+
 - The Playwright export is slower but avoids native build approvals and works cross-platform.
 
 ### Project Architecture Diagram
