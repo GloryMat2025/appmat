@@ -8,6 +8,16 @@ import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
 
+// Global error handlers for better debugging
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err && (err.stack || err.message) || err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandledRejection:', reason && (reason.stack || reason) || reason);
+  process.exit(1);
+});
+
 const args = process.argv.slice(2);
 const skipOnError = args.includes('--skip-on-error');
 const persistent = args.includes('--persistent');

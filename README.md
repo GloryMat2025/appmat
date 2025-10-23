@@ -4,13 +4,93 @@
 [![Release Workflow](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml)
 [![Version Bump](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml)
 
----
 
 ## 🧭 Overview
 
 **Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
 It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
  
+## 🖼️ Docs export (SVG → PNG)
+
+We provide both a native and a fallback path to export the architecture SVG to PNG so contributors and CI can generate the image reliably.
+
+- Local (preferred) — Sharp (native):
+    - Script: `pnpm run docs:export-png`
+    - This tries the Sharp-based `scripts/svg-to-png.mjs` first. Note: pnpm may block Sharp's native build scripts until you approve them.
+    - If pnpm asks to approve builds, run:
+
+```powershell
+pnpm approve-builds sharp
+pnpm install --frozen-lockfile
+pnpm run docs:export-png
+```
+
+- Fallback (local & CI) — Playwright renderer:
+    - Script: `pnpm run docs:export-png:ci` (CI uses this deterministic path)
+    - This uses Playwright to render `docs/architecture-refined.svg` into `docs/architecture-refined.png` and includes retry logic to reduce flakiness.
+
+- CI behavior:
+    - The `export-architecture-png.yml` workflow first attempts `rsvg-convert` on Ubuntu runners for speed.
+    - If that fails the workflow runs `pnpm run docs:export-png:ci` (Playwright path), verifies the PNG exists and is >1KB, uploads it as an artifact, and (optionally) commits it back to the branch.
+
+CI-only export note
+-------------------
+
+If you only need the CI export (for example to include the PNG in a release or to share with reviewers) use the CI-only script which is deterministic and avoids native builds:
+
+```bash
+pnpm run docs:export-png:ci
+```
+
+Notes:
+- This path always uses the Playwright renderer (no Sharp required). It's the path the workflow falls back to when `rsvg-convert` isn't available.
+- For local fast exports you can still use `pnpm run docs:export-png` which prefers `sharp` (faster) but may require `pnpm approve-builds sharp` on first run.
+- CI runners upload the exported PNG as an artifact named `architecture-png`; the export workflow also posts a helpful PR comment linking to the run and artifact.
+
+Tips
+----
+- If you want to avoid committing generated PNGs to git, rely on the CI artifact instead (recommended).
+
+- To fetch the exported PNG from a workflow run (authenticated with GitHub CLI):
+
+```bash
+# find the run id and download the artifact named "architecture-png"
+gh run list --workflow=export-architecture-png.yml --limit 10
+gh run download <run-id> --name architecture-png --dir tmp
+# then compute the SHA256 locally to verify
+certutil -hashfile tmp\\architecture-refined.png SHA256
+```
+ 
+CI artifact verification (example)
+--------------------------------
+The workflow uploads the authoritative PNG artifact as `architecture-png`. Use the commands below to download and verify the artifact produced by run 18740367394 (DPR=1):
+
+PowerShell (recommended):
+
+```powershell
+gh run download 18740367394 --repo GloryMat2025/appmat --name architecture-png --dir tmp
+Expand-Archive -LiteralPath .\tmp\architecture-png.zip -DestinationPath .\tmp\architecture-png -Force
+Get-FileHash .\tmp\architecture-png\architecture-refined.png -Algorithm SHA256 | Format-List
+Get-Item .\tmp\architecture-png\architecture-refined.png | Select-Object Name, Length
+```
+
+cmd.exe:
+
+```
+gh run download 18740367394 --repo GloryMat2025/appmat --name architecture-png --dir tmp
+powershell -Command "Expand-Archive -LiteralPath .\\tmp\\architecture-png.zip -DestinationPath .\\tmp\\architecture-png -Force"
+certutil -hashfile tmp\\architecture-png\\architecture-refined.png SHA256
+for %I in (tmp\\architecture-refined.png) do @echo Size(bytes): %~zI
+```
+
+Authoritative CI values (from run 18740367394):
+
+- DPR: 1
+- PNG size (bytes): 50594
+- PNG sha256: 3e444b39c760bd8ebf483206b5a5fcc0bcf5bf494f5705fee7e4165dcf9f5c2e
+
+- The Playwright export is slower but avoids native build approvals and works cross-platform.
+
 ### Project Architecture Diagram
 
 The diagram below shows how developer actions, the repository scripts, and GitHub workflows interact end-to-end.
@@ -141,6 +221,10 @@ Runs on every push/PR to `main` or `shots-final`.
   pnpm run shots:zip
   pnpm run shots:merge
   ```
+
+Note about the guard step
+------------------------
+The smoke workflow contains a guard that detects raw `child_process` usage across the codebase. By default the guard only prints matches and succeeds (so PRs collect warnings). To enforce the guard and make the step fail when matches are found, set the environment variable `GUARD_FAIL_ON_MATCH=1` in the workflow run (for example, enable it on `main` runs while keeping PR runs as warnings).
 
 ### **2️⃣ Version bump – `version-bump.yml`**
 - Runs on pushes to `main`. Uses `standard-version`/`standard-version` style bumping to update `package.json` and `CHANGELOG.md`, commit the changes and push a `vX.Y.Z` tag.

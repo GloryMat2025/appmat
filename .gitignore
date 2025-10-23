@@ -14,3 +14,12 @@ pnpm-debug.log*
 latest-mock-*.zip
 shots/
 node_modules/
+
+# Local run snapshots and artifacts
+_gh_runs.json
+_gh_runs_recent.json
+runs.json
+run_*.json
+artifacts/
+tmp/
+$($_.conclusion) } }
