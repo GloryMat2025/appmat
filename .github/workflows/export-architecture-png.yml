@@ -65,14 +65,33 @@ jobs:
           name: architecture-png
           path: docs/architecture-refined.png
 
+      - name: Collect PNG metadata
+        id: png_meta
+        run: |
+          if [ -f docs/architecture-refined.png ]; then
+            size=$(stat -c%s docs/architecture-refined.png || echo 0)
+            sha=$(sha256sum docs/architecture-refined.png 2>/dev/null | awk '{print $1}' || echo "")
+            echo "png_size=$size" >> $GITHUB_OUTPUT
+            echo "png_sha256=$sha" >> $GITHUB_OUTPUT
+          else
+            echo "png_size=0" >> $GITHUB_OUTPUT
+            echo "png_sha256=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Commit and push PNG (if changed)
+        if: github.event_name == 'push'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/architecture-refined.png || true
-          git diff --staged --quiet || (
-            git commit -m "docs: add exported architecture PNG" && git push origin HEAD:feature-xyz
-          )
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: add exported architecture PNG"
+            # Use token-authenticated push to avoid credential issues in CI
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            git push origin HEAD:${{ github.ref_name }} || echo "Warning: push rejected or failed (non-fatal)"
+          fi
 
       - name: Resolve PR number (for push events)
         id: find_pr
@@ -91,8 +110,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Comment on PR with artifact info
-        if: steps.find_pr.outputs.pr != ''
+      - name: Detect if PNG is committed/tracked in HEAD
+        id: detect_png
+        run: |
+          # Check if the file is tracked in the current HEAD (returns 0 when tracked)
+          if git ls-files --error-unmatch docs/architecture-refined.png >/dev/null 2>&1; then
+            echo "png_in_branch=true" >> $GITHUB_OUTPUT
+          else
+            echo "png_in_branch=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR with preview (PNG committed)
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'true'
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +132,23 @@ jobs:
             - Download the artifact: open the run above and choose "architecture-png".
             - Preview (raw): https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
             - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
 
             ## Quick preview
 
             ![architecture](https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png)
+
+      - name: Comment on PR with artifact-only info (PNG not committed)
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'false'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ✅ PNG export completed for this branch.
+            - View the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            Note: The PNG is not committed in this branch; use the workflow artifact or re-run the export.
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
