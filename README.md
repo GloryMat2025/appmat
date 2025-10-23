@@ -4,13 +4,40 @@
 [![Release Workflow](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml)
 [![Version Bump](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml)
 
----
 
 ## 🧭 Overview
 
 **Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
 It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
  
+## 🖼️ Docs export (SVG → PNG)
+
+We provide both a native and a fallback path to export the architecture SVG to PNG so contributors and CI can generate the image reliably.
+
+- Local (preferred) — Sharp (native):
+    - Script: `pnpm run docs:export-png`
+    - This tries the Sharp-based `scripts/svg-to-png.mjs` first. Note: pnpm may block Sharp's native build scripts until you approve them.
+    - If pnpm asks to approve builds, run:
+
+```powershell
+pnpm approve-builds sharp
+pnpm install --frozen-lockfile
+pnpm run docs:export-png
+```
+
+- Fallback (local & CI) — Playwright renderer:
+    - Script: `pnpm run docs:export-png:ci` (CI uses this deterministic path)
+    - This uses Playwright to render `docs/architecture-refined.svg` into `docs/architecture-refined.png` and includes retry logic to reduce flakiness.
+
+- CI behavior:
+    - The `export-architecture-png.yml` workflow first attempts `rsvg-convert` on Ubuntu runners for speed.
+    - If that fails the workflow runs `pnpm run docs:export-png:ci` (Playwright path), verifies the PNG exists and is >1KB, uploads it as an artifact, and (optionally) commits it back to the branch.
+
+Tips
+----
+- If you want to avoid committing generated PNGs to git, remove `docs/architecture-refined.png` from the branch and rely on CI artifacts (the export workflow uploads `architecture-png`).
+- The Playwright export is slower but avoids native build approvals and works cross-platform.
+
 ### Project Architecture Diagram
 
 The diagram below shows how developer actions, the repository scripts, and GitHub workflows interact end-to-end.
