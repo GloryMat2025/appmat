@@ -33,6 +33,20 @@ pnpm run docs:export-png
     - The `export-architecture-png.yml` workflow first attempts `rsvg-convert` on Ubuntu runners for speed.
     - If that fails the workflow runs `pnpm run docs:export-png:ci` (Playwright path), verifies the PNG exists and is >1KB, uploads it as an artifact, and (optionally) commits it back to the branch.
 
+CI-only export note
+-------------------
+
+If you only need the CI export (for example to include the PNG in a release or to share with reviewers) use the CI-only script which is deterministic and avoids native builds:
+
+```bash
+pnpm run docs:export-png:ci
+```
+
+Notes:
+- This path always uses the Playwright renderer (no Sharp required). It's the path the workflow falls back to when `rsvg-convert` isn't available.
+- For local fast exports you can still use `pnpm run docs:export-png` which prefers `sharp` (faster) but may require `pnpm approve-builds sharp` on first run.
+- CI runners upload the exported PNG as an artifact named `architecture-png`; the export workflow also posts a helpful PR comment linking to the run and artifact.
+
 Tips
 ----
 - If you want to avoid committing generated PNGs to git, remove `docs/architecture-refined.png` from the branch and rely on CI artifacts (the export workflow uploads `architecture-png`).
