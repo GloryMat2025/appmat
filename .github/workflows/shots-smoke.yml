@@ -24,11 +24,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Guard: detect raw child_process usage (warn)
-        # Print matches (if any) but don't fail the CI — useful for initial rollouts
+      - name: Guard: detect raw child_process usage (warn or fail)
+        # By default this prints matches and succeeds. Set GUARD_FAIL_ON_MATCH=1 to make the step fail if matches are found.
         run: |
-          echo "Searching for raw child_process usage (warning only)..."
-          pnpm exec --silent -- grep -R --line-number -E "require\\(['\"]child_process['\"]\\)|from ['\"]child_process['\"]" -- '*.js' '*.mjs' '*.ts' || true
+          echo "Searching for raw child_process usage (warning unless GUARD_FAIL_ON_MATCH=1)..."
+          set -o pipefail || true
+          pnpm exec --silent -- grep -R --line-number -E "require\\(['\"]child_process['\"]\\)|from ['\"]child_process['\"]" -- '*.js' '*.mjs' '*.ts' | tee grep_matches.txt || true
+          if [ "${GUARD_FAIL_ON_MATCH:-0}" = '1' ]; then
+            if [ -s grep_matches.txt ]; then
+              echo "Found raw child_process usage:" && cat grep_matches.txt
+              echo "Failing because GUARD_FAIL_ON_MATCH=1" >&2
+              exit 1
+            else
+              echo "No raw child_process usage found."
+            fi
+          else
+            if [ -s grep_matches.txt ]; then
+              echo "WARNING: raw child_process usage detected (see grep_matches.txt)."
+            else
+              echo "No raw child_process usage found."
+            fi
+          fi
 
       - name: Run health-check
         run: pnpm run hc

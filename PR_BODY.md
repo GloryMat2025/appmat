@@ -11,13 +11,12 @@ Changed files
 - .github/workflows/ci.yml (new)
 - .github/workflows/deploy.yml (new)
 - .github/workflows/export-architecture-png.yml (new/updated) — try rsvg-convert, fallback to Node export, verify PNG size
-- docs/architecture-refined.png (new) — generated artifact
 - scripts/svg-to-png-pw.mjs (new) — Playwright-based exporter
 - package.json (updated) — merged scripts and `docs:export-png` fallback
 
 Reviewer checklist
 ------------------
-- [ ] Confirm `docs/architecture-refined.png` renders correctly and is of sufficient quality.
+ - [ ] Confirm the exported PNG renders correctly and is of sufficient quality (the PNG has been removed from the branch and is available as a workflow artifact named `architecture-png`).
 - [ ] Verify CI workflows meet org policy (checkout depth, permissions, apt usage).
 - [ ] Decide whether to keep the committed PNG in repo or rely on CI artifacts.
 - [ ] Optionally prefer Playwright fallback by updating scripts or adding a `docs:export-png:ci` script.
@@ -74,6 +73,11 @@ Notes & follow-ups
 
 - Large binary artifacts are intentionally excluded from this PR. If you want the full debug patches, they are available in `patches/` (not included here) or I can re-produce them on request.
 - If you'd like the guard to initially warn (instead of fail) for raw `child_process` usage, I can change the workflow to only print matches and succeed.
+
+• Large binary artifacts are intentionally excluded from this PR. If you want the full debug patches, they are
+	available in  patches/  (not included here) or I can re-produce them on request.
+	• If you'd like the guard to initially warn (instead of fail) for raw  child_process  usage, I can change the
+	workflow to only print matches and succeed.
 
 Reviewed-by: automated CI smoke workflow
 

@@ -29,6 +29,13 @@ if (viewBoxMatch) {
 const maxAttempts = parseInt(process.env.SVG_PW_ATTEMPTS || '3', 10);
 const attemptDelayMs = parseInt(process.env.SVG_PW_DELAY_MS || '250', 10);
 
+// Debug mode: --debug or DEBUG_SVG_PW=1 will write the HTML wrapper to .tmp/svg-debug.html
+const argvDebug = process.argv.includes('--debug');
+const debugMode = argvDebug || process.env.DEBUG_SVG_PW === '1';
+if (debugMode) {
+  try { await (async function ensureTmp(){ const fsP = await import('fs'); const p = '.tmp'; if (!fsP.existsSync(p)) fsP.mkdirSync(p); })(); } catch (err) { /* ignore */ }
+}
+
 async function renderOnce() {
   let browser;
   try {
@@ -38,8 +45,20 @@ async function renderOnce() {
 
     // minimal HTML wrapper so fonts and styles resolve predictably
     const html = `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent}</style>${svg}`;
+    if (debugMode) {
+      // write out the wrapper for inspection
+      try {
+        const fs = await import('fs');
+        fs.writeFileSync('.tmp/svg-debug.html', html, 'utf8');
+        console.log('Wrote debug HTML to .tmp/svg-debug.html');
+      } catch (e) {
+        console.error('Failed to write debug HTML:', e && e.message ? e.message : e);
+      }
+    }
+
     await page.setContent(html, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(150);
+    // give a bit more time in debug mode
+    await page.waitForTimeout(debugMode ? 500 : 150);
 
     await page.screenshot({ path: pngPath, fullPage: false });
     await browser.close();

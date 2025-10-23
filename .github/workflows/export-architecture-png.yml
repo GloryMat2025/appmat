@@ -6,6 +6,10 @@ on:
       - feature-xyz
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   export-png:
     runs-on: ubuntu-latest
@@ -37,7 +41,7 @@ jobs:
           fi
 
       - name: Fallback to Playwright/Node exporter if rsvg failed
-        if: steps.rsvg.outputs.converted-with-rsvg == 'false'
+        if: steps.rsvg.outputs['converted-with-rsvg'] == 'false'
         run: |
           echo "Rsvg conversion failed or missing; running node exporter fallback"
           corepack enable && corepack prepare pnpm@latest --activate

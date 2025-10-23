@@ -49,7 +49,17 @@ Notes:
 
 Tips
 ----
-- If you want to avoid committing generated PNGs to git, remove `docs/architecture-refined.png` from the branch and rely on CI artifacts (the export workflow uploads `architecture-png`).
+- If you want to avoid committing generated PNGs to git, rely on the CI artifact instead (recommended).
+
+- To fetch the exported PNG from a workflow run (authenticated with GitHub CLI):
+
+```bash
+# find the run id and download the artifact named "architecture-png"
+gh run list --workflow=export-architecture-png.yml --limit 10
+gh run download <run-id> --name architecture-png --dir tmp
+# then compute the SHA256 locally to verify
+certutil -hashfile tmp\\architecture-refined.png SHA256
+```
 - The Playwright export is slower but avoids native build approvals and works cross-platform.
 
 ### Project Architecture Diagram
@@ -182,6 +192,10 @@ Runs on every push/PR to `main` or `shots-final`.
   pnpm run shots:zip
   pnpm run shots:merge
   ```
+
+Note about the guard step
+------------------------
+The smoke workflow contains a guard that detects raw `child_process` usage across the codebase. By default the guard only prints matches and succeeds (so PRs collect warnings). To enforce the guard and make the step fail when matches are found, set the environment variable `GUARD_FAIL_ON_MATCH=1` in the workflow run (for example, enable it on `main` runs while keeping PR runs as warnings).
 
 ### **2️⃣ Version bump – `version-bump.yml`**
 - Runs on pushes to `main`. Uses `standard-version`/`standard-version` style bumping to update `package.json` and `CHANGELOG.md`, commit the changes and push a `vX.Y.Z` tag.
