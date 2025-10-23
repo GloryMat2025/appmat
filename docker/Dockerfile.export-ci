@@ -1,0 +1,75 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    ca-certificates \
+    build-essential \
+    libgtk-3-0 \
+    libgbm1 \
+    libasound2 \
+    libnss3 \
+    libxss1 \
+    fonts-dejavu-core \
+    imagemagick \
+    librsvg2-bin \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# Copy project files (only what we need) to reduce build context size
+COPY package.json package-lock.json* pnpm-lock.yaml* ./
+COPY scripts/ ./scripts/
+COPY tools/ ./tools/
+COPY docker/run-export.sh ./run-export.sh
+RUN chmod +x ./run-export.sh
+
+RUN apt-get update && apt-get install -y nodejs npm git && rm -rf /var/lib/apt/lists/*
+
+# Install project deps (npm used here to ensure node_modules presence; adapt if pnpm/yarn desired)
+RUN npm install --production || true
+
+CMD ["/workspace/run-export.sh"]
+FROM ubuntu:24.04
+
+# Install basics and librsvg for rsvg-convert path parity
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  ca-certificates \
+  curl \
+  gnupg \
+  build-essential \
+  python3 \
+  python3-pip \
+  librsvg2-bin \
+  unzip \
+  git \
+  wget \
+  ca-certificates \
+  pkg-config \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (use Node 22 base recommended by CI) - use NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
+
+# Install corepack/pnpm
+RUN corepack enable || true
+RUN corepack prepare pnpm@latest --activate || true
+
+WORKDIR /workspace
+
+# Copy only package files first for cached installs
+COPY package.json pnpm-lock.yaml ./
+
+# Install dependencies (Playwright included) -- will install browsers on next step
+RUN pnpm install --frozen-lockfile --ignore-scripts || pnpm install --frozen-lockfile
+
+# Make entrypoint script available
+COPY run-export.sh /usr/local/bin/run-export.sh
+RUN chmod +x /usr/local/bin/run-export.sh
+
+VOLUME ["/workspace/out"]
+ENTRYPOINT ["/usr/local/bin/run-export.sh"]
