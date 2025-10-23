@@ -57,6 +57,9 @@
     "baseline:set": "node tools/baseline-set.mjs",
     "baseline:set:latest": "node tools/baseline-set-latest.mjs"
   },
+  "scripts": {
+    "docs:export-png": "node scripts/svg-to-png.mjs"
+  },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.19",
