@@ -13,6 +13,8 @@ permissions:
 jobs:
   export-png:
     runs-on: ubuntu-latest
+    env:
+      SVG_PW_DPR: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,9 +79,12 @@ jobs:
             sha=$(sha256sum docs/architecture-refined.png 2>/dev/null | awk '{print $1}' || echo "")
             echo "png_size=$size" >> $GITHUB_OUTPUT
             echo "png_sha256=$sha" >> $GITHUB_OUTPUT
+            # Record the DPR used for Playwright rendering (set via env SVG_PW_DPR)
+            echo "png_dpr=${SVG_PW_DPR:-1}" >> $GITHUB_OUTPUT
           else
             echo "png_size=0" >> $GITHUB_OUTPUT
             echo "png_sha256=" >> $GITHUB_OUTPUT
+            echo "png_dpr=" >> $GITHUB_OUTPUT
           fi
 
       - name: Commit and push PNG (if changed)
@@ -140,6 +145,7 @@ jobs:
             - Download the artifact: open the run above and choose "architecture-png".
             - Preview (raw): https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
             - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
 
@@ -158,5 +164,6 @@ jobs:
             - View the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             - Download the artifact: open the run above and choose "architecture-png".
             Note: The PNG is not committed in this branch; use the workflow artifact or re-run the export.
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
