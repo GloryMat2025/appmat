@@ -1,0 +1,46 @@
+name: Export architecture PNG
+
+on:
+  push:
+    branches:
+      - feature-xyz
+  workflow_dispatch: {}
+
+jobs:
+  export-png:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Install librsvg2
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y librsvg2-bin
+
+      - name: Convert SVG to PNG
+        run: |
+          mkdir -p docs
+          if [ -f docs/architecture-refined.svg ]; then
+            rsvg-convert -w 1200 docs/architecture-refined.svg -o docs/architecture-refined.png || true
+          else
+            echo "SVG not found, skipping conversion"
+          fi
+
+      - name: Upload PNG as artifact
+        if: success() && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-png
+          path: docs/architecture-refined.png
+
+      - name: Commit and push PNG (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture-refined.png || true
+          git diff --staged --quiet || (
+            git commit -m "docs: add exported architecture PNG" && git push origin HEAD:feature-xyz
+          )
