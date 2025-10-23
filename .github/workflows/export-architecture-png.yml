@@ -13,6 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: true
 
       - name: Install librsvg2
@@ -20,17 +21,45 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y librsvg2-bin
 
-      - name: Convert SVG to PNG
+      - name: Convert SVG to PNG (try rsvg-convert)
+        id: rsvg
         run: |
           mkdir -p docs
           if [ -f docs/architecture-refined.svg ]; then
-            rsvg-convert -w 1200 docs/architecture-refined.svg -o docs/architecture-refined.png || true
+            if rsvg-convert -w 1200 docs/architecture-refined.svg -o docs/architecture-refined.png; then
+              echo "converted-with-rsvg=true" >> $GITHUB_OUTPUT
+            else
+              echo "converted-with-rsvg=false" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "SVG not found, skipping conversion"
+            echo "SVG_NOT_FOUND" >&2
+            echo "converted-with-rsvg=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fallback to Playwright/Node exporter if rsvg failed
+        if: steps.rsvg.outputs.converted-with-rsvg == 'false'
+        run: |
+          echo "Rsvg conversion failed or missing; running node exporter fallback"
+          corepack enable && corepack prepare pnpm@latest --activate
+          pnpm install --frozen-lockfile
+          # Ensure Playwright browsers are available (best-effort)
+          npx playwright install --with-deps || true
+          pnpm run docs:export-png:ci
+
+      - name: Verify PNG exists and size
+        run: |
+          if [ ! -f docs/architecture-refined.png ]; then
+            echo "PNG not produced" >&2
+            exit 2
+          fi
+          size=$(stat -c%s docs/architecture-refined.png || echo 0)
+          echo "PNG size: $size"
+          if [ "$size" -lt 1024 ]; then
+            echo "PNG smaller than 1KB (likely invalid)" >&2
+            exit 3
           fi
 
       - name: Upload PNG as artifact
-        if: success() && always()
         uses: actions/upload-artifact@v4
         with:
           name: architecture-png
@@ -44,3 +73,37 @@ jobs:
           git diff --staged --quiet || (
             git commit -m "docs: add exported architecture PNG" && git push origin HEAD:feature-xyz
           )
+
+      - name: Resolve PR number (for push events)
+        id: find_pr
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          echo "Searching PRs for branch: $BRANCH"
+          # Use gh (already available in GitHub Hosted runners) to find PR number where head.ref matches branch
+          PR_NUM=$(gh api repos/${GITHUB_REPOSITORY}/pulls --jq ".[] | select(.head.ref==\"$BRANCH\") | .number" 2>/dev/null || true)
+          # Emit both the PR number (if any) and the branch name for later steps
+          if [ -n "$PR_NUM" ]; then
+            echo "pr=$PR_NUM" >> $GITHUB_OUTPUT
+          else
+            echo "pr=" >> $GITHUB_OUTPUT
+          fi
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on PR with artifact info
+        if: steps.find_pr.outputs.pr != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ✅ PNG export completed for this branch.
+            - View the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            - Preview (raw): https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+            - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+
+            ## Quick preview
+
+            ![architecture](https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png)

@@ -1,4 +1,4 @@
-name: Deploy to cPanel via FTP
+name: Smart Deploy to cPanel via FTP
 
 on:
   push:
@@ -23,7 +23,25 @@ jobs:
           npm install
           npm run build
 
-      - name: Deploy to cPanel via FTP
+      # Optional: compress build folder
+      - name: Compress build output
+        run: |
+          zip -r build.zip dist/
+
+      # Optional: upload backup zip ke cPanel
+      - name: Backup old version before deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          local-dir: dist
+          server-dir: ${{ secrets.CPANEL_FTP_PATH }}/_backup_$(date +'%Y%m%d')
+          protocol: ftps
+          dry-run: false
+
+      # Deploy only changed files (delta)
+      - name: Deploy changed files only
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
@@ -32,3 +50,5 @@ jobs:
           local-dir: dist
           server-dir: ${{ secrets.CPANEL_FTP_PATH }}
           protocol: ftps
+          state-name: .ftp-deploy-sync-state.json
+          dangerous-clean-slate: false
