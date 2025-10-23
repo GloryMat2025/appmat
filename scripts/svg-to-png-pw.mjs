@@ -62,7 +62,10 @@ async function renderOnce() {
   let browser;
   try {
     browser = await chromium.launch({ headless: true });
-    const context = await browser.newContext({ viewport: { width, height } });
+  // Allow forcing device pixel ratio (deviceScaleFactor) for deterministic renders
+  const dpr = Number.parseFloat(process.env.SVG_PW_DPR || '1') || 1;
+  console.log(`Using deviceScaleFactor (DPR): ${dpr}`);
+  const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr });
     const page = await context.newPage();
 
     // minimal HTML wrapper so fonts and styles resolve predictably
