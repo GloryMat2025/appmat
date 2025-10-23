@@ -84,6 +84,7 @@ jobs:
 
       - name: Commit and push PNG (if changed)
         if: github.event_name == 'push'
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -94,7 +95,10 @@ jobs:
             git commit -m "docs: add exported architecture PNG"
             # Use token-authenticated push to avoid credential issues in CI
             git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-            git push origin HEAD:${{ github.ref_name }} || echo "Warning: push rejected or failed (non-fatal)"
+            # Attempt authenticated push; if it fails we log a clear message but do not fail the job
+            if ! git push origin HEAD:${{ github.ref_name }}; then
+              echo "Warning: push rejected or failed (non-fatal). Check token permissions or branch protection rules."
+            fi
           fi
 
       - name: Resolve PR number (for push events)
