@@ -94,17 +94,21 @@ jobs:
 
       - name: Verify produced PNG matches metadata
         id: png_verify
-        continue-on-error: true
         run: |
-          # Soft rollout: do not fail job on verification failure; record result in $GITHUB_OUTPUT
+          # Mandatory verification: set png_verify output and fail the step (and job) on mismatch.
           if [ -z "${{ steps.png_meta.outputs.png_sha256 }}" ]; then
             echo "png_verify=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Run verifier and capture exit status
+          if node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"; then
+            echo "png_verify=pass" >> $GITHUB_OUTPUT
+            exit 0
           else
-            if node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"; then
-              echo "png_verify=pass" >> $GITHUB_OUTPUT
-            else
-              echo "png_verify=fail" >> $GITHUB_OUTPUT
-            fi
+            echo "png_verify=fail" >> $GITHUB_OUTPUT
+            echo "PNG verification failed: produced PNG does not match computed metadata" >&2
+            exit 1
           fi
 
       - name: Commit and push PNG (if changed)
