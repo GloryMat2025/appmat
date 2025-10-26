@@ -87,6 +87,19 @@ jobs:
             echo "png_dpr=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Setup Node (for verifier)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify produced PNG matches metadata
+        run: |
+          if [ -z "${{ steps.png_meta.outputs.png_sha256 }}" ]; then
+            echo "No PNG SHA available, skipping verification";
+            exit 0;
+          fi
+          node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"
+
       - name: Commit and push PNG (if changed)
         if: github.event_name == 'push'
         continue-on-error: true
