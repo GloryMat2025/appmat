@@ -2,13 +2,18 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install system dependencies used in CI for headless browsers, fonts and native svg conversion
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
     gnupg \
-    ca-certificates \
     build-essential \
+    git \
+    wget \
+    unzip \
+    python3 \
+    python3-pip \
     libgtk-3-0 \
     libgbm1 \
     libasound2 \
@@ -17,58 +22,34 @@ RUN apt-get update \
     fonts-dejavu-core \
     imagemagick \
     librsvg2-bin \
+    pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+# Install Node.js 22 from NodeSource (matches CI runner choice)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get update && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
 
-# Copy project files (only what we need) to reduce build context size
-COPY package.json package-lock.json* pnpm-lock.yaml* ./
-COPY scripts/ ./scripts/
-COPY tools/ ./tools/
-COPY docker/run-export.sh ./run-export.sh
-RUN chmod +x ./run-export.sh
-
-RUN apt-get update && apt-get install -y nodejs npm git && rm -rf /var/lib/apt/lists/*
-
-# Install project deps (npm used here to ensure node_modules presence; adapt if pnpm/yarn desired)
-RUN npm install --production || true
-
-CMD ["/workspace/run-export.sh"]
-FROM ubuntu:24.04
-
-# Install basics and librsvg for rsvg-convert path parity
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates \
-  curl \
-  gnupg \
-  build-essential \
-  python3 \
-  python3-pip \
-  librsvg2-bin \
-  unzip \
-  git \
-  wget \
-  ca-certificates \
-  pkg-config \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install Node.js (use Node 22 base recommended by CI) - use NodeSource
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
-
-# Install corepack/pnpm
+# Enable corepack and pnpm for consistent installs
 RUN corepack enable || true
 RUN corepack prepare pnpm@latest --activate || true
 
 WORKDIR /workspace
 
-# Copy only package files first for cached installs
-COPY package.json pnpm-lock.yaml ./
+# Copy lockfiles first to leverage Docker cache for deps
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
 
-# Install dependencies (Playwright included) -- will install browsers on next step
-RUN pnpm install --frozen-lockfile --ignore-scripts || pnpm install --frozen-lockfile
+# Install Node deps (prefer pnpm when lockfile present)
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm install --frozen-lockfile --offline || pnpm install --frozen-lockfile || pnpm install; \
+    else \
+      npm install --production || true; \
+    fi
 
-# Make entrypoint script available
-COPY run-export.sh /usr/local/bin/run-export.sh
+# Copy the scripts and minimal project files we need for export
+COPY scripts/ ./scripts/
+COPY tools/ ./tools/
+COPY docs/ ./docs/
+COPY docker/run-export.sh /usr/local/bin/run-export.sh
 RUN chmod +x /usr/local/bin/run-export.sh
 
 VOLUME ["/workspace/out"]
