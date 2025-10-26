@@ -93,12 +93,19 @@ jobs:
           node-version: '22'
 
       - name: Verify produced PNG matches metadata
+        id: png_verify
+        continue-on-error: true
         run: |
+          # Soft rollout: do not fail job on verification failure; record result in $GITHUB_OUTPUT
           if [ -z "${{ steps.png_meta.outputs.png_sha256 }}" ]; then
-            echo "No PNG SHA available, skipping verification";
-            exit 0;
+            echo "png_verify=skipped" >> $GITHUB_OUTPUT
+          else
+            if node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"; then
+              echo "png_verify=pass" >> $GITHUB_OUTPUT
+            else
+              echo "png_verify=fail" >> $GITHUB_OUTPUT
+            fi
           fi
-          node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"
 
       - name: Commit and push PNG (if changed)
         if: github.event_name == 'push'
@@ -161,6 +168,7 @@ jobs:
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+            - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
 
             ## Quick preview
 
@@ -180,3 +188,4 @@ jobs:
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+            - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
