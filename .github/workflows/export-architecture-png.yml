@@ -13,6 +13,11 @@ permissions:
 jobs:
   export-png:
     runs-on: ubuntu-latest
+    outputs:
+      png_sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+      png_size: ${{ steps.png_meta.outputs.png_size }}
+      png_dpr: ${{ steps.png_meta.outputs.png_dpr }}
+      png_verify: ${{ steps.png_verify.outputs.png_verify }}
     env:
       SVG_PW_DPR: '1'
     steps:
@@ -208,3 +213,31 @@ jobs:
 
             The produced PNG did not match the computed metadata. Reviewers: please download the artifact and run the verifier locally (see docker/README.md and scripts/verify-artifact.mjs) to debug. If this happens repeatedly, consider repro with the Docker reproduction container or file an issue.
             - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
+
+  reverify-artifact:
+    needs: export-png
+    runs-on: ubuntu-latest
+    if: ${{ needs.export-png.result == 'success' }}
+    steps:
+      - name: Checkout (fresh runner)
+        uses: actions/checkout@v4
+
+      - name: Download architecture-png artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: architecture-png
+          path: ./artifact
+
+      - name: Setup Node (verify)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify downloaded artifact (fresh runner)
+        run: |
+          if [ ! -f ./artifact/architecture-refined.png ]; then
+            echo "Artifact not found: ./artifact/architecture-refined.png" >&2
+            exit 2
+          fi
+          echo "Verifying downloaded artifact against export job metadata"
+          node scripts/verify-artifact.mjs ./artifact/architecture-refined.png --sha "${{ needs.export-png.outputs.png_sha256 }}" --size "${{ needs.export-png.outputs.png_size }}"
