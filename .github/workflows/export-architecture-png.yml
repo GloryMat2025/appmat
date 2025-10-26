@@ -137,20 +137,20 @@ jobs:
 
       - name: Resolve PR number (for push events)
         id: find_pr
-        run: |
-          BRANCH=${GITHUB_REF#refs/heads/}
-          echo "Searching PRs for branch: $BRANCH"
-          # Use gh (already available in GitHub Hosted runners) to find PR number where head.ref matches branch
-          PR_NUM=$(gh api repos/${GITHUB_REPOSITORY}/pulls --jq ".[] | select(.head.ref==\"$BRANCH\") | .number" 2>/dev/null || true)
-          # Emit both the PR number (if any) and the branch name for later steps
-          if [ -n "$PR_NUM" ]; then
-            echo "pr=$PR_NUM" >> $GITHUB_OUTPUT
-          else
-            echo "pr=" >> $GITHUB_OUTPUT
-          fi
-          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = process.env.GITHUB_REF.replace('refs/heads/', '');
+            core.info(`Searching open PRs for branch: ${branch}`);
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const pr = pulls.data.find(p => p.head.ref === branch);
+            return { pr: pr ? String(pr.number) : '', branch };
 
       - name: Detect if PNG is committed/tracked in HEAD
         id: detect_png
