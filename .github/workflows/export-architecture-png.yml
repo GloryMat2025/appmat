@@ -192,4 +192,19 @@ jobs:
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+      - name: Warning comment when PNG verification failed
+        if: steps.find_pr.outputs.pr != '' && steps.png_verify.outputs.png_verify == 'fail'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ⚠️ PNG export completed but verification FAILED for this branch.
+            - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256 (computed): ${{ steps.png_meta.outputs.png_sha256 }}
+
+            The produced PNG did not match the computed metadata. Reviewers: please download the artifact and run the verifier locally (see docker/README.md and scripts/verify-artifact.mjs) to debug. If this happens repeatedly, consider repro with the Docker reproduction container or file an issue.
             - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
