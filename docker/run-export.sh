@@ -5,6 +5,7 @@ set -euo pipefail
 echo "Running CI-style export inside container"
 
 # Ensure pnpm/corepack and Playwright are available (best-effort)
+export CI=${CI:-true}
 if command -v corepack >/dev/null 2>&1; then
   corepack enable || true
   corepack prepare pnpm@latest --activate || true
@@ -14,13 +15,17 @@ if command -v npx >/dev/null 2>&1; then
   npx playwright@latest install --with-deps || npx playwright install --with-deps || true
 fi
 
-# Install node deps
-if command -v pnpm >/dev/null 2>&1; then
-  echo "Installing node deps (pnpm)"
-  pnpm install --frozen-lockfile || pnpm install || true
-elif [ -f package.json ]; then
-  echo "Installing node deps (npm)"
-  npm install --production || true
+# Install node deps only if node_modules is missing (we prefer deps baked into the image)
+if [ ! -d node_modules ]; then
+  if command -v pnpm >/dev/null 2>&1; then
+    echo "Installing node deps (pnpm)"
+    pnpm install --frozen-lockfile || pnpm install || true
+  elif [ -f package.json ]; then
+    echo "Installing node deps (npm)"
+    npm install --production || true
+  fi
+else
+  echo "Using baked-in node_modules from image"
 fi
 
 echo "Running CI export (docs:export-png:ci)"
