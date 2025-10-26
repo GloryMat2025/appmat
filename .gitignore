@@ -26,3 +26,4 @@ $($_.conclusion) } }
 
 # Ignore exported PNG artifacts (CI artifacts should be authoritative)
 docs/architecture-refined.png
+out/
