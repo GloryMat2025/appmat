@@ -2,6 +2,9 @@ name: Docker reproduction (build & run)
 
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - feature-xyz
 
 permissions:
   contents: read
