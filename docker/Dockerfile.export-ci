@@ -25,6 +25,15 @@ RUN apt-get update \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
+# Install additional fonts and ffmpeg which affect rendering parity with GitHub runners
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    fonts-liberation \
+    fonts-noto-core \
+    fonts-noto-color-emoji \
+    ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
+
 # Install Node.js 22 from NodeSource (matches CI runner choice)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
@@ -44,6 +53,11 @@ RUN if [ -f pnpm-lock.yaml ]; then \
     else \
       npm install --production || true; \
     fi
+
+# Ensure Playwright browsers (and ffmpeg helper assets) are available. Keep this as
+# a separate RUN so it's obvious and doesn't get copy-pasted into PowerShell accidentally.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install --with-deps || true
 
 # Copy the scripts and minimal project files we need for export
 COPY scripts/ ./scripts/
