@@ -23,3 +23,6 @@ run_*.json
 artifacts/
 tmp/
 $($_.conclusion) } }
+
+# Ignore exported PNG artifacts (CI artifacts should be authoritative)
+docs/architecture-refined.png
