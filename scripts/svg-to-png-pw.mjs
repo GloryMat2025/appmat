@@ -68,8 +68,59 @@ async function renderOnce() {
   const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: dpr });
     const page = await context.newPage();
 
+    // Attempt to embed a deterministic font (Roboto) when available so renders are stable
+    let fontCss = '';
+    try {
+      const fontsDir = path.resolve('docs', 'fonts');
+      const robotoPath = path.join(fontsDir, 'Roboto-Regular.ttf');
+      if (!fs.existsSync(robotoPath) && !process.env.SVG_PW_FORCE_NO_EMBED) {
+        // Try multiple known mirrors for Roboto and cache to docs/fonts/Roboto-Regular.ttf
+        const urls = [
+          'https://github.com/google/fonts/raw/main/apache/roboto/Roboto-Regular.ttf',
+          'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/roboto/Roboto-Regular.ttf'
+        ];
+        if (!fs.existsSync(fontsDir)) fs.mkdirSync(fontsDir, { recursive: true });
+        let downloaded = false;
+        for (const url of urls) {
+          try {
+            console.log('Roboto not found locally; attempting to download from', url);
+            const controller = new AbortController();
+            const timeoutMs = Number.parseInt(process.env.SVG_PW_FETCH_TIMEOUT_MS || '12000', 10);
+            const timeout = setTimeout(() => controller.abort(), timeoutMs);
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeout);
+            if (res && res.ok) {
+              const buffer = Buffer.from(await res.arrayBuffer());
+              fs.writeFileSync(robotoPath, buffer);
+              console.log('Downloaded Roboto to', robotoPath);
+              downloaded = true;
+              break;
+            } else {
+              console.warn('Download attempt failed for', url, 'status', res && res.status);
+            }
+          } catch (e) {
+            console.warn('Download error for Roboto from', url, ':', e && (e.message || e));
+          }
+        }
+        if (!downloaded) {
+          console.warn('Failed to download Roboto from all known mirrors; continuing without embedded font (renders may differ).');
+        }
+      }
+      if (fs.existsSync(robotoPath) && !process.env.SVG_PW_FORCE_NO_EMBED) {
+        const fontData = fs.readFileSync(robotoPath);
+        const b64 = fontData.toString('base64');
+        fontCss = `<style>@font-face{font-family: 'ExportRoboto'; src: url('data:font/truetype;base64,${b64}') format('truetype'); font-weight: normal; font-style: normal;} svg{font-family: 'ExportRoboto', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;}</style>`;
+        console.log('Embedded Roboto font into HTML wrapper for deterministic rendering');
+      }
+      else if (process.env.SVG_PW_FORCE_NO_EMBED === '1' || process.env.SVG_PW_FORCE_NO_EMBED === 'true') {
+        console.log('SVG_PW_FORCE_NO_EMBED is set; skipping font embedding.');
+      }
+    } catch (e) {
+      console.warn('Error preparing embedded font:', e && (e.message || e));
+    }
+
     // minimal HTML wrapper so fonts and styles resolve predictably
-    const html = `<!doctype html><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent}</style>${svg}`;
+    const html = `<!doctype html><meta charset="utf-8">${fontCss}<style>html,body{margin:0;padding:0;background:transparent}</style>${svg}`;
     if (debugMode) {
       // write out the wrapper for inspection
       try {

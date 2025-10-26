@@ -34,6 +34,14 @@ RUN apt-get update \
     ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
+# Try to fetch Roboto during image build so containers have the deterministic font available.
+# This is a best-effort step: if the fetch fails the build will continue (we don't want image
+# build to be brittle), but CI runs that build should normally succeed and contain the font.
+RUN mkdir -p /workspace/docs/fonts \
+  && curl -fsSL -o /workspace/docs/fonts/Roboto-Regular.ttf \
+    https://cdn.jsdelivr.net/gh/google/fonts@main/apache/roboto/Roboto-Regular.ttf || \
+    (echo "Warning: failed to download Roboto during image build; image will proceed without it" && true)
+
 # Install Node.js 22 from NodeSource (matches CI runner choice)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get update && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
