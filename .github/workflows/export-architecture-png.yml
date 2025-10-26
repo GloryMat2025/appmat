@@ -17,6 +17,7 @@ jobs:
       png_sha256: ${{ steps.png_meta.outputs.png_sha256 }}
       png_size: ${{ steps.png_meta.outputs.png_size }}
       png_dpr: ${{ steps.png_meta.outputs.png_dpr }}
+      png_exporter: ${{ steps.png_meta.outputs.png_exporter }}
       png_verify: ${{ steps.png_verify.outputs.png_verify }}
     env:
       SVG_PW_DPR: '1'
@@ -86,10 +87,17 @@ jobs:
             echo "png_sha256=$sha" >> $GITHUB_OUTPUT
             # Record the DPR used for Playwright rendering (set via env SVG_PW_DPR)
             echo "png_dpr=${SVG_PW_DPR:-1}" >> $GITHUB_OUTPUT
+            # Detect which exporter created the PNG: if rsvg conversion step reported success use rsvg, otherwise assume Playwright
+            if [ "${{ steps.rsvg.outputs.converted-with-rsvg }}" = "true" ]; then
+              echo "png_exporter=rsvg" >> $GITHUB_OUTPUT
+            else
+              echo "png_exporter=playwright" >> $GITHUB_OUTPUT
+            fi
           else
             echo "png_size=0" >> $GITHUB_OUTPUT
             echo "png_sha256=" >> $GITHUB_OUTPUT
             echo "png_dpr=" >> $GITHUB_OUTPUT
+            echo "png_exporter=" >> $GITHUB_OUTPUT
           fi
 
       - name: Setup Node (for verifier)
@@ -175,6 +183,7 @@ jobs:
             - Preview (raw): https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
             - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+              - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
             - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
@@ -195,6 +204,7 @@ jobs:
             - Download the artifact: open the run above and choose "architecture-png".
             Note: The PNG is not committed in this branch; use the workflow artifact or re-run the export.
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
       - name: Warning comment when PNG verification failed
@@ -207,6 +217,8 @@ jobs:
             ⚠️ PNG export completed but verification FAILED for this branch.
             - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             - Download the artifact: open the run above and choose "architecture-png".
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256 (computed): ${{ steps.png_meta.outputs.png_sha256 }}
