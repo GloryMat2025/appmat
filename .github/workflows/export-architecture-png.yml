@@ -158,7 +158,7 @@ jobs:
           fi
 
       - name: Comment on PR with preview (PNG committed)
-        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'true'
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'true' && steps.png_verify.outputs.png_verify == 'pass'
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -179,7 +179,7 @@ jobs:
             ![architecture](https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png)
 
       - name: Comment on PR with artifact-only info (PNG not committed)
-        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'false'
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'false' && steps.png_verify.outputs.png_verify == 'pass'
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
