@@ -1,0 +1,21 @@
+FILE: out/pw-embed-roboto-docker.png
+SIZE: 38172 bytes
+SHA256: 4a83f9c5884a70ec56b2c96329535e32e026006b8e3efd4aab277fad0591b17c
+CHUNK @8: IHDR (len=13)
+  IHDR: 1200x800, bit=8, color=6, comp=0, filter=0, interlace=0
+CHUNK @33: IDAT (len=4096)
+CHUNK @4141: IDAT (len=4096)
+CHUNK @8249: IDAT (len=4096)
+CHUNK @12357: IDAT (len=4096)
+CHUNK @16465: IDAT (len=4096)
+CHUNK @20573: IDAT (len=4096)
+CHUNK @24681: IDAT (len=4096)
+CHUNK @28789: IDAT (len=4096)
+CHUNK @32897: IDAT (len=4096)
+CHUNK @37005: IDAT (len=1125)
+CHUNK @38142: IDAT (len=6)
+CHUNK @38160: IEND (len=0)
+  IEND end
+Total IDAT bytes: 37995
+---
+

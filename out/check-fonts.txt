@@ -1,0 +1,8 @@
+Checking for vendored font: docs/fonts/Roboto-Regular.ttf
+Missing vendored font at docs/fonts/Roboto-Regular.ttf
+To reproduce deterministic exports, add Roboto-Regular.ttf to that path.
+You can obtain Roboto from Google Fonts (ensure license compliance) or copy from a system installation.
+Example (POSIX):
+  mkdir -p docs/fonts && curl -L -o docs/fonts/Roboto-Regular.ttf <url-to-roboto-ttf>
+Example (Windows PowerShell):
+  mkdir docs\fonts; Invoke-WebRequest -OutFile docs\fonts\Roboto-Regular.ttf -Uri <url-to-roboto-ttf>

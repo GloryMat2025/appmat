@@ -1,0 +1,4 @@
+Wrote visual diff to out/pixel-diff.ppm
+Width x Height: 1200x800
+Pixels with non-zero diff: 425247 of 960000
+Total diff sum (0-255 aggregate): 60354668

@@ -1,0 +1,80 @@
+name: Playwright parity matrix (manual)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  parity-matrix:
+    name: Playwright parity matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dpr: [1, 2]
+        embed: [true, false]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          corepack enable && corepack prepare pnpm@latest --activate
+          pnpm install --frozen-lockfile
+
+      - name: Ensure Playwright browsers
+        run: |
+          npx playwright install --with-deps || true
+
+      - name: Create output dir
+        run: mkdir -p out/matrix
+
+      - name: Run Playwright exporter
+        id: run_export
+        env:
+          SVG_PW_DPR: ${{ matrix.dpr }}
+        run: |
+          set -e
+          outpath=out/matrix/pw-dpr${{ matrix.dpr }}-embed${{ matrix.embed }}.png
+          cmd="node scripts/svg-to-png-pw.mjs docs/architecture-refined.svg $outpath"
+          if [ "${{ matrix.embed }}" = "true" ]; then
+            cmd="$cmd --embed-font docs/fonts/Roboto-Regular.ttf"
+          fi
+          echo "Running: $cmd"
+          eval $cmd
+          echo "exported=$outpath" >> $GITHUB_OUTPUT
+
+      - name: Compare to canonical (IDAT diff)
+        if: always()
+        run: |
+          exported=$(cat $GITHUB_OUTPUT | sed -n 's/exported=//p' | tr -d '\r')
+          # canonical path in repo
+          canonical=out/docker-repro-architecture-png/architecture-refined.png
+          idat_out=out/matrix/$(basename $exported)-idat.txt
+          node scripts/png-idat-diff.mjs $canonical $exported > $idat_out || true
+          echo "Wrote IDAT diff to $idat_out"
+
+      - name: Visual diff & analysis
+        if: always()
+        run: |
+          exported=$(cat $GITHUB_OUTPUT | sed -n 's/exported=//p' | tr -d '\r')
+          canonical=out/docker-repro-architecture-png/architecture-refined.png
+          ppm_out=out/matrix/$(basename $exported)-pixdiff.ppm
+          node scripts/png-visual-diff.mjs $canonical $exported $ppm_out || true
+          node scripts/ppm-analyze.mjs $ppm_out > out/matrix/$(basename $exported)-ppm-analysis.txt || true
+
+      - name: Upload matrix artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-matrix-${{ matrix.dpr }}-embed-${{ matrix.embed }}
+          path: |
+            out/matrix/pw-dpr${{ matrix.dpr }}-embed${{ matrix.embed }}.png
+            out/matrix/pw-dpr${{ matrix.dpr }}-embed${{ matrix.embed }}.png-idat.txt
+            out/matrix/pw-dpr${{ matrix.dpr }}-embed${{ matrix.embed }}.png-pixdiff.ppm
+            out/matrix/pw-dpr${{ matrix.dpr }}-embed${{ matrix.embed }}.png-pixdiff.ppm-analysis.txt

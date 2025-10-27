@@ -1,0 +1,19 @@
+IHDR A: {
+  width: 1200,
+  height: 700,
+  bitDepth: 8,
+  colorType: 2,
+  comp: 0,
+  filter: 0,
+  interlace: 0
+}
+IHDR B: {
+  width: 1200,
+  height: 800,
+  bitDepth: 8,
+  colorType: 6,
+  comp: 0,
+  filter: 0,
+  interlace: 0
+}
+Different dimensions — cannot directly per-scanline compare

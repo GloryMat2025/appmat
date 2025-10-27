@@ -33,6 +33,16 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y librsvg2-bin
 
+      - name: Check vendored Roboto font
+        id: font_check
+        run: |
+          # Check for vendored Roboto-Regular.ttf used when embedding fonts for Playwright
+          if [ -f docs/fonts/Roboto-Regular.ttf ]; then
+            echo "font_vendored=true" >> $GITHUB_OUTPUT
+          else
+            echo "font_vendored=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Convert SVG to PNG (try rsvg-convert)
         id: rsvg
         run: |
@@ -184,6 +194,7 @@ jobs:
             - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
               - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
             - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
@@ -191,6 +202,13 @@ jobs:
             ## Quick preview
 
             ![architecture](https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png)
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - Reproduce locally using `docker/Dockerfile.export-ci` (build & run) and compare SHA256/size as documented.
 
       - name: Comment on PR with artifact-only info (PNG not committed)
         if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'false' && steps.png_verify.outputs.png_verify == 'pass'
@@ -205,8 +223,16 @@ jobs:
             Note: The PNG is not committed in this branch; use the workflow artifact or re-run the export.
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - Reproduce locally using `docker/Dockerfile.export-ci` (build & run) and compare SHA256/size as documented.
       - name: Warning comment when PNG verification failed
         if: steps.find_pr.outputs.pr != '' && steps.png_verify.outputs.png_verify == 'fail'
         uses: peter-evans/create-or-update-comment@v4
@@ -219,12 +245,20 @@ jobs:
             - Download the artifact: open the run above and choose "architecture-png".
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
             - DPR: ${{ steps.png_meta.outputs.png_dpr }}
             - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
             - PNG sha256 (computed): ${{ steps.png_meta.outputs.png_sha256 }}
 
             The produced PNG did not match the computed metadata. Reviewers: please download the artifact and run the verifier locally (see docker/README.md and scripts/verify-artifact.mjs) to debug. If this happens repeatedly, consider repro with the Docker reproduction container or file an issue.
             - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - If you need help, run the Docker reproduction image or contact the PR author with the artifact SHA above.
 
   reverify-artifact:
     needs: export-png

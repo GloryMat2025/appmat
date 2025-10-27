@@ -23,7 +23,7 @@
   <text x="50" y="85" class="label">Fork / Clone</text>
   <text x="50" y="105" class="label">Create feature branch</text>
   <text x="50" y="125" class="label">Commit (Conventional Commit)</text>
-  <text x="50" y="145" class="label">Push & Open PR</text>
+  <text x="50" y="145" class="label">Push &amp; Open PR</text>
 
   <!-- CI lane -->
   <text x="300" y="40" class="title">CI / GitHub Actions</text>

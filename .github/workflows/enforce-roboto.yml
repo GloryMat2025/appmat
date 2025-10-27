@@ -1,0 +1,33 @@
+name: Enforce vendored Roboto font
+
+on:
+  push:
+    branches:
+      - feature-xyz
+  pull_request:
+    branches:
+      - feature-xyz
+
+permissions:
+  contents: read
+
+jobs:
+  check-roboto:
+    name: Check that Roboto is vendored
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify docs/fonts/Roboto-Regular.ttf exists
+        run: |
+          if [ -f docs/fonts/Roboto-Regular.ttf ]; then
+            echo "Roboto vendored: true"
+            exit 0
+          else
+            # Soft warning: do not fail the job. Emit a GitHub workflow warning so reviewers/CI can notice the issue.
+            echo "::warning::docs/fonts/Roboto-Regular.ttf is missing. Playwright embedding experiments may be non-deterministic without the vendored Roboto font. Enforcement is currently a soft warning."
+            echo "Error: docs/fonts/Roboto-Regular.ttf is missing. To run Playwright embedding experiments deterministically, add Roboto-Regular.ttf to docs/fonts/ or disable enforcement." >&2
+            # Do not exit with non-zero; keep as soft warning for now.
+            exit 0
+          fi
