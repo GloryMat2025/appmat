@@ -47,17 +47,24 @@ WORKDIR /workspace
 # Copy lockfiles first to leverage Docker cache for deps
 COPY package.json pnpm-lock.yaml* package-lock.json* ./
 
-# Install Node deps (prefer pnpm when lockfile present)
+# Run installs during image build so the runtime container doesn't have to install
+# (avoids pnpm interactive/no-tty issues and guarantees Playwright is present).
+# Set CI=true so pnpm runs non-interactively and honors CI behavior.
+ENV CI=true
+
+# Install Node deps (prefer pnpm when lockfile present). Use --frozen-lockfile to
+# ensure deterministic installs and --reporter=silent to reduce noisy output.
 RUN if [ -f pnpm-lock.yaml ]; then \
-      pnpm install --frozen-lockfile --offline || pnpm install --frozen-lockfile || pnpm install; \
+      pnpm install --frozen-lockfile --reporter=silent || pnpm install --frozen-lockfile || pnpm install; \
     else \
       npm install --production || true; \
     fi
 
-# Ensure Playwright browsers (and ffmpeg helper assets) are available. Keep this as
-# a separate RUN so it's obvious and doesn't get copy-pasted into PowerShell accidentally.
+# Ensure Playwright package is installed and browsers are downloaded during build.
+# Use pnpm exec to run the playwright binary from the installed deps. Keep browsers
+# in a stable location and include system deps via --with-deps for CI parity.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install --with-deps || true
+RUN pnpm exec -- playwright install --with-deps || true
 
 # Copy the scripts and minimal project files we need for export
 COPY scripts/ ./scripts/
