@@ -1,0 +1,51 @@
+name: Docker reproduction (build & run)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - feature-xyz
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -f docker/Dockerfile.export-ci -t appmat-export-ci .
+
+      - name: Create out dir
+        run: mkdir -p out
+
+      - name: Run container to produce PNG
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE/out:/workspace/out" appmat-export-ci
+
+      - name: List produced files
+        run: ls -la out || true
+
+      - name: Compute PNG metadata
+        run: |
+          if [ -f out/architecture-refined.png ]; then
+            sha=$(sha256sum out/architecture-refined.png | awk '{print $1}') || true
+            size=$(stat -c%s out/architecture-refined.png || echo 0)
+            echo "PNG_SHA256=$sha" >> $GITHUB_OUTPUT
+            echo "PNG_SIZE=$size" >> $GITHUB_OUTPUT
+            echo "Produced PNG: size=${size}, sha256=${sha}"
+          else
+            echo "No PNG produced" >&2
+            exit 2
+          fi
+
+      - name: Upload PNG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-repro-architecture-png
+          path: out/architecture-refined.png

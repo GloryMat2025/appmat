@@ -2,6 +2,16 @@
 import fs from 'fs';
 import path from 'path';
 
+// Global error handlers to ensure we log full stacks for unexpected runtime errors
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err && (err.stack || err.message) || err);
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandledRejection:', reason && (reason.stack || reason) || reason);
+  process.exit(1);
+});
+
 const svgPath = path.resolve('docs', 'architecture-refined.svg');
 const pngPath = path.resolve('docs', 'architecture-refined.png');
 

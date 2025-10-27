@@ -1,0 +1,80 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:transparent}</style><?xml version="1.0" encoding="UTF-8"?>
+<!-- Refined architecture SVG for Appmat: clearer layout and color accents -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <style>
+    .bg { fill: #0f172a; }
+    .card { fill: #ffffff; stroke: #e2e8f0; stroke-width: 1; rx: 8; }
+    .dev { fill: #f0f9ff; stroke: #0369a1; stroke-width: 1.2; }
+    .workflow { fill: #fffbeb; stroke: #92400e; stroke-width: 1.2; }
+    .script { fill: #f8fafc; stroke: #0f172a; stroke-width: 1; }
+    .label { font: 13px 'Segoe UI', Roboto, sans-serif; fill: #0f172a; }
+    .title { font: 12px 'Segoe UI', Roboto, sans-serif; fill: #0ea5a3; font-weight: 600; }
+    .arrow { stroke: #0f172a; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- Developer lane -->
+  <text x="40" y="40" class="title">Developer</text>
+  <rect x="30" y="50" width="220" height="120" class="dev" />
+  <text x="50" y="85" class="label">Fork / Clone</text>
+  <text x="50" y="105" class="label">Create feature branch</text>
+  <text x="50" y="125" class="label">Commit (Conventional Commit)</text>
+  <text x="50" y="145" class="label">Push & Open PR</text>
+
+  <!-- CI lane -->
+  <text x="300" y="40" class="title">CI / GitHub Actions</text>
+  <rect x="280" y="50" width="860" height="580" class="card" />
+
+  <!-- Smoke workflow -->
+  <rect x="310" y="90" width="260" height="90" class="workflow" />
+  <text x="330" y="120" class="label">shots-smoke.yml</text>
+  <text x="330" y="138" class="label">pnpm run shots:mock | capture</text>
+
+  <!-- Scripts -->
+  <rect x="600" y="90" width="240" height="90" class="script" />
+  <text x="620" y="120" class="label">tools/capture.mjs</text>
+  <text x="620" y="138" class="label">(Playwright capture)</text>
+
+  <rect x="860" y="90" width="260" height="90" class="script" />
+  <text x="880" y="120" class="label">scripts/generate-gallery.mjs</text>
+  <text x="880" y="138" class="label">-> shots/gallery.html</text>
+
+  <rect x="600" y="210" width="240" height="90" class="script" />
+  <text x="620" y="240" class="label">scripts/zip-latest.mjs</text>
+  <text x="620" y="258" class="label">-> shots/*.zip</text>
+
+  <rect x="860" y="210" width="260" height="90" class="workflow" />
+  <text x="880" y="240" class="label">release.yml</text>
+  <text x="880" y="258" class="label">verify -> changelog -> release</text>
+
+  <rect x="600" y="330" width="240" height="90" class="workflow" />
+  <text x="620" y="360" class="label">version-bump.yml</text>
+  <text x="620" y="378" class="label">standard-version -> tag</text>
+
+  <rect x="860" y="330" width="260" height="90" class="script" />
+  <text x="880" y="360" class="label">shots/gallery.html & shots/*.zip</text>
+  <text x="880" y="378" class="label">(artifacts)</text>
+
+  <rect x="600" y="450" width="520" height="80" class="card" />
+  <text x="620" y="485" class="label">GitHub Release (created by release.yml)</text>
+  <text x="620" y="503" class="label">Uploads: gallery.html, shots/*.zip, CHANGELOG.md</text>
+
+  <!-- Arrows -->
+  <path d="M250,110 L310,110" class="arrow" />
+  <path d="M420,140 L600,140" class="arrow" />
+  <path d="M840,140 L860,140" class="arrow" />
+  <path d="M740,180 L740,210" class="arrow" />
+  <path d="M740,270 L740,300" class="arrow" />
+  <path d="M740,380 L740,430" class="arrow" />
+  <path d="M980,180 L980,210" class="arrow" />
+  <path d="M980,270 L980,330" class="arrow" />
+  <path d="M980,415 L980,450" class="arrow" />
+
+  <!-- Connect developer to CI -->
+  <path d="M150,170 L150,210 L350,210" class="arrow" />
+
+</svg>

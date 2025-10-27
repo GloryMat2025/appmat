@@ -55,10 +55,12 @@
 
     "baseline:get": "node tools/baseline-get.mjs",
     "baseline:set": "node tools/baseline-set.mjs",
-    "baseline:set:latest": "node tools/baseline-set-latest.mjs"
-  },
-  "scripts": {
-    "docs:export-png": "node scripts/svg-to-png.mjs"
+    "baseline:set:latest": "node tools/baseline-set-latest.mjs",
+
+    "docs:export-png": "node scripts/svg-to-png.mjs || node scripts/svg-to-png-pw.mjs",
+    "docs:export-png:ci": "node scripts/svg-to-png-pw.mjs",
+    "verify:artifact": "node scripts/verify-artifact.mjs",
+    "open-pr": "gh pr create --base main --head feature-xyz --title \"feat(docs): add PNG export + CI exporter workflow\" --body-file PR_BODY.md"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
