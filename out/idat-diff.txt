@@ -1,0 +1,45 @@
+IHDR A: {
+  width: 1200,
+  height: 800,
+  bitDepth: 8,
+  colorType: 6,
+  comp: 0,
+  filter: 0,
+  interlace: 0
+}
+IHDR B: {
+  width: 1200,
+  height: 800,
+  bitDepth: 8,
+  colorType: 6,
+  comp: 0,
+  filter: 0,
+  interlace: 0
+}
+Scanline length (incl filter byte): 4801
+Inflated IDAT bytes A: 3840800 B: 3840800
+Total differing bytes in inflated streams: 122351
+First differing byte index in inflated stream: 168035
+Difference is in filter byte of row 35
+Number of rows with differences: 510 of 800
+Sample differing rows (first 20):
+ row 35 -> 92 differing bytes
+ row 36 -> 198 differing bytes
+ row 37 -> 88 differing bytes
+ row 38 -> 436 differing bytes
+ row 39 -> 420 differing bytes
+ row 40 -> 386 differing bytes
+ row 41 -> 344 differing bytes
+ row 42 -> 210 differing bytes
+ row 43 -> 275 differing bytes
+ row 44 -> 357 differing bytes
+ row 45 -> 275 differing bytes
+ row 46 -> 207 differing bytes
+ row 47 -> 26 differing bytes
+ row 48 -> 11 differing bytes
+ row 49 -> 1 differing bytes
+ row 50 -> 1 differing bytes
+ row 51 -> 1 differing bytes
+ row 52 -> 1 differing bytes
+ row 53 -> 1 differing bytes
+ row 54 -> 1 differing bytes

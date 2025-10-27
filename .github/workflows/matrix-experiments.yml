@@ -1,0 +1,26 @@
+name: matrix-experiments
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  run-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build reproduction image
+        run: |
+          docker build -t appmat-export-ci:gh -f docker/Dockerfile.export-ci .
+
+      - name: Run matrix experiments
+        run: |
+          mkdir -p out
+          docker run --rm -v "$GITHUB_WORKSPACE:/workspace" appmat-export-ci:gh sh /workspace/scripts/matrix-experiments.sh
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: matrix-results
+          path: out/matrix

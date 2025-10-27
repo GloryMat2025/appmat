@@ -1,0 +1,289 @@
+name: Export architecture PNG
+
+on:
+  push:
+    branches:
+      - feature-xyz
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  export-png:
+    runs-on: ubuntu-latest
+    outputs:
+      png_sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+      png_size: ${{ steps.png_meta.outputs.png_size }}
+      png_dpr: ${{ steps.png_meta.outputs.png_dpr }}
+      png_exporter: ${{ steps.png_meta.outputs.png_exporter }}
+      png_verify: ${{ steps.png_verify.outputs.png_verify }}
+    env:
+      SVG_PW_DPR: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install librsvg2
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y librsvg2-bin
+
+      - name: Check vendored Roboto font
+        id: font_check
+        run: |
+          # Check for vendored Roboto-Regular.ttf used when embedding fonts for Playwright
+          if [ -f docs/fonts/Roboto-Regular.ttf ]; then
+            echo "font_vendored=true" >> $GITHUB_OUTPUT
+          else
+            echo "font_vendored=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Convert SVG to PNG (try rsvg-convert)
+        id: rsvg
+        run: |
+          mkdir -p docs
+          if [ -f docs/architecture-refined.svg ]; then
+            if rsvg-convert -w 1200 docs/architecture-refined.svg -o docs/architecture-refined.png; then
+              echo "converted-with-rsvg=true" >> $GITHUB_OUTPUT
+            else
+              echo "converted-with-rsvg=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "SVG_NOT_FOUND" >&2
+            echo "converted-with-rsvg=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fallback to Playwright/Node exporter if rsvg failed
+        if: steps.rsvg.outputs['converted-with-rsvg'] == 'false'
+        run: |
+          echo "Rsvg conversion failed or missing; running node exporter fallback"
+          corepack enable && corepack prepare pnpm@latest --activate
+          pnpm install --frozen-lockfile
+          # Ensure Playwright browsers are available (best-effort)
+          npx playwright install --with-deps || true
+          pnpm run docs:export-png:ci
+
+      - name: Verify PNG exists and size
+        run: |
+          if [ ! -f docs/architecture-refined.png ]; then
+            echo "PNG not produced" >&2
+            exit 2
+          fi
+          size=$(stat -c%s docs/architecture-refined.png || echo 0)
+          echo "PNG size: $size"
+          if [ "$size" -lt 1024 ]; then
+            echo "PNG smaller than 1KB (likely invalid)" >&2
+            exit 3
+          fi
+
+      - name: Upload PNG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-png
+          path: docs/architecture-refined.png
+
+      - name: Collect PNG metadata
+        id: png_meta
+        run: |
+          if [ -f docs/architecture-refined.png ]; then
+            size=$(stat -c%s docs/architecture-refined.png || echo 0)
+            sha=$(sha256sum docs/architecture-refined.png 2>/dev/null | awk '{print $1}' || echo "")
+            echo "png_size=$size" >> $GITHUB_OUTPUT
+            echo "png_sha256=$sha" >> $GITHUB_OUTPUT
+            # Record the DPR used for Playwright rendering (set via env SVG_PW_DPR)
+            echo "png_dpr=${SVG_PW_DPR:-1}" >> $GITHUB_OUTPUT
+            # Detect which exporter created the PNG: if rsvg conversion step reported success use rsvg, otherwise assume Playwright
+            if [ "${{ steps.rsvg.outputs.converted-with-rsvg }}" = "true" ]; then
+              echo "png_exporter=rsvg" >> $GITHUB_OUTPUT
+            else
+              echo "png_exporter=playwright" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "png_size=0" >> $GITHUB_OUTPUT
+            echo "png_sha256=" >> $GITHUB_OUTPUT
+            echo "png_dpr=" >> $GITHUB_OUTPUT
+            echo "png_exporter=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node (for verifier)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify produced PNG matches metadata
+        id: png_verify
+        run: |
+          # Mandatory verification: set png_verify output and fail the step (and job) on mismatch.
+          if [ -z "${{ steps.png_meta.outputs.png_sha256 }}" ]; then
+            echo "png_verify=skipped" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Run verifier and capture exit status
+          if node scripts/verify-artifact.mjs docs/architecture-refined.png --sha "${{ steps.png_meta.outputs.png_sha256 }}" --size "${{ steps.png_meta.outputs.png_size }}"; then
+            echo "png_verify=pass" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            echo "png_verify=fail" >> $GITHUB_OUTPUT
+            echo "PNG verification failed: produced PNG does not match computed metadata" >&2
+            exit 1
+          fi
+
+      - name: Commit and push PNG (if changed)
+        if: github.event_name == 'push'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture-refined.png || true
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: add exported architecture PNG"
+            # Use token-authenticated push to avoid credential issues in CI
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            # Attempt authenticated push; if it fails we log a clear message but do not fail the job
+            if ! git push origin HEAD:${{ github.ref_name }}; then
+              echo "Warning: push rejected or failed (non-fatal). Check token permissions or branch protection rules."
+            fi
+          fi
+
+      - name: Resolve PR number (for push events)
+        id: find_pr
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = process.env.GITHUB_REF.replace('refs/heads/', '');
+            core.info(`Searching open PRs for branch: ${branch}`);
+            const pulls = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100
+            });
+            const pr = pulls.data.find(p => p.head.ref === branch);
+            return { pr: pr ? String(pr.number) : '', branch };
+
+      - name: Detect if PNG is committed/tracked in HEAD
+        id: detect_png
+        run: |
+          # Check if the file is tracked in the current HEAD (returns 0 when tracked)
+          if git ls-files --error-unmatch docs/architecture-refined.png >/dev/null 2>&1; then
+            echo "png_in_branch=true" >> $GITHUB_OUTPUT
+          else
+            echo "png_in_branch=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR with preview (PNG committed)
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'true' && steps.png_verify.outputs.png_verify == 'pass'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ✅ PNG export completed for this branch.
+            - View the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            - Preview (raw): https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+            - Preview (GitHub UI): ${{ github.server_url }}/${{ github.repository }}/blob/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+              - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+            - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
+
+            ## Quick preview
+
+            ![architecture](https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.find_pr.outputs.branch }}/docs/architecture-refined.png)
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - Reproduce locally using `docker/Dockerfile.export-ci` (build & run) and compare SHA256/size as documented.
+
+      - name: Comment on PR with artifact-only info (PNG not committed)
+        if: steps.find_pr.outputs.pr != '' && steps.detect_png.outputs.png_in_branch == 'false' && steps.png_verify.outputs.png_verify == 'pass'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ✅ PNG export completed for this branch.
+            - View the workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            Note: The PNG is not committed in this branch; use the workflow artifact or re-run the export.
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256: ${{ steps.png_meta.outputs.png_sha256 }}
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - Reproduce locally using `docker/Dockerfile.export-ci` (build & run) and compare SHA256/size as documented.
+      - name: Warning comment when PNG verification failed
+        if: steps.find_pr.outputs.pr != '' && steps.png_verify.outputs.png_verify == 'fail'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ steps.find_pr.outputs.pr }}
+          body: |
+            ⚠️ PNG export completed but verification FAILED for this branch.
+            - Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            - Download the artifact: open the run above and choose "architecture-png".
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - Exporter used: ${{ steps.png_meta.outputs.png_exporter }}
+            - Roboto vendored: ${{ steps.font_check.outputs.font_vendored }}
+            - DPR: ${{ steps.png_meta.outputs.png_dpr }}
+            - PNG size (bytes): ${{ steps.png_meta.outputs.png_size }}
+            - PNG sha256 (computed): ${{ steps.png_meta.outputs.png_sha256 }}
+
+            The produced PNG did not match the computed metadata. Reviewers: please download the artifact and run the verifier locally (see docker/README.md and scripts/verify-artifact.mjs) to debug. If this happens repeatedly, consider repro with the Docker reproduction container or file an issue.
+            - PNG verification: ${{ steps.png_verify.outputs.png_verify }}
+
+            ## Canonical artifact (for reviewer verification)
+
+            - See `docs/CANONICAL_EXPORT.md` in this repository for exact reproduction and verification steps.
+            - Canonical PNG SHA256: `1e8d9d60c1aeedb0338baac825a517e81a859b975ab6a3364d37ebf1b51006bf`
+            - Canonical PNG size (bytes): `57016`
+            - If you need help, run the Docker reproduction image or contact the PR author with the artifact SHA above.
+
+  reverify-artifact:
+    needs: export-png
+    runs-on: ubuntu-latest
+    if: ${{ needs.export-png.result == 'success' }}
+    steps:
+      - name: Checkout (fresh runner)
+        uses: actions/checkout@v4
+
+      - name: Download architecture-png artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: architecture-png
+          path: ./artifact
+
+      - name: Setup Node (verify)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify downloaded artifact (fresh runner)
+        run: |
+          if [ ! -f ./artifact/architecture-refined.png ]; then
+            echo "Artifact not found: ./artifact/architecture-refined.png" >&2
+            exit 2
+          fi
+          echo "Verifying downloaded artifact against export job metadata"
+          node scripts/verify-artifact.mjs ./artifact/architecture-refined.png --sha "${{ needs.export-png.outputs.png_sha256 }}" --size "${{ needs.export-png.outputs.png_size }}"

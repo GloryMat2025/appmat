@@ -1,0 +1,5 @@
+PPM analysis: C:\Users\DESIGNER 1\Desktop\appmat\out\matrix\pw-dpr1-embedtrue-pixdiff.ppm
+ size: 1200x800, maxval=255, pixels=960000
+ differing pixels: 428952 (44.68%)
+ intensity: avg=140.7, min=1, max=255
+ bbox: x=0..1141, y=0..707
