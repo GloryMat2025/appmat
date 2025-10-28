@@ -19,34 +19,48 @@ jobs:
         node: [20, 22]
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
 
-      - name: Enable Corepack & Install Deps
+      - name: Enable Corepack and install dependencies
         run: |
           corepack enable
           pnpm install --frozen-lockfile
 
-      - name: Run Export Script
+      - name: Run export script
         run: pnpm run docs:export-png
 
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-${{ matrix.os }}-node${{ matrix.node }}
+          path: |
+            out/
+            docs/
+            **/*.png
+
   parity:
+    needs: build-and-test
     runs-on: ubuntu-latest
     env:
       RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Print run id
-        run: |
-          echo "RUN_ID=${RUN_ID}"
+        run: echo "RUN_ID=${RUN_ID}"
+
+      - name: Run Playwright tests
+        run: npx playwright test --browser ${{ matrix.browser }}
