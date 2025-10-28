@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       run_id:
@@ -33,14 +36,14 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
 
-      - name: Run export script
+      - name: Run Playwright export
         run: pnpm run docs:export-png
 
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: export-${{ matrix.os }}-node${{ matrix.node }}
+          name: parity-artifacts-${{ matrix.os }}-node${{ matrix.node }}
           path: |
             out/
             docs/
@@ -56,11 +59,29 @@ jobs:
         browser: [chromium, firefox, webkit]
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Enable Corepack & install dependencies
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
 
       - name: Print run id
         run: echo "RUN_ID=${RUN_ID}"
 
-      - name: Run Playwright tests
+      - name: Run Playwright browser parity tests
         run: npx playwright test --browser ${{ matrix.browser }}
+
+      - name: Post summary to PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: parity-summary
+          message: |
