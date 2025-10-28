@@ -2,11 +2,9 @@ name: Playwright Parity Matrix
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       run_id:
@@ -39,15 +37,23 @@ jobs:
       - name: Run Playwright export
         run: pnpm run docs:export-png
 
+      - name: Generate HTML gallery (auto)
+        run: |
+          node scripts/generate-gallery.mjs --make-html
+          echo "Generated gallery.html"
+
+      - name: Package exported results
+        run: |
+          zip -r export-results-${{ matrix.os }}-node${{ matrix.node }}.zip docs out gallery.html
+
       - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: parity-artifacts-${{ matrix.os }}-node${{ matrix.node }}
           path: |
-            out/
-            docs/
-            **/*.png
+            export-results-${{ matrix.os }}-node${{ matrix.node }}.zip
+            gallery.html
 
   parity:
     needs: build-and-test
@@ -73,15 +79,20 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
 
-      - name: Print run id
-        run: echo "RUN_ID=${RUN_ID}"
-
-      - name: Run Playwright browser parity tests
+      - name: Run browser parity tests
         run: npx playwright test --browser ${{ matrix.browser }}
 
-      - name: Post summary to PR
+      - name: Post summary comment on PR
         if: github.event_name == 'pull_request'
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: parity-summary
           message: |
+            ✅ **Playwright Parity Workflow Complete**
+            - Run ID: `${{ env.RUN_ID }}`
+            - Browser: `${{ matrix.browser }}`
+            - Node: `22`
+            - OS: `ubuntu-latest`
+            - 🎨 [View gallery & PNG results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            *(Artifacts and gallery.zip are attached in the Actions tab.)*
