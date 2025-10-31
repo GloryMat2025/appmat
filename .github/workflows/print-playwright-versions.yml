@@ -1,0 +1,31 @@
+name: Print Playwright & browser versions
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  print-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable corepack
+        run: |
+          corepack enable || true
+
+      - name: Install dependencies (pnpm)
+        run: |
+          corepack prepare pnpm@latest --activate || true
+          pnpm install --frozen-lockfile || pnpm install
+
+      - name: Print Playwright version and browsers
+        run: |
+          echo "npx playwright --version"
+          npx playwright --version || true
+          echo
+          echo "Node require('playwright') info"
+          node -e "const p=require('playwright'); console.log('playwright', p.playwright ? 'has playwright key' : 'ok'); try { console.log('chromium:' , p.chromium?.name || p.chromium?._name || 'unknown'); } catch(e){}; try { console.log('chromium revision (if available):', p.chromium?._revision || 'n/a'); } catch(e){}"

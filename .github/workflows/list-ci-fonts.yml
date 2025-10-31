@@ -1,0 +1,30 @@
+name: List CI fonts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  list-fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Print font directories
+        run: |
+          echo "/usr/share/fonts contents:"
+          ls -la /usr/share/fonts || true
+
+      - name: Print fc-list (if available)
+        run: |
+          if command -v fc-list >/dev/null 2>&1; then
+            echo "fc-list output (filtered):"
+            fc-list | grep -E "DejaVu|Liberation|Noto|Roboto|Arial|Segoe" || true
+          else
+            echo "fc-list not present; installing fontconfig to query fonts"
+            sudo apt-get update && sudo apt-get install -y fontconfig >/dev/null
+            fc-list | grep -E "DejaVu|Liberation|Noto|Roboto|Arial|Segoe" || true
+          fi

@@ -1,0 +1,78 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies used in CI for headless browsers, fonts and native svg conversion
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    gnupg \
+    build-essential \
+    git \
+    wget \
+    unzip \
+    python3 \
+    python3-pip \
+    libgtk-3-0 \
+    libgbm1 \
+    libasound2 \
+    libnss3 \
+    libxss1 \
+    fonts-dejavu-core \
+    imagemagick \
+    librsvg2-bin \
+    pkg-config \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install additional fonts and ffmpeg which affect rendering parity with GitHub runners
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends \
+    fonts-liberation \
+    fonts-noto-core \
+    fonts-noto-color-emoji \
+    ffmpeg \
+  && rm -rf /var/lib/apt/lists/*
+
+# Try to fetch Roboto during image build so containers have the deterministic font available.
+# This is a best-effort step: if the fetch fails the build will continue (we don't want image
+# build to be brittle), but CI runs that build should normally succeed and contain the font.
+RUN mkdir -p /workspace/docs/fonts \
+  && curl -fsSL -o /workspace/docs/fonts/Roboto-Regular.ttf \
+    https://cdn.jsdelivr.net/gh/google/fonts@main/apache/roboto/Roboto-Regular.ttf || \
+    (echo "Warning: failed to download Roboto during image build; image will proceed without it" && true)
+
+# Install Node.js 22 from NodeSource (matches CI runner choice)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+  && apt-get update && apt-get install -y nodejs && rm -rf /var/lib/apt/lists/*
+
+# Enable corepack and pnpm for consistent installs
+RUN corepack enable || true
+RUN corepack prepare pnpm@latest --activate || true
+
+WORKDIR /workspace
+
+# Copy lockfiles first to leverage Docker cache for deps
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
+
+# Install Node deps (prefer pnpm when lockfile present)
+RUN if [ -f pnpm-lock.yaml ]; then \
+      pnpm install --frozen-lockfile --offline || pnpm install --frozen-lockfile || pnpm install; \
+    else \
+      npm install --production || true; \
+    fi
+
+# Ensure Playwright browsers (and ffmpeg helper assets) are available. Keep this as
+# a separate RUN so it's obvious and doesn't get copy-pasted into PowerShell accidentally.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN npx playwright install --with-deps || true
+
+# Copy the scripts and minimal project files we need for export
+COPY scripts/ ./scripts/
+COPY tools/ ./tools/
+COPY docs/ ./docs/
+COPY docker/run-export.sh /usr/local/bin/run-export.sh
+RUN chmod +x /usr/local/bin/run-export.sh
+
+VOLUME ["/workspace/out"]
+ENTRYPOINT ["/usr/local/bin/run-export.sh"]
