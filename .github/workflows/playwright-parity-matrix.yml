@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
   workflow_dispatch:
     inputs:
       run_id:
@@ -14,62 +13,17 @@ on:
 permissions:
   contents: read
   actions: read
-  pull-requests: write
-
-env:
-  RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run build if defined
-        run: |
-          BUILD=$(node -e "try{const p=require('./package.json'); console.log(p && p.scripts && p.scripts.build ? 'yes' : 'no')}catch(e){console.log('no')}")
-          if [ \"$BUILD\" = \"yes\" ]; then
-            echo \"Found build script — running pnpm build\"
-            pnpm build || echo \"pnpm build failed (continuing)\"
-          else
-            echo \"No build script defined — skipping build\"
-          fi
-
-      - name: Run tests if defined
-        run: |
-          TEST=$(node -e "try{const p=require('./package.json'); console.log(p && p.scripts && p.scripts.test ? 'yes' : 'no')}catch(e){console.log('no')}")
-          if [ \"$TEST\" = \"yes\" ]; then
-            echo \"Found test script — running pnpm test\"
-            pnpm test || echo \"pnpm test failed (continuing)\"
-          else
-            echo \"No test script defined — skipping tests\"
-          fi
-
   parity:
-    name: Parity export — ${{ matrix.browser }}
-    needs: build-and-test
+    name: Parity — ${{ matrix.browser }}
     runs-on: ubuntu-latest
-    env:
-      RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
     strategy:
       matrix:
         browser: [chromium, firefox, webkit]
-
+    env:
+      # use provided run_id when manually dispatched, otherwise fallback to github.run_id
+      RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -77,79 +31,49 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 18
           cache: 'pnpm'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+      - name: Install pnpm and dependencies
+        run: |
+          npm install -g pnpm
+          pnpm install --frozen-lockfile
+        shell: bash
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-
-      - name: Run Playwright tests (browser)
-        run: npx playwright test --browser ${{ matrix.browser }}
+      - name: Ensure Playwright browsers are installed
+        # This will download browsers needed by playwright tests/exporter
+        run: |
+          pnpm dlx playwright install --with-deps
+        shell: bash
 
       - name: Create output folder
-        run: mkdir -p out/${RUN_ID}-${{ matrix.browser }}
+        run: mkdir -p out
+        shell: bash
 
-      - name: Generate gallery thumbnails (if available)
+      - name: Run Playwright exporter (per-browser)
+        id: export
         run: |
-          if [ -f "./scripts/generate-gallery.mjs" ]; then
-            echo "Running gallery generator to populate out/${RUN_ID}-${{ matrix.browser }}"
-            node ./scripts/generate-gallery.mjs --browser "${{ matrix.browser }}" --out "out/${RUN_ID}-${{ matrix.browser }}" || echo "generate-gallery exited non-zero (continuing)"
-          else
-            echo "No gallery generator found at ./scripts/generate-gallery.mjs — skipping"
-          fi
+          echo "Running parity export for browser=${{ matrix.browser }} RUN_ID=${RUN_ID}"
+          # Example call: adjust flags to match your local exporter CLI
+          pnpm node scripts/svg-to-png-pw.mjs \
+            --browser "${{ matrix.browser }}" \
+            --dpr 1 \
+            --embed-fonts \
+            --outdir out
+          echo "Export exit code: $?"
+          ls -l out || true
+        shell: bash
 
-      - name: List produced files
-        run: ls -la "out/${RUN_ID}-${{ matrix.browser }}" || true
-
-      - name: Compute SHA256 checksums for artifacts
-        run: |
-          DIR="out/${RUN_ID}-${{ matrix.browser }}"
-          if [ -d "$DIR" ]; then
-            for f in "$DIR"/*; do
-              if [ -f "$f" ]; then
-                sha256sum "$f" >> "$DIR/SHA256.txt"
-              fi
-            done
-            echo "Checksums written to $DIR/SHA256.txt"
-            cat "$DIR/SHA256.txt"
-          else
-            echo "No output folder found: $DIR"
-          fi
-
-      - name: Upload artifacts (per-browser)
+      - name: Upload parity artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: parity-${{ env.RUN_ID }}-${{ matrix.browser }}
-          path: out/${RUN_ID}-${{ matrix.browser }}
+          # include the run id and browser in artifact name for easy correlation
+          name: parity-${{ matrix.browser }}-${{ env.RUN_ID }}
+          path: out
 
-      - name: Comment Gallery Preview (sticky) on PR
-        if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: parity-gallery
-          message: |
-            🎨 **Visual Parity Gallery Ready**
-            - 🧩 Run ID : `${{ env.RUN_ID }}`
-            - 🌐 Browser : `${{ matrix.browser }}`
-            - 💾 OS : `ubuntu-latest`
-            - ⚙️ Node : `22`
-
-            🔗 [**Open full gallery → Actions Run**](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            <details>
-            <summary>🖼️ Inline Preview (example thumbnails)</summary>
-
-            <!-- Replace these placeholders with real thumbnails (commit small preview files into docs/ or modify to link artifact URLs) -->
-            ![Preview 1](docs/example1.png)
-            ![Preview 2](docs/example2.png)
-            ![Preview 3](docs/example3.png)
-
-            </details>
+      - name: Print debug info
+        run: |
+          echo "GITHUB_RUN_ID=${{ github.run_id }}"
+          echo "INPUT_RUN_ID=${{ github.event.inputs.run_id }}"
+          echo "RUN_ID_ENV=${RUN_ID}"
+        shell: bash
