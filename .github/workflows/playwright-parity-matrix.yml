@@ -1,19 +1,99 @@
-name: Playwright Parity Matrix
+name: Playwright parity matrix (manual)
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Optional run identifier"
+        required: false
+
+concurrency:
+  group: playwright-parity-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   parity:
+    name: Parity — ${{ matrix.browser }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    env:
+      # Prefer explicit run_id when provided; otherwise fall back to GitHub-run id
+      RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (npm)
+        uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Run Playwright parity test
-        run: pnpm run docs:export-png:ci
+          node-version: 18
+          cache: 'npm'
+
+      - name: Configure npm auth (optional)
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        shell: bash
+
+      - name: Install dependencies (npm ci, verbose)
+        run: |
+          set -euo pipefail
+          echo "node: $(node -v)  npm: $(npm -v)"
+          echo "Using npm ci for reproducible install"
+          npm ci --prefer-offline --no-audit --progress=false
+        shell: bash
+
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install --with-deps
+        shell: bash
+
+      - name: Create output folder
+        run: mkdir -p out
+        shell: bash
+
+      - name: Run Playwright exporter (per-browser)
+        id: export
+        run: |
+          echo "Running parity export for browser=${{ matrix.browser }} RUN_ID=${RUN_ID}"
+          # Call your exporter script — adjust flags if your script's CLI differs
+          node scripts/svg-to-png-pw.mjs \
+            --browser "${{ matrix.browser }}" \
+            --dpr 1 \
+            --embed-fonts \
+            --outdir out
+          echo "Export done; ls -la out:"
+          ls -la out || true
+        shell: bash
+
+      - name: Upload parity artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-${{ matrix.browser }}-${{ env.RUN_ID }}
+          path: out
+
+      - name: Print dispatch/debug info
+        run: |
+          echo "github.run_id=${{ github.run_id }}"
+          echo "github.event.inputs.run_id=${{ github.event.inputs.run_id }}"
+          echo "env.RUN_ID=${RUN_ID}"
+        shell: bash
+
+      - name: Commit and push changes
+        run: |
+          cd /d "c:\Users\DESIGNER 1\Desktop\appmat"
+          powershell -NoProfile -Command "Set-Content -Path '.github\workflows\playwright-parity-matrix.yml' -Value (Get-Content -Raw -LiteralPath '.github\workflows\playwright-parity-matrix.yml') -Encoding UTF8"
+          git checkout add-playwright-dispatch
+          git add .github\workflows\playwright-parity-matrix.yml package-lock.json package.json
+          git commit -m "ci: switch Playwright parity workflow from pnpm to npm (npm ci + cache)" || echo "No commit (maybe identical)"
+          git push -u origin add-playwright-dispatch
+        shell: bash
