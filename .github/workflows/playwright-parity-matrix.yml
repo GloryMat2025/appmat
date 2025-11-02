@@ -32,77 +32,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (pnpm)
+      - name: Setup Node.js (npm)
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'pnpm'
+          cache: 'npm'
 
-      - name: Install pnpm (pinned) and project deps (robust + verbose)
+      - name: Configure npm auth (optional)
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
         shell: bash
+
+      - name: Install dependencies (npm ci, verbose)
         run: |
           set -euo pipefail
           echo "node: $(node -v)  npm: $(npm -v)"
-          npm install -g pnpm@8 || { echo "npm install -g pnpm@8 failed"; exit 1; }
-          pnpm -v
+          echo "Using npm ci for reproducible install"
+          npm ci --prefer-offline --no-audit --progress=false
+        shell: bash
 
-          echo "=== Registry & network diagnostic ==="
-          REGISTRY=$(npm config get registry)
-          echo "npm registry: $REGISTRY"
-          curl -fsS -I "$REGISTRY" || echo "registry HEAD check failed (network?)"
-
-          echo "=== Try pnpm install (frozen lockfile) with retries ==="
-          max_attempts=3
-          attempt=1
-          until [ $attempt -gt $max_attempts ]
-          do
-            echo "--- pnpm install attempt #$attempt ---"
-            # use reporter append-only to reduce noise but keep logs in the runner
-            pnpm install --frozen-lockfile --reporter=append-only && break
-            rc=$?
-            echo "pnpm install failed with rc=$rc on attempt #$attempt"
-            attempt=$((attempt+1))
-            sleep $((attempt * 5))
-          done
-
-          if [ $attempt -gt $max_attempts ]; then
-            echo "pnpm install failed after $max_attempts attempts. Dumping diagnostics..."
-            echo "=== pnpm store status (if available) ==="
-            pnpm store status || true
-
-            echo "=== First 200 lines of pnpm-lock.yaml ==="
-            if [ -f pnpm-lock.yaml ]; then head -n 200 pnpm-lock.yaml || true; else echo "no pnpm-lock.yaml found"; fi
-
-            echo "=== node_modules listing (top-level) ==="
-            ls -la | sed -n '1,200p' || true
-
-            echo "=== Fallback: try npm ci to see if it succeeds ==="
-            if command -v npm >/dev/null 2>&1; then
-              echo "Running npm ci as fallback (no lockfile parity guarantee)"
-              npm ci --prefer-offline || echo "npm ci fallback also failed"
-            fi
-
-            # fail the job so we can inspect logs
-            exit 1
-          fi
-
-          echo "pnpm install succeeded"
-
-      - name: Cache pnpm store + node_modules
-        uses: actions/cache@v4
-        with:
-          # cache pnpm store folders and optionally node_modules
-          path: |
-            ~/.pnpm-store
-            node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-
-
-      - name: Ensure Playwright browsers are installed
+      - name: Install Playwright browsers
         run: |
-          # Use pnpm exec for reproducible runner behavior
-          pnpm exec playwright install --with-deps
+          npx playwright install --with-deps
         shell: bash
 
       - name: Create output folder
@@ -114,7 +66,7 @@ jobs:
         run: |
           echo "Running parity export for browser=${{ matrix.browser }} RUN_ID=${RUN_ID}"
           # Call your exporter script — adjust flags if your script's CLI differs
-          pnpm node scripts/svg-to-png-pw.mjs \
+          node scripts/svg-to-png-pw.mjs \
             --browser "${{ matrix.browser }}" \
             --dpr 1 \
             --embed-fonts \
@@ -134,4 +86,14 @@ jobs:
           echo "github.run_id=${{ github.run_id }}"
           echo "github.event.inputs.run_id=${{ github.event.inputs.run_id }}"
           echo "env.RUN_ID=${RUN_ID}"
+        shell: bash
+
+      - name: Commit and push changes
+        run: |
+          cd /d "c:\Users\DESIGNER 1\Desktop\appmat"
+          powershell -NoProfile -Command "Set-Content -Path '.github\workflows\playwright-parity-matrix.yml' -Value (Get-Content -Raw -LiteralPath '.github\workflows\playwright-parity-matrix.yml') -Encoding UTF8"
+          git checkout add-playwright-dispatch
+          git add .github\workflows\playwright-parity-matrix.yml package-lock.json package.json
+          git commit -m "ci: switch Playwright parity workflow from pnpm to npm (npm ci + cache)" || echo "No commit (maybe identical)"
+          git push -u origin add-playwright-dispatch
         shell: bash
