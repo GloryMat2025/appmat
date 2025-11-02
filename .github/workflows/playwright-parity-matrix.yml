@@ -1,8 +1,9 @@
-name: Playwright parity matrix (npm)
+name: Playwright parity matrix (pnpm, pinned)
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       run_id:
@@ -29,27 +30,58 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js (npm)
+      - name: Setup Node.js (pnpm)
         uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: 'pnpm'
 
-      - name: Configure npm auth (optional)
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+      - name: Cache pnpm store + node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install pnpm@8 and project deps (robust + verbose)
         shell: bash
-
-      - name: Install dependencies (npm ci, verbose)
         run: |
           set -euo pipefail
           echo "node: $(node -v)  npm: $(npm -v)"
-          npm ci --prefer-offline --no-audit --progress=false
-        shell: bash
+          npm install -g pnpm@8 || { echo "npm install -g pnpm@8 failed"; exit 1; }
+          pnpm -v
+          REGISTRY=$(npm config get registry)
+          echo "npm registry: $REGISTRY"
+          curl -fsS -I "$REGISTRY" || echo "registry HEAD check failed (network?)"
+          max_attempts=3
+          attempt=1
+          until [ $attempt -gt $max_attempts ]
+          do
+            echo "pnpm install attempt #$attempt"
+            pnpm install --frozen-lockfile --reporter=append-only && break
+            rc=$?
+            echo "pnpm install failed rc=$rc attempt #$attempt"
+            attempt=$((attempt+1))
+            sleep $((attempt * 5))
+          done
+          if [ $attempt -gt $max_attempts ]; then
+            echo "pnpm install failed after $max_attempts attempts; dumping diagnostics"
+            pnpm store status || true
+            if [ -f pnpm-lock.yaml ]; then head -n 200 pnpm-lock.yaml || true; fi
+            ls -la | sed -n '1,200p' || true
+            if command -v npm >/dev/null 2>&1; then
+              echo "Trying npm ci fallback"
+              npm ci --prefer-offline || echo "npm ci also failed"
+            fi
+            exit 1
+          fi
+          echo "pnpm install succeeded"
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Ensure Playwright browsers
+        run: pnpm exec playwright install --with-deps
         shell: bash
 
       - name: Create output folder
@@ -60,7 +92,7 @@ jobs:
         id: export
         run: |
           echo "Running for browser=${{ matrix.browser }} RUN_ID=${RUN_ID}"
-          node scripts/svg-to-png-pw.mjs --browser "${{ matrix.browser }}" --dpr 1 --embed-fonts --outdir out
+          pnpm node scripts/svg-to-png-pw.mjs --browser "${{ matrix.browser }}" --dpr 1 --embed-fonts --outdir out
           ls -la out || true
         shell: bash
 
