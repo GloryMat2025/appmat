@@ -38,11 +38,47 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      - name: Install pnpm and project deps
-        run: |
-          npm install -g pnpm
-          pnpm install --frozen-lockfile
+      - name: Install pnpm and project deps (robust + verbose)
         shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Environment info"
+          node -v || true
+          npm -v || true
+          uname -a || true
+          lsb_release -a || true || true
+
+          echo "Installing pnpm (latest v7/v8 recommended) and printing versions"
+          npm install -g pnpm || { echo "npm install -g pnpm failed"; npm -v; exit 1; }
+          pnpm -v
+
+          echo "Cache / network diagnostics (npm registry)"
+          npm config get registry || true
+          curl -I "$(npm config get registry)" || true
+
+          echo "Attempt pnpm install (frozen lockfile) with retries"
+          max_attempts=3
+          attempt=1
+          until [ $attempt -gt $max_attempts ]
+          do
+            echo "pnpm install attempt #$attempt"
+            pnpm install --frozen-lockfile --reporter=append-only && break
+            rc=$?
+            echo "pnpm install failed with rc=$rc on attempt #$attempt"
+            attempt=$((attempt+1))
+            sleep $((attempt * 5))
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "pnpm install failed after $max_attempts attempts; dumping pnpm debug logs and lockfile"
+            pnpm store status || true
+            echo "Contents of pnpm-lock.yaml (head):"
+            head -n 200 pnpm-lock.yaml || true
+            echo "Listing node_modules (partial):"
+            ls -la | sed -n '1,200p' || true
+            false
+          fi
 
       - name: Ensure Playwright browsers are installed
         run: |
