@@ -1,4 +1,4 @@
-# Playwright Parity Matrix
+name: Playwright Parity Matrix
 
 on:
   push:
@@ -51,7 +51,6 @@ jobs:
           echo "pnpm version: $(pnpm --version)"
           echo "Using registry: $(pnpm config get registry || npm config get registry)"
 
-          # try pnpm install with retries
           retries=3
           delay=5
           i=1
@@ -80,7 +79,6 @@ jobs:
 
       - name: Ensure Playwright browsers
         run: |
-          # install playwright browsers (with deps) -- allow failures to provide diagnostics
           pnpm exec playwright install --with-deps
         shell: bash
 
@@ -88,7 +86,6 @@ jobs:
         run: |
           mkdir -p artifacts || true
           echo "Running exporter for ${matrix.browser} with RUN_ID=${RUN_ID}"
-          # export per-browser into an artifacts folder named with the run id
           node --version
           pnpm exec node scripts/svg-to-png-pw.mjs --browser=${{ matrix.browser }} --out=artifacts/${{ matrix.browser }}-${{ env.RUN_ID }}
         shell: bash
