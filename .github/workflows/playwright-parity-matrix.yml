@@ -79,6 +79,12 @@ jobs:
           fi
           echo "pnpm install succeeded"
 
+      - name: Configure npm auth (if NPM_TOKEN set)
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}" > ~/.npmrc
+        shell: bash
+
       - name: Ensure Playwright browsers
         run: pnpm exec playwright install --with-deps
         shell: bash
