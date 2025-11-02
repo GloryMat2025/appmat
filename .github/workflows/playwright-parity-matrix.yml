@@ -43,26 +43,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          echo "Environment info"
+          echo "=== Environment ==="
           node -v || true
           npm -v || true
           uname -a || true
-          lsb_release -a || true || true
 
-          echo "Installing pnpm (latest v7/v8 recommended) and printing versions"
+          echo "=== Install pnpm (global) and show versions ==="
+          # pin a stable pnpm if you want: npm i -g pnpm@8
           npm install -g pnpm || { echo "npm install -g pnpm failed"; npm -v; exit 1; }
           pnpm -v
 
-          echo "Cache / network diagnostics (npm registry)"
-          npm config get registry || true
-          curl -I "$(npm config get registry)" || true
+          echo "=== Registry & network diagnostic ==="
+          REGISTRY=$(npm config get registry)
+          echo "npm registry: $REGISTRY"
+          curl -fsS -I "$REGISTRY" || echo "registry HEAD check failed (network?)"
 
-          echo "Attempt pnpm install (frozen lockfile) with retries"
+          echo "=== Try pnpm install (frozen lockfile) with retries ==="
           max_attempts=3
           attempt=1
           until [ $attempt -gt $max_attempts ]
           do
-            echo "pnpm install attempt #$attempt"
+            echo "--- pnpm install attempt #$attempt ---"
+            # use reporter append-only to reduce noise but keep logs in the runner
             pnpm install --frozen-lockfile --reporter=append-only && break
             rc=$?
             echo "pnpm install failed with rc=$rc on attempt #$attempt"
@@ -71,14 +73,27 @@ jobs:
           done
 
           if [ $attempt -gt $max_attempts ]; then
-            echo "pnpm install failed after $max_attempts attempts; dumping pnpm debug logs and lockfile"
+            echo "pnpm install failed after $max_attempts attempts. Dumping diagnostics..."
+            echo "=== pnpm store status (if available) ==="
             pnpm store status || true
-            echo "Contents of pnpm-lock.yaml (head):"
-            head -n 200 pnpm-lock.yaml || true
-            echo "Listing node_modules (partial):"
+
+            echo "=== First 200 lines of pnpm-lock.yaml ==="
+            if [ -f pnpm-lock.yaml ]; then head -n 200 pnpm-lock.yaml || true; else echo "no pnpm-lock.yaml found"; fi
+
+            echo "=== node_modules listing (top-level) ==="
             ls -la | sed -n '1,200p' || true
-            false
+
+            echo "=== Fallback: try npm ci to see if it succeeds ==="
+            if command -v npm >/dev/null 2>&1; then
+              echo "Running npm ci as fallback (no lockfile parity guarantee)"
+              npm ci --prefer-offline || echo "npm ci fallback also failed"
+            fi
+
+            # fail the job so we can inspect logs
+            exit 1
           fi
+
+          echo "pnpm install succeeded"
 
       - name: Ensure Playwright browsers are installed
         run: |
