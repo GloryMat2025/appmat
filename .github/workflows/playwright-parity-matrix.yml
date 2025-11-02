@@ -10,6 +10,10 @@ on:
         description: "Optional run identifier"
         required: false
 
+concurrency:
+  group: playwright-parity-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
@@ -22,28 +26,28 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     env:
-      # use provided run_id when manually dispatched, otherwise fallback to github.run_id
+      # Prefer explicit run_id when provided; otherwise fall back to GitHub-run id
       RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (pnpm)
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'pnpm'
 
-      - name: Install pnpm and dependencies
+      - name: Install pnpm and project deps
         run: |
           npm install -g pnpm
           pnpm install --frozen-lockfile
         shell: bash
 
       - name: Ensure Playwright browsers are installed
-        # This will download browsers needed by playwright tests/exporter
         run: |
-          pnpm dlx playwright install --with-deps
+          # Use pnpm exec for reproducible runner behavior
+          pnpm exec playwright install --with-deps
         shell: bash
 
       - name: Create output folder
@@ -54,26 +58,25 @@ jobs:
         id: export
         run: |
           echo "Running parity export for browser=${{ matrix.browser }} RUN_ID=${RUN_ID}"
-          # Example call: adjust flags to match your local exporter CLI
+          # Call your exporter script — adjust flags if your script's CLI differs
           pnpm node scripts/svg-to-png-pw.mjs \
             --browser "${{ matrix.browser }}" \
             --dpr 1 \
             --embed-fonts \
             --outdir out
-          echo "Export exit code: $?"
-          ls -l out || true
+          echo "Export done; ls -la out:"
+          ls -la out || true
         shell: bash
 
       - name: Upload parity artifacts
         uses: actions/upload-artifact@v4
         with:
-          # include the run id and browser in artifact name for easy correlation
           name: parity-${{ matrix.browser }}-${{ env.RUN_ID }}
           path: out
 
-      - name: Print debug info
+      - name: Print dispatch/debug info
         run: |
-          echo "GITHUB_RUN_ID=${{ github.run_id }}"
-          echo "INPUT_RUN_ID=${{ github.event.inputs.run_id }}"
-          echo "RUN_ID_ENV=${RUN_ID}"
+          echo "github.run_id=${{ github.run_id }}"
+          echo "github.event.inputs.run_id=${{ github.event.inputs.run_id }}"
+          echo "env.RUN_ID=${RUN_ID}"
         shell: bash
