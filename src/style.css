@@ -1,0 +1,26 @@
+body {
+  font-family: system-ui, sans-serif;
+  background-color: #f7f9fb;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+header.site {
+  background-color: #0078ff;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+main {
+  text-align: center;
+  padding: 2rem;
+}
+
+footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+  margin-top: 2rem;
+}

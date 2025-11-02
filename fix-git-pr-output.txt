@@ -1,0 +1,7 @@
+ParserError: C:\Users\DESIGNER 1\Desktop\appmat\scripts\fix-git-pr.ps1:62:53
+Line |
+  62 |  Write-Host "Commits on $currentBranch not on origin/$BaseBranch:"
+     |                                                      ~~~~~~~~~~~~
+     | Variable reference is not valid. ':' was not followed by a
+     | valid variable name character. Consider using ${} to
+     | delimit the name.

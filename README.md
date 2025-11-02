@@ -561,3 +561,68 @@ graph TD
 	D --> E[Generate changelog + publish GitHub Release]
 	E --> F[Upload artifacts (gallery.html, zip)]
 ```
+```mermaid
+flowchart TD
+  A([🟢 Trigger]) -->|push / PR / manual| B[🏗️ Job: build-and-test]
+  B --> C[🧪 Job: parity]
+  C --> D[[📦 Output]]
+
+  subgraph "Trigger Events"
+    A1(push ke main)
+    A2(pull_request)
+    A3(workflow_dispatch)
+  end
+  A1 --> B
+  A2 --> B
+  A3 --> B
+
+  subgraph "build-and-test"
+    B1[Checkout repository]
+    B2[Setup Node & pnpm]
+    B3[Enable Corepack & Install deps]
+    B4[Run Playwright export (PNG)]
+    B5[Generate gallery.html]
+    B6[Upload Artifacts (ZIP + HTML)]
+  end
+  B1 --> B2 --> B3 --> B4 --> B5 --> B6
+
+  subgraph "parity"
+    C1[Checkout repository]
+    C2[Setup Node v22]
+    C3[Install dependencies]
+    C4[Run Playwright tests (3 browsers)]
+    C5[Auto-comment on PR]
+  end
+  C1 --> C2 --> C3 --> C4 --> C5
+
+  subgraph "Output"
+    D1[Artifacts: PNG + gallery.html]
+    D2[PR comment: thumbnails + gallery link]
+    D3[workflow_dispatch ready]
+  end
+  D1 --> D2 --> D3
+
+  classDef job fill:#f9f9f9,stroke:#333,stroke-width:1px;
+  class B,C job;
+
+
+> 💡 **Tip:** Kalau kau preview `README.md` di GitHub, diagram ni akan muncul automatik dengan ikon & panah flow.
+
+---
+
+## 🧩 **Apa Yang Dah Lengkap Sekarang**
+| Komponen | Status |
+|-----------|---------|
+| ✅ Workflow YAML (push, PR, manual trigger) | Siap |
+| ✅ Matrix (Node × OS, browser) | Siap |
+| ✅ Gallery generator (with slider) | Siap |
+| ✅ PR comment automation | Siap |
+| ✅ Diagram dokumentasi (Mermaid) | Siap |
+
+---
+
+Langkah seterusnya, aku boleh bantu kau:
+- 🔖 **Tambahkan dokumentasi “Developer Guide”** (contohnya `docs/ci-overview.md`) — lengkap dengan cara run CI secara lokal dengan `act`.
+- atau 💬 **Integrasi notifikasi WhatsApp/Telegram** setiap kali parity test gagal (alert QA team automatik).  
+
+Nak saya terus buat versi “Developer CI Guide” untuk folder `docs/`?
