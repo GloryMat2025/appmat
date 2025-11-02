@@ -1,4 +1,4 @@
-name: Playwright parity matrix (pnpm, pinned)
+name: Playwright parity matrix (pnpm, pinned, auth)
 
 on:
   push:
@@ -35,6 +35,12 @@ jobs:
         with:
           node-version: 18
           cache: 'pnpm'
+
+      - name: Configure npm auth (if NPM_TOKEN set)
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: |
+          echo \"//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}\" > ~/.npmrc
+        shell: bash
 
       - name: Cache pnpm store + node_modules
         uses: actions/cache@v4
