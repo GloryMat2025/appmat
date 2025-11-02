@@ -1,14 +1,14 @@
-name: Playwright parity matrix (pnpm, pinned, auth)
-
+# Playwright parity matrix — pnpm pinned & cached, robust install
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       run_id:
         description: "Optional run identifier"
         required: false
+
+name: Playwright parity matrix (pnpm, pinned)
 
 concurrency:
   group: playwright-parity-${{ github.ref }}
@@ -35,12 +35,6 @@ jobs:
         with:
           node-version: 18
           cache: 'pnpm'
-
-      - name: Configure npm auth (if NPM_TOKEN set)
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: |
-          echo \"//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }}\" > ~/.npmrc
-        shell: bash
 
       - name: Cache pnpm store + node_modules
         uses: actions/cache@v4
