@@ -38,19 +38,12 @@ jobs:
           node-version: 18
           cache: 'pnpm'
 
-      - name: Install pnpm and project deps (robust + verbose)
+      - name: Install pnpm (pinned) and project deps (robust + verbose)
         shell: bash
         run: |
           set -euo pipefail
-
-          echo "=== Environment ==="
-          node -v || true
-          npm -v || true
-          uname -a || true
-
-          echo "=== Install pnpm (global) and show versions ==="
-          # pin a stable pnpm if you want: npm i -g pnpm@8
-          npm install -g pnpm || { echo "npm install -g pnpm failed"; npm -v; exit 1; }
+          echo "node: $(node -v)  npm: $(npm -v)"
+          npm install -g pnpm@8 || { echo "npm install -g pnpm@8 failed"; exit 1; }
           pnpm -v
 
           echo "=== Registry & network diagnostic ==="
@@ -94,6 +87,17 @@ jobs:
           fi
 
           echo "pnpm install succeeded"
+
+      - name: Cache pnpm store + node_modules
+        uses: actions/cache@v4
+        with:
+          # cache pnpm store folders and optionally node_modules
+          path: |
+            ~/.pnpm-store
+            node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Ensure Playwright browsers are installed
         run: |
