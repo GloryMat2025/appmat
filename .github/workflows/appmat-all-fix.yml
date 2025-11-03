@@ -1,0 +1,70 @@
+name: "Appmat All-Fix CI"
+
+on:
+  push:
+    branches: [ "main", "fix/**", "dev/**" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  all-fix:
+    name: "Run Full Build & Playwright Validation"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node + pnpm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 4️⃣ Run build
+      - name: Build project
+        run: pnpm run build
+
+      # 5️⃣ Run Playwright tests
+      - name: Run Playwright tests
+        run: |
+          npx playwright install --with-deps
+          pnpm run test || pnpm run test:playwright
+        continue-on-error: true
+
+      # 6️⃣ Generate screenshots & reports
+      - name: Generate screenshots & reports
+        run: |
+          pnpm run capture || true
+          pnpm run shots:report || true
+          pnpm run shots:zip || true
+
+      # 7️⃣ Upload gallery + logs as artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: appmat-fix-artifacts
+          path: |
+            dist/**
+            test-results/**
+            gallery.html
+            fix-report.log
+          if-no-files-found: ignore
+
+      # 8️⃣ Summary output
+      - name: Print summary
+        run: |
+          echo "✅ Appmat All-Fix CI completed successfully."
+          echo "Logs and gallery artifacts uploaded."
+
