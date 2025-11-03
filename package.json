@@ -13,22 +13,24 @@
     "test:report": "playwright show-report"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.19",
-    "archiver": "^5.3.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "archiver": "^7.0.1",
     "autoprefixer": "^10.4.21",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.25.12",
     "pixelmatch": "^7.1.0",
-    "playwright": "^1.56.0",
+    "playwright": "^1.56.1",
     "pngjs": "^7.0.0",
     "postcss": "^8.5.6",
     "sharp": "^0.34.4",
     "tailwindcss": "4.1.16",
-    "vite": "^5.4.2"
+    "vite": "^7.1.12"
   }
 }
