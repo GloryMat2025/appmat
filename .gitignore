@@ -22,3 +22,4 @@ hashes-*.txt
 run-*-full.log
 step-install-*.log
 
+java/target/
