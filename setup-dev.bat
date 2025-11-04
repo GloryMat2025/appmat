@@ -15,6 +15,16 @@ if %ERRORLEVEL% neq 0 (
     echo ✅ pnpm version %PNPM_VERSION% found.
 )
 
+:: Ensure pnpm is available via Corepack (idempotent)
+where corepack >nul 2>&1
+if %ERRORLEVEL%==0 (
+  echo Enabling Corepack and preparing pnpm@8.10.0...
+  corepack enable
+  corepack prepare pnpm@8.10.0 --activate
+) else (
+  echo Corepack not found. Please install pnpm or Node >=16.10 which includes corepack.
+)
+
 :: Step 2 — Install dependencies
 echo.
 echo [2/2] Installing dependencies...
