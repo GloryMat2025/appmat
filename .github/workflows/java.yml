@@ -1,1 +1,40 @@
-<PASTE THE ENTIRE YAML CONTENT FROM ABOVE HERE>
+name: Java CI (Java 21)
+
+on:
+  push:
+    paths:
+      - 'java/**'
+      - '.github/workflows/**'
+    branches:
+      - main
+      - add-java-setup-readme
+  pull_request:
+    paths:
+      - 'java/**'
+      - '.github/workflows/**'
+    branches:
+      - main
+
+jobs:
+  build-java-sample:
+    name: Build Java sample (JDK 21)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Show Java / Maven versions
+        run: |
+          java -XshowSettings:properties -version
+          mvn -v
+
+      - name: Build and run tests for java module
+        run: |
+          mvn -f java/pom.xml -B -U clean verify
