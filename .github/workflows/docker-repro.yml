@@ -19,6 +19,8 @@ jobs:
       # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Setup pnpm
+      - name: Setup pnpm
 
       # 2️⃣ Log in to GitHub Container Registry (GHCR)
       - name: Log in to GHCR
