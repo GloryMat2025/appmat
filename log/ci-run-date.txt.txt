@@ -1,0 +1,67 @@
+$ErrorActionPreference = "Stop"
+
+# === Setup log file ===
+$logDir = Join-Path (Get-Location) "logs"
+if (!(Test-Path $logDir)) { New-Item -ItemType Directory -Path $logDir | Out-Null }
+$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$logFile = Join-Path $logDir "ci-run-$timestamp.txt"
+Start-Transcript -Path $logFile -Append | Out-Null
+
+Write-Host "🧩 Cleaning package.json..." -ForegroundColor Cyan
+node scripts/fix-package.mjs
+
+# === Find latest report ===
+$report = Get-ChildItem -Path . -Filter "package-fix-report.*.json" |
+  Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if (-not $report) {
+  Write-Host "❌ No package-fix-report.*.json found." -ForegroundColor Red
+  Stop-Transcript
+  exit 1
+}
+
+Write-Host "📄 Using report: $($report.Name)" -ForegroundColor Yellow
+$json = Get-Content $report.FullName | ConvertFrom-Json
+$pkgs = @()
+foreach ($k in $json.suggestions.PSObject.Properties.Name) {
+  $v = $json.suggestions.$k
+  if ($v) { $pkgs += "$k@$v" }
+}
+
+# === Install dependencies ===
+if ($pkgs.Count -gt 0) {
+  Write-Host "📦 Installing suggested dependencies..." -ForegroundColor Cyan
+  npm install $pkgs
+} else {
+  Write-Host "No suggested packages to reinstall." -ForegroundColor Yellow
+}
+
+# === Commit & push ===
+$commitMsg = "chore: auto-fix deps and dispatch workflow"
+Write-Host "💾 Committing cleaned package.json..." -ForegroundColor Cyan
+git add package.json
+git commit -m $commitMsg | Out-Null
+git push
+
+# === Dispatch workflow ===
+Write-Host "🚀 Dispatching CI workflow..." -ForegroundColor Cyan
+$run = gh workflow run "Playwright parity matrix (manual)" -f branch=main --json | ConvertFrom-Json
+Start-Sleep -Seconds 10
+
+# === Monitor run ===
+$runId = $run.id
+Write-Host "🔍 Monitoring workflow run ID: $runId" -ForegroundColor Cyan
+do {
+  $status = gh run view $runId --json status,conclusion | ConvertFrom-Json
+  Write-Host ("  • Status: {0}  (Conclusion: {1})" -f $status.status, $status.conclusion)
+  Start-Sleep -Seconds 15
+} while ($status.status -ne "completed")
+
+if ($status.conclusion -eq "success") {
+  Write-Host "✅ Workflow succeeded!" -ForegroundColor Green
+} else {
+  Write-Host "❌ Workflow failed: $($status.conclusion)" -ForegroundColor Red
+}
+
+# === End logging ===
+Stop-Transcript
+Write-Host "`n📁 Log saved to: $logFile" -ForegroundColor Yellow
