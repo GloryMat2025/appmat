@@ -2,15 +2,24 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Home from "./pages/Home";
 import Footer from "./components/Footer";
+import React from "react";
+import OfflineStatus from "./components/OfflineStatus";
 
-export default function App() {
+function App() {
   return (
-    
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 dark:text-white">
-      <Navbar />
-      <Hero />
-      <Home />
-      <Footer />
-    </div>
+    <>
+      <header>
+        <h1>AppMat</h1>
+      </header>
+
+      <main>
+        <p>Your app content goes here...</p>
+      </main>
+
+      {/* ✅ Offline detector */}
+      <OfflineStatus />
+    </>
   );
 }
+
+export default App;

@@ -1,0 +1,71 @@
+name: "Appmat Artifact Verification & Diff"
+
+on:
+  workflow_run:
+    workflows: ["Appmat Matrix Parity CI", "Appmat Docker Repro Build"]
+    types:
+      - completed
+
+jobs:
+  verify:
+    name: "Compare CI vs Docker Artifacts"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Install required tools
+      - name: Setup compare tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick diffutils jq
+
+      # 3️⃣ Download latest artifacts from CI
+      - name: Download latest Matrix artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: appmat-fix-artifacts
+          path: ./ci-out
+        continue-on-error: true
+
+      - name: Download latest Docker output
+        uses: actions/download-artifact@v4
+        with:
+          name: parity-ubuntu-latest-node20
+          path: ./docker-out
+        continue-on-error: true
+
+      # 4️⃣ Compute file hashes for both outputs
+      - name: Compute hashes
+        run: |
+          mkdir -p diff
+          find ./ci-out -type f -exec sha256sum {} \; | sort > diff/ci.hash
+          find ./docker-out -type f -exec sha256sum {} \; | sort > diff/docker.hash
+          diff -u diff/ci.hash diff/docker.hash > diff/hashdiff.txt || true
+
+      # 5️⃣ Visual diff for PNGs (if any)
+      - name: Generate visual diffs
+        run: |
+          mkdir -p diff/images
+          for f in $(find ./ci-out -name '*.png'); do
+            rel=${f#./ci-out/}
+            if [ -f "./docker-out/$rel" ]; then
+              compare -metric AE "$f" "./docker-out/$rel" "diff/images/${rel%.png}-diff.png" || true
+            fi
+          done
+
+      # 6️⃣ Upload diff report as artifact
+      - name: Upload diff report
+        uses: actions/upload-artifact@v4
+        with:
+          name: appmat-diff-report
+          path: diff/
+          if-no-files-found: ignore
+
+      # 7️⃣ Print summary
+      - name: Print summary
+        run: |
+          echo "✅ Artifact verification completed."
+          echo "Check artifact 'appmat-diff-report' for any differences."

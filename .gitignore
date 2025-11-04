@@ -14,3 +14,18 @@ pnpm-debug.log*
 latest-mock-*.zip
 shots/
 node_modules/
+
+# CI artifacts and generated hashes
+artifacts-*/
+hashes-*.txt
+*.bak.*
+run-*-full.log
+step-install-*.log
+
+java/target/
+java/target/
+java/target/
+java/target/
+java/target/
+java/target/
+java/target/

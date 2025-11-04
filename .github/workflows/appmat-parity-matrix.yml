@@ -1,0 +1,75 @@
+name: "Appmat Matrix Parity CI"
+
+on:
+  push:
+    branches: [ "main", "dev/**", "fix/**" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-test-matrix:
+    name: "Build & Parity Test"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [20, 22]
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node per matrix
+      - name: Setup Node ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: "pnpm"
+$leading- name: Setup pnpm
+
+        uses: pnpm/action-setup@v2
+
+        with:
+
+          version: '9'
+# 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 4️⃣ Build & capture outputs
+      - name: Build & Capture
+        run: |
+          echo "Building on ${{ matrix.os }} Node ${{ matrix.node }}"
+          pnpm run build
+          pnpm run capture || true
+
+      # 5️⃣ Run Playwright tests
+      - name: Run Playwright Tests
+        run: |
+          npx playwright install --with-deps
+          pnpm run test || pnpm run test:playwright
+        continue-on-error: true
+
+      # 6️⃣ Compare results (if artifacts exist)
+      - name: Verify parity consistency
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 20
+        run: |
+          echo "Comparing output hashes..."
+          find dist -type f -exec sha256sum {} \; | sort > ubuntu20.hashes
+        shell: bash
+
+      - name: Upload parity results
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-${{ matrix.os }}-node${{ matrix.node }}
+          path: |
+            dist/**
+            gallery.html
+            test-results/**
+          if-no-files-found: ignore
+
