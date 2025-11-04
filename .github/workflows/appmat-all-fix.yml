@@ -25,10 +25,11 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
-      - name: Install pnpm
-        run: npm install -g pnpm@9
-
-      # 3️⃣ Install dependencies
+      - name: Setup pnpm
+  uses: pnpm/action-setup@v2
+  with:
+    version: '9'
+# 3️⃣ Install dependencies
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -67,4 +68,5 @@ jobs:
         run: |
           echo "✅ Appmat All-Fix CI completed successfully."
           echo "Logs and gallery artifacts uploaded."
+
 
