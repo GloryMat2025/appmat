@@ -1,0 +1,41 @@
+name: Frontend CI (pnpm)
+
+on:
+  push:
+    branches: [ main, "add-java-ci" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run lint
+        run: pnpm lint
+        # remove or change if you don't have a lint script
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
