@@ -3,6 +3,11 @@ import App from "../App.jsx";
 import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
 import Admin from "./pages/Admin.jsx";
+import "./styles/main.css";
+import "./styles/offline.css";
+import "./scripts/registerSW";
+
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
