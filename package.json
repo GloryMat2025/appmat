@@ -17,7 +17,11 @@
     "postinstall": "node ./scripts/rebuild-esbuild.cjs"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,css,html}": "prettier --write"
+    "*.{js,jsx,ts,tsx}": [
+      "pnpm exec eslint --fix",
+      "pnpm exec prettier --write"
+    ],
+    "*.{json,md,css,html}": "pnpm exec prettier --write"
   },
   "husky": {
     "hooks": {
