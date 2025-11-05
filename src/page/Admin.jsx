@@ -101,6 +101,16 @@ export default function Admin() {
   const nextStatus = (current) =>
     current === 'baru' ? 'diproses' : current === 'diproses' ? 'selesai' : 'baru';
 
+  if (loading) {
+    return (
+      <section className="py-12 px-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
+        <div className="max-w-4xl mx-auto text-center py-20">
+          <p className="text-lg text-gray-600">Memuat data pesanan...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 px-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       <div className="max-w-6xl mx-auto relative">
