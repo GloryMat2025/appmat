@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import useCart from '../hooks/useCart';
 
 export default function Checkout() {
-  const { cartItems, totalPrice, removeFromCart } = useCart();
+  const { cartItems, totalPrice, removeFromCart, clearCart } = useCart();
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -126,11 +126,7 @@ export default function Checkout() {
             >
               {submitting ? 'Memproses...' : 'Hantar Pesanan'}
             </button>
-            <button
-              type="button"
-              onClick={() => removeFromCart(null)}
-              className="text-sm text-red-600"
-            >
+            <button type="button" onClick={clearCart} className="text-sm text-red-600">
               Kosongkan Troli
             </button>
           </div>
