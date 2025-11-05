@@ -18,10 +18,10 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "node ./node_modules/eslint/bin/eslint.js --fix",
+      "node ./node_modules/prettier/bin-prettier.js --write"
     ],
-    "*.{json,md,css,html}": "prettier --write"
+    "*.{json,md,css,html}": "node ./node_modules/prettier/bin-prettier.js --write"
   },
   "husky": {
     "hooks": {
