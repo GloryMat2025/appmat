@@ -17,13 +17,35 @@ let subscriptions = [];
 
 // Terima subscription dari client
 app.post('/api/subscribe', (req, res) => {
-  subscriptions.push(req.body);
+  const sub = req.body;
+
+  // Try to persist subscription to Supabase table `push_subscriptions` if available
+  (async () => {
+    try {
+      await supabase.from('push_subscriptions').insert({ subscription: sub });
+      console.log('💾 Stored subscription in Supabase');
+    } catch (dbErr) {
+      // If DB insert fails, keep in-memory as a fallback
+      console.warn('⚠️ Could not store subscription in Supabase, falling back to memory', dbErr);
+      subscriptions.push(sub);
+    }
+  })();
+
   res.status(201).json({});
 });
 
-// Helper: get all push subscribers (could be replaced with DB lookup)
+// Helper: get all push subscribers (prefer DB lookup, fallback to memory)
 const getPushSubscribers = async () => {
-  // For now keep subscribers in memory; replace with DB-backed storage if needed
+  try {
+    const { data, error } = await supabase.from('push_subscriptions').select('subscription');
+    if (error) throw error;
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map((r) => r.subscription).filter(Boolean);
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to read subscriptions from Supabase, using in-memory list', err);
+  }
+
   return subscriptions;
 };
 
