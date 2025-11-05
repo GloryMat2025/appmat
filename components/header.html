@@ -13,8 +13,9 @@
       style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px"
     >
       <div style="width: 36px; height: 36px; border-radius: 12px; background: var(--brand)"></div>
-      <strong>appmat</strong>
+      <strong>AppMat</strong>
     </a>
+
     <nav class="tabs">
       <a href="/pages/home.html">Home</a>
       <a href="/pages/menu.html">Menu</a>
@@ -24,5 +25,16 @@
     </nav>
   </div>
 </div>
-<script defer src="/assets/js/app.js"></script>
-</head>
+
+<!-- Butang hamburger -->
+<button id="menu-toggle" class="md:hidden p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
+  ☰
+</button>
+
+<nav id="mobile-menu" class="tabs hidden md:flex flex-col md:flex-row gap-2 md:gap-4">
+  <a href="/pages/home.html">Home</a>
+  <a href="/pages/menu.html">Menu</a>
+  <a href="/pages/rewards.html">Rewards</a>
+  <a href="/pages/cart.html">Cart</a>
+  <a href="/pages/account.html">Account</a>
+</nav>

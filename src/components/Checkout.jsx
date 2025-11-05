@@ -1,14 +1,14 @@
-import useCart from "../hooks/useCart";
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { supabase } from "../lib/supabaseClient";
+import useCart from '../hooks/useCart';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Checkout() {
   const { cartItems, totalPrice } = useCart();
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
+    name: '',
+    phone: '',
+    address: '',
   });
 
   const handleChange = (e) => {
@@ -19,7 +19,7 @@ export default function Checkout() {
     e.preventDefault();
 
     // Simpan order dalam Supabase
-    const { error } = await supabase.from("orders").insert([
+    const { error } = await supabase.from('orders').insert([
       {
         name: form.name,
         phone: form.phone,
@@ -31,7 +31,7 @@ export default function Checkout() {
 
     if (error) {
       console.error(error);
-      alert("Ralat menyimpan pesanan: " + error.message);
+      alert('Ralat menyimpan pesanan: ' + error.message);
       return;
     }
 
@@ -45,33 +45,23 @@ Assalamualaikum, saya ingin membuat pesanan 👇
 
 🛍️ Senarai Item:
 ${cartItems
-  .map(
-    (item) =>
-      `• ${item.title} x${item.quantity} = RM${(
-        item.price * item.quantity
-      ).toFixed(2)}`
-  )
-  .join("\n")}
+  .map((item) => `• ${item.title} x${item.quantity} = RM${(item.price * item.quantity).toFixed(2)}`)
+  .join('\n')}
 
 💰 Jumlah: RM ${totalPrice.toFixed(2)}
 
 Terima kasih! 🙏
     `.trim();
 
-    const phone = "60123456789"; // ganti nombor ni dgn nombor bisnes kau
-    const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(
-      message
-    )}`;
-    window.open(whatsappURL, "_blank");
+    const phone = '60123456789'; // ganti nombor ni dgn nombor bisnes kau
+    const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, '_blank');
 
-    alert("Pesanan berjaya disimpan & dihantar ke WhatsApp ✅");
+    alert('Pesanan berjaya disimpan & dihantar ke WhatsApp ✅');
   };
 
   return (
-    <section
-      id="checkout"
-      className="py-16 px-4 bg-gray-50 dark:bg-gray-900 min-h-screen"
-    >
+    <section id="checkout" className="py-16 px-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center text-blue-700 dark:text-yellow-400">
           Checkout Pesanan 🧾

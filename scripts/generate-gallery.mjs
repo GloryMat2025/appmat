@@ -3,21 +3,21 @@
  * Compare before/after screenshots interactively.
  */
 
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(__dirname, "..");
-const DOCS_DIR = path.join(ROOT, "docs");
-const OUT_DIR = path.join(ROOT, "out");
-const OUTPUT_HTML = path.join(ROOT, "gallery.html");
+const ROOT = path.resolve(__dirname, '..');
+const DOCS_DIR = path.join(ROOT, 'docs');
+const OUT_DIR = path.join(ROOT, 'out');
+const OUTPUT_HTML = path.join(ROOT, 'gallery.html');
 
 function collectPNGs(dir) {
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
-    .filter((f) => f.toLowerCase().endsWith(".png"))
+    .filter((f) => f.toLowerCase().endsWith('.png'))
     .map((f) => path.join(dir, f));
 }
 
@@ -26,7 +26,7 @@ const docsPNGs = collectPNGs(DOCS_DIR);
 const outPNGs = collectPNGs(OUT_DIR);
 
 if (docsPNGs.length === 0 && outPNGs.length === 0) {
-  console.log("⚠️  No PNG files found in docs/ or out/");
+  console.log('⚠️  No PNG files found in docs/ or out/');
   process.exit(0);
 }
 
@@ -117,9 +117,9 @@ const html = `
           return `
           <div class="card">
             <div class="compare-container" data-name="${p.name}">
-              <img src="${path.relative(ROOT, p.current).replace(/\\/g, "/")}" alt="after">
+              <img src="${path.relative(ROOT, p.current).replace(/\\/g, '/')}" alt="after">
               <div class="compare-overlay">
-                <img src="${path.relative(ROOT, p.baseline).replace(/\\/g, "/")}" alt="before">
+                <img src="${path.relative(ROOT, p.baseline).replace(/\\/g, '/')}" alt="before">
               </div>
               <div class="slider"></div>
             </div>
@@ -128,11 +128,11 @@ const html = `
         else
           return `
           <div class="card">
-            <img src="${path.relative(ROOT, p.current).replace(/\\/g, "/")}" alt="${p.name}">
+            <img src="${path.relative(ROOT, p.current).replace(/\\/g, '/')}" alt="${p.name}">
             <div class="caption">${p.name} (no baseline)</div>
           </div>`;
       })
-      .join("\n")}
+      .join('\n')}
   </div>
   <footer>Generated automatically on ${new Date().toLocaleString()}</footer>
 <script>
@@ -186,6 +186,5 @@ const html = `
 </html>`;
 
 // write output
-fs.writeFileSync(OUTPUT_HTML, html, "utf8");
+fs.writeFileSync(OUTPUT_HTML, html, 'utf8');
 console.log(`Gallery written to ${OUTPUT_HTML}`);
-
