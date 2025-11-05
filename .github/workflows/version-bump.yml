@@ -7,6 +7,7 @@ on:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,19 +23,23 @@ jobs:
         run: npm install -g standard-version
 
       - name: Bump version & generate changelog
+        id: bump
         run: |
           standard-version
           git push --follow-tags origin main
 
-      - name: Show new version
-        run: node -p "require('./package.json').version"
+      - name: Extract version dynamically
+        id: version
+        run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
 
-      # ✅ Auto publish GitHub Release
+      - name: Show new version
+        run: echo "📦 Released version $VERSION"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.1.1
-          name: "Release v0.1.1"
+          tag_name: v${{ env.VERSION }}
+          name: "Release v${{ env.VERSION }}"
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
