@@ -28,13 +28,19 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
           COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+          echo "$COMMITS" | grep -qi "beta" && echo "PRERELEASE=beta" >> $GITHUB_ENV && exit 0
+          echo "$COMMITS" | grep -qi "rc" && echo "PRERELEASE=rc" >> $GITHUB_ENV && exit 0
           echo "$COMMITS" | grep -q "BREAKING CHANGE" && echo "TYPE=major" >> $GITHUB_ENV && exit 0
           echo "$COMMITS" | grep -q "^feat" && echo "TYPE=minor" >> $GITHUB_ENV && exit 0
           echo "TYPE=patch" >> $GITHUB_ENV
 
       - name: Bump version based on commit type
         run: |
-          standard-version --release-as $TYPE
+          if [ -n "$PRERELEASE" ]; then
+            standard-version --prerelease $PRERELEASE
+          else
+            standard-version --release-as $TYPE
+          fi
           git push --follow-tags origin main
 
       - name: Get current version
