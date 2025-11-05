@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 import {
   ResponsiveContainer,
   LineChart,
@@ -8,7 +8,7 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-} from "recharts";
+} from 'recharts';
 
 export default function MonthlySalesChart() {
   const [data, setData] = useState([]);
@@ -20,12 +20,12 @@ export default function MonthlySalesChart() {
       const from = startOfYear.toISOString().slice(0, 10);
 
       const { data, error } = await supabase
-        .from("orders")
-        .select("total, created_at")
-        .gte("created_at", from);
+        .from('orders')
+        .select('total, created_at')
+        .gte('created_at', from);
 
       if (error) {
-        console.error("Ralat ambil data jualan bulanan:", error);
+        console.error('Ralat ambil data jualan bulanan:', error);
         return;
       }
 
@@ -33,7 +33,7 @@ export default function MonthlySalesChart() {
       const grouped = {};
       data.forEach((o) => {
         const date = new Date(o.created_at);
-        const month = date.toLocaleDateString("ms-MY", { month: "short", year: "numeric" });
+        const month = date.toLocaleDateString('ms-MY', { month: 'short', year: 'numeric' });
         grouped[month] = (grouped[month] || 0) + Number(o.total || 0);
       });
 
@@ -45,8 +45,8 @@ export default function MonthlySalesChart() {
       // Susun ikut masa
       formatted.sort(
         (a, b) =>
-          new Date(a.month.split(" ")[1], new Date(Date.parse(a.month)).getMonth()) -
-          new Date(b.month.split(" ")[1], new Date(Date.parse(b.month)).getMonth())
+          new Date(a.month.split(' ')[1], new Date(Date.parse(a.month)).getMonth()) -
+          new Date(b.month.split(' ')[1], new Date(Date.parse(b.month)).getMonth())
       );
 
       setData(formatted);

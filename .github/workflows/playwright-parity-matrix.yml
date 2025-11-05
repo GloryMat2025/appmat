@@ -2,7 +2,7 @@ name: Playwright Parity Matrix
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
     inputs:
       run_id:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        browser: [ chromium, firefox, webkit ]
+        browser: [chromium, firefox, webkit]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           npm --version || true
           git --version
           echo "RUN_ID=${RUN_ID}"
-      
+
       - name: Cache pnpm store and node_modules
         uses: actions/cache@v4
         with:

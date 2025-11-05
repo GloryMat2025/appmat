@@ -1,15 +1,15 @@
-name: "Appmat All-Fix CI"
+name: 'Appmat All-Fix CI'
 
 on:
   push:
-    branches: [ "main", "fix/**", "dev/**" ]
+    branches: ['main', 'fix/**', 'dev/**']
   pull_request:
-    branches: [ "main" ]
+    branches: ['main']
   workflow_dispatch:
 
 jobs:
   all-fix:
-    name: "Run Full Build & Playwright Validation"
+    name: 'Run Full Build & Playwright Validation'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
+          cache: 'pnpm'
 
       - name: Install pnpm
         run: npm install -g pnpm@9
@@ -67,4 +67,3 @@ jobs:
         run: |
           echo "✅ Appmat All-Fix CI completed successfully."
           echo "Logs and gallery artifacts uploaded."
-

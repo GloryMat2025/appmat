@@ -10,7 +10,7 @@
 
 **Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
 It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
- 
+
 ### Project Architecture Diagram
 
 The diagram below shows how developer actions, the repository scripts, and GitHub workflows interact end-to-end.
@@ -39,16 +39,17 @@ flowchart LR
 
 View the diagram in a standalone page: [docs/index.html](docs/index.html)
 ```
+
 ---
 
 ## 🧩 Features
 
-- 🧪 **Automated Shots & Reports** via Playwright or mock runs  
-- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions  
-- 🧱 **Auto Version Bump** (based on commit messages)  
-- 🧾 **Auto CHANGELOG.md** generation  
-- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts  
-- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes  
+- 🧪 **Automated Shots & Reports** via Playwright or mock runs
+- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions
+- 🧱 **Auto Version Bump** (based on commit messages)
+- 🧾 **Auto CHANGELOG.md** generation
+- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts
+- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes
 
 ---
 
@@ -118,21 +119,22 @@ pnpm run shots:zip
 
 ## ⚡ Quick commands
 
-| Command | Description |
-|---|---|
-| `pnpm run shots:mock` | Generate mock screenshots |
-| `pnpm run shots:report` | Create HTML gallery |
-| `pnpm run shots:zip` | Archive latest run |
-| `pnpm run shots:merge` | Merge and index results |
+| Command                           | Description                    |
+| --------------------------------- | ------------------------------ |
+| `pnpm run shots:mock`             | Generate mock screenshots      |
+| `pnpm run shots:report`           | Create HTML gallery            |
+| `pnpm run shots:zip`              | Archive latest run             |
+| `pnpm run shots:merge`            | Merge and index results        |
 | `npm version patch\|minor\|major` | Manual version bump (optional) |
-
 
 ## 🧪 CI/CD Workflows
 
 ### **1️⃣ Smoke Test – `shots-smoke.yml`**
+
 Runs on every push/PR to `main` or `shots-final`.
 
 **Steps:**
+
 - Install dependencies via `pnpm install --frozen-lockfile`
 - Run:
   ```bash
@@ -143,9 +145,11 @@ Runs on every push/PR to `main` or `shots-final`.
   ```
 
 ### **2️⃣ Version bump – `version-bump.yml`**
+
 - Runs on pushes to `main`. Uses `standard-version`/`standard-version` style bumping to update `package.json` and `CHANGELOG.md`, commit the changes and push a `vX.Y.Z` tag.
 
 ### **3️⃣ Release – `release.yml`**
+
 Runs automatically whenever a tag is pushed (v1.1.0, etc.)
 
 **Features:**
@@ -163,11 +167,11 @@ The `version-bump.yml` workflow automates semantic version increments and change
 
 Commit prefix -> version bump mapping:
 
-| Commit prefix | Version bump |
-|---------------|--------------|
-| `fix:`        | Patch        |
-| `feat:`       | Minor        |
-| `BREAKING CHANGE:` | Major   |
+| Commit prefix      | Version bump |
+| ------------------ | ------------ |
+| `fix:`             | Patch        |
+| `feat:`            | Minor        |
+| `BREAKING CHANGE:` | Major        |
 
 What the workflow does:
 
@@ -178,6 +182,7 @@ What the workflow does:
 5. The tag push triggers the `release.yml` workflow which performs release generation and artifact upload.
 
 Notes:
+
 - Ensure commit messages follow the prefix convention above; otherwise, no bump will be performed.
 - You can override automatic bumps by creating a PR with the desired version changes, but the CI flow expects the tag push to trigger releases.
 
@@ -199,6 +204,7 @@ Examples:
 - `chore: cleanup workflow cache`
 
 These prefixes feed the `version-bump.yml` workflow to decide whether to bump patch/minor/major.
+
 # 🚀 Appmat Automation
 
 [![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
@@ -216,12 +222,12 @@ It streamlines project snapshots, HTML gallery generation, version bumping, chan
 
 ## 🧩 Features
 
-- 🧪 **Automated Shots & Reports** via Playwright or mock runs  
-- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions  
-- 🧱 **Auto Version Bump** (based on commit messages)  
-- 🧾 **Auto CHANGELOG.md** generation  
-- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts  
-- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes  
+- 🧪 **Automated Shots & Reports** via Playwright or mock runs
+- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions
+- 🧱 **Auto Version Bump** (based on commit messages)
+- 🧾 **Auto CHANGELOG.md** generation
+- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts
+- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes
 
 ---
 
@@ -292,9 +298,11 @@ pnpm run shots:zip
 ## 🧪 CI/CD Workflows
 
 ### **1️⃣ Smoke Test – `shots-smoke.yml`**
+
 Runs on every push/PR to `main` or `shots-final`.
 
 **Steps:**
+
 - Install dependencies via `pnpm install --frozen-lockfile`
 - Run:
   ```bash
@@ -305,9 +313,11 @@ Runs on every push/PR to `main` or `shots-final`.
   ```
 
 ### **2️⃣ Version bump – `version-bump.yml`**
+
 - Runs on merges to `main`. Uses `standard-version` style bumping based on commit messages and pushes a `vX.Y.Z` tag.
 
 ### **3️⃣ Release – `release.yml`**
+
 Runs automatically whenever a tag is pushed (v1.1.0, etc.)
 
 **Features:**
@@ -335,6 +345,7 @@ If you prefer artifacts to be pre-committed rather than generated in-job, the ve
 ---
 
 If you'd like I can add a Troubleshooting section for Playwright on Windows (browsers, dependencies, required packages).
+
 # 🚀 Appmat Automation
 
 [![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
@@ -352,12 +363,12 @@ It streamlines project snapshots, HTML gallery generation, version bumping, chan
 
 ## 🧩 Features
 
-- 🧪 **Automated Shots & Reports** via Playwright or mock runs  
-- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions  
-- 🧱 **Auto Version Bump** (based on commit messages)  
-- 🧾 **Auto CHANGELOG.md** generation  
-- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts  
-- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes  
+- 🧪 **Automated Shots & Reports** via Playwright or mock runs
+- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions
+- 🧱 **Auto Version Bump** (based on commit messages)
+- 🧾 **Auto CHANGELOG.md** generation
+- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts
+- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes
 
 ---
 
@@ -428,9 +439,11 @@ pnpm run shots:zip
 ## 🧪 CI/CD Workflows
 
 ### **1️⃣ Smoke Test – `shots-smoke.yml`**
+
 Runs on every push/PR to `main` or `shots-final`.
 
 **Steps:**
+
 - Install dependencies via `pnpm install --frozen-lockfile`
 - Run:
   ```bash
@@ -441,9 +454,11 @@ Runs on every push/PR to `main` or `shots-final`.
   ```
 
 ### **2️⃣ Version bump – `version-bump.yml`**
+
 - Runs on merges to `main`. Uses `standard-version` style bumping based on commit messages and pushes a `vX.Y.Z` tag.
 
 ### **3️⃣ Release – `release.yml`**
+
 - Triggered by tag pushes `v*`. Generates gallery, creates changelog, verifies artifacts, and publishes a GitHub Release with `shots/gallery.html`, `shots/*.zip` and `CHANGELOG.md` attached.
 
 ---
@@ -464,6 +479,7 @@ If you prefer artifacts to be pre-committed rather than generated in-job, the ve
 ---
 
 If you'd like I can add a Troubleshooting section for Playwright on Windows (browsers, dependencies, required packages).
+
 # 🚀 Appmat Automation
 
 [![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
@@ -481,18 +497,18 @@ It streamlines project snapshots, HTML gallery generation, version bumping, chan
 
 ## 🧩 Features
 
-- 🧪 **Automated Shots & Reports** via Playwright or mock runs  
-- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions  
-- 🧱 **Auto Version Bump** (based on commit messages)  
-- 🧾 **Auto CHANGELOG.md** generation  
-- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts  
-- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes  
+- 🧪 **Automated Shots & Reports** via Playwright or mock runs
+- 🧰 **Cross-platform CI/CD** with `pnpm`, Node 20, and GitHub Actions
+- 🧱 **Auto Version Bump** (based on commit messages)
+- 🧾 **Auto CHANGELOG.md** generation
+- 🚀 **Automatic Releases** with uploaded gallery + ZIP artifacts
+- 🔒 **Release Guards** — only trigger if artifacts exist and pipeline passes
 
 ---
 
 ## 🗂 Folder Structure
 
-```
+````
 index.html
 package.json
 pnpm-lock.yaml
@@ -507,7 +523,7 @@ Run a mock capture locally (fast):
 
 ```bash
 pnpm run shots:mock
-```
+````
 
 Run the full capture/report pipeline (requires Playwright browsers & dev server):
 
@@ -521,30 +537,33 @@ pnpm run shots:zip
 
 - The `version-bump.yml` workflow bumps the package version on `main` when commit messages follow conventional style (e.g. `feat:`, `fix:`, `chore:`) and pushes a tag like `v1.2.3`.
 - The `release.yml` workflow is triggered by a tag push (`v*`). It performs the following high-level steps:
-    1. Checkout full history (`fetch-depth: 0`) so commit message checks work.
-    2. Run smoke steps that can generate the latest `shots/` outputs (mock or real captures).
-    3. Generate an HTML gallery (`shots/gallery.html`) and zip the latest shots.
-    4. Verify the gallery contains images and at least one zip is non-trivial (>= 1 KB). If verification fails the release is aborted.
-    5. Generate a changelog and create a GitHub release with the changelog as the body.
-    6. Upload `shots/gallery.html`, `shots/*.zip`, and `CHANGELOG.md` as release artifacts.
+  1. Checkout full history (`fetch-depth: 0`) so commit message checks work.
+  2. Run smoke steps that can generate the latest `shots/` outputs (mock or real captures).
+  3. Generate an HTML gallery (`shots/gallery.html`) and zip the latest shots.
+  4. Verify the gallery contains images and at least one zip is non-trivial (>= 1 KB). If verification fails the release is aborted.
+  5. Generate a changelog and create a GitHub release with the changelog as the body.
+  6. Upload `shots/gallery.html`, `shots/*.zip`, and `CHANGELOG.md` as release artifacts.
 
 If you prefer artifacts to be pre-committed rather than generated in-job, the verify step can be moved to the start of the job (or made non-blocking).
 
 ---
+
     outlets.json
     products.json
+
 pages/
-    account.html
-    cart.html
-    checkout.html
-    home.html
-    menu.html
-    rewards.html
+account.html
+cart.html
+checkout.html
+home.html
+menu.html
+rewards.html
 scripts/
-    fix-all.js
+fix-all.js
 src/
-    index.css
-```
+index.css
+
+````
 ![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)
 
 # appmat
@@ -560,7 +579,8 @@ graph TD
 	C -->|New tag vX.Y.Z| D[Release Workflow (release.yml)]
 	D --> E[Generate changelog + publish GitHub Release]
 	E --> F[Upload artifacts (gallery.html, zip)]
-```
+````
+
 ```mermaid
 flowchart TD
   A([🟢 Trigger]) -->|push / PR / manual| B[🏗️ Job: build-and-test]
@@ -623,6 +643,7 @@ flowchart TD
 
 Langkah seterusnya, aku boleh bantu kau:
 - 🔖 **Tambahkan dokumentasi “Developer Guide”** (contohnya `docs/ci-overview.md`) — lengkap dengan cara run CI secara lokal dengan `act`.
-- atau 💬 **Integrasi notifikasi WhatsApp/Telegram** setiap kali parity test gagal (alert QA team automatik).  
+- atau 💬 **Integrasi notifikasi WhatsApp/Telegram** setiap kali parity test gagal (alert QA team automatik).
 
 Nak saya terus buat versi “Developer CI Guide” untuk folder `docs/`?
+```

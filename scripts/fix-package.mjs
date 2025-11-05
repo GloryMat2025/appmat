@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 
 function safeExec(cmd) {
   try {
-    return execSync(cmd, { encoding: 'utf8', stdio: ['pipe','pipe','ignore'] }).trim();
+    return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }).trim();
   } catch (e) {
     return null;
   }
@@ -61,7 +61,10 @@ const ts = new Date().toISOString().replace(/[:.]/g, '-');
 const backupPath = path.join(repoRoot, `package.json.bak.${ts}.json`);
 const reportPath = path.join(repoRoot, `package-fix-report.${ts}.json`);
 
-if (Object.keys(removed.dependencies).length === 0 && Object.keys(removed.devDependencies).length === 0) {
+if (
+  Object.keys(removed.dependencies).length === 0 &&
+  Object.keys(removed.devDependencies).length === 0
+) {
   console.log('No invalid dependency entries found. package.json unchanged.');
   process.exit(0);
 }
@@ -73,7 +76,7 @@ const report = {
   timestamp: new Date().toISOString(),
   backup: path.basename(backupPath),
   removed,
-  suggestions
+  suggestions,
 };
 fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8');
 
@@ -81,18 +84,22 @@ console.log('Backed up original package.json ->', backupPath);
 console.log('Wrote cleaned package.json ->', pkgPath);
 console.log('Wrote fix report ->', reportPath);
 console.log('Removed entries:');
-for (const sec of ['dependencies','devDependencies']) {
+for (const sec of ['dependencies', 'devDependencies']) {
   const items = removed[sec];
   if (Object.keys(items).length) {
     console.log(` ${sec}:`);
     for (const k of Object.keys(items)) {
-      console.log(`  - ${k} => ${JSON.stringify(items[k])} (suggested: ${JSON.stringify(suggestions[k])})`);
+      console.log(
+        `  - ${k} => ${JSON.stringify(items[k])} (suggested: ${JSON.stringify(suggestions[k])})`
+      );
     }
   }
 }
 
 console.log('\nNext steps:');
 console.log(' 1) Inspect the report file:', reportPath);
-console.log(' 2) Re-add needed packages with valid version strings (use suggestions in report if helpful).');
+console.log(
+  ' 2) Re-add needed packages with valid version strings (use suggestions in report if helpful).'
+);
 console.log(' 3) Run `npm install`.');
 console.log('\nTo restore original package.json if needed: copy', backupPath, 'over package.json');

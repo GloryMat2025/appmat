@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { motion } from "framer-motion";
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { motion } from 'framer-motion';
 
 export default function TopCustomersActions() {
   const [customers, setCustomers] = useState([]);
@@ -8,20 +8,18 @@ export default function TopCustomersActions() {
 
   useEffect(() => {
     const fetchTopCustomers = async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("name, phone, total");
+      const { data, error } = await supabase.from('orders').select('name, phone, total');
 
       if (error) {
-        console.error("Ralat ambil data pelanggan:", error);
+        console.error('Ralat ambil data pelanggan:', error);
         return;
       }
 
       // Kumpul jualan ikut pelanggan
       const grouped = {};
       data.forEach((order) => {
-        const name = order.name || "Tidak Dikenali";
-        const phone = order.phone || "-";
+        const name = order.name || 'Tidak Dikenali';
+        const phone = order.phone || '-';
         if (!grouped[name]) grouped[name] = { name, phone, total: 0 };
         grouped[name].total += Number(order.total || 0);
       });
@@ -55,10 +53,10 @@ https://wa.me/60123456789?text=${encodeURIComponent(
 Terima kasih & semoga terus sihat selalu!
 `.trim();
 
-    const url = `https://wa.me/${cust.phone.replace(/^0/, "6")}?text=${encodeURIComponent(
+    const url = `https://wa.me/${cust.phone.replace(/^0/, '6')}?text=${encodeURIComponent(
       message
     )}`;
-    window.open(url, "_blank");
+    window.open(url, '_blank');
   };
 
   return (
@@ -89,7 +87,7 @@ Terima kasih & semoga terus sihat selalu!
                 whileTap={{ scale: 0.95 }}
                 onClick={runWeeklyReminder}
                 className="bg-blue-600 text-white px-6 py-2 rounded mt-4 hover:bg-blue-700 transition"
->
+              >
                 🚀 Jalankan Reminder Mingguan Sekarang
               </motion.button>
             </div>

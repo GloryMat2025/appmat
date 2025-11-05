@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-import fs from "fs";
-import path from "path";
-import archiver from "archiver";
+import fs from 'fs';
+import path from 'path';
+import archiver from 'archiver';
 
 // Folder utama
-const docsDir = path.resolve("docs");
-const outDir = path.join(docsDir, "exported");
-const zipPath = path.join(outDir, "exported.zip");
+const docsDir = path.resolve('docs');
+const outDir = path.join(docsDir, 'exported');
+const zipPath = path.join(outDir, 'exported.zip');
 
 // Pastikan folder wujud
 if (!fs.existsSync(docsDir)) {
@@ -18,18 +18,18 @@ if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
 // Import Sharp
 let sharp;
 try {
-  sharp = (await import("sharp")).default;
+  sharp = (await import('sharp')).default;
 } catch (err) {
-  console.error("❌ Sharp belum dipasang.");
-  console.error("➡️  Jalankan: pnpm add -D sharp");
+  console.error('❌ Sharp belum dipasang.');
+  console.error('➡️  Jalankan: pnpm add -D sharp');
   process.exit(3);
 }
 
 // Dapatkan semua fail SVG
-const svgFiles = fs.readdirSync(docsDir).filter(f => f.endsWith(".svg"));
+const svgFiles = fs.readdirSync(docsDir).filter((f) => f.endsWith('.svg'));
 
 if (svgFiles.length === 0) {
-  console.error("❌ Tiada fail SVG dijumpai dalam folder docs/");
+  console.error('❌ Tiada fail SVG dijumpai dalam folder docs/');
   process.exit(4);
 }
 
@@ -37,13 +37,11 @@ console.log(`📄 Jumpa ${svgFiles.length} fail SVG. Memulakan penukaran...`);
 
 for (const file of svgFiles) {
   const svgPath = path.join(docsDir, file);
-  const pngPath = path.join(outDir, file.replace(".svg", ".png"));
+  const pngPath = path.join(outDir, file.replace('.svg', '.png'));
 
   try {
     const svgBuffer = fs.readFileSync(svgPath);
-    await sharp(svgBuffer)
-      .png({ quality: 90 })
-      .toFile(pngPath);
+    await sharp(svgBuffer).png({ quality: 90 }).toFile(pngPath);
     console.log(`✅ ${file} → ${path.basename(pngPath)}`);
   } catch (e) {
     console.error(`⚠️  Gagal convert ${file}:`, e.message);
@@ -51,14 +49,14 @@ for (const file of svgFiles) {
 }
 
 // Zip semua hasil PNG
-console.log("📦 Memampatkan hasil ke exported.zip...");
+console.log('📦 Memampatkan hasil ke exported.zip...');
 const output = fs.createWriteStream(zipPath);
-const archive = archiver("zip", { zlib: { level: 9 } });
+const archive = archiver('zip', { zlib: { level: 9 } });
 
-output.on("close", () => {
+output.on('close', () => {
   console.log(`🎉 Siap! ${archive.pointer()} bytes ditulis ke ${zipPath}`);
 });
-archive.on("error", err => {
+archive.on('error', (err) => {
   throw err;
 });
 

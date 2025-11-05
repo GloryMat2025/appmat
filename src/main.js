@@ -1,7 +1,7 @@
-import "./style.css";
+import './style.css';
 
-document.addEventListener("DOMContentLoaded", () => {
-  const root = document.getElementById("app-root");
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.getElementById('app-root');
   if (root) {
     root.innerHTML = `
       <section class="welcome">
@@ -10,6 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
     `;
   } else {
-    console.error("❌ #app-root not found");
+    console.error('❌ #app-root not found');
   }
 });

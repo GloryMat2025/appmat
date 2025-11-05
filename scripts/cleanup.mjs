@@ -4,7 +4,7 @@ const junk = [
   'h -u origin add-playwright-parity-workflow',
   'h origin add-playwright-parity-workflow',
   'mall comment for review',
-  'tatus'
+  'tatus',
 ];
 
 for (const file of junk) {
@@ -14,4 +14,4 @@ for (const file of junk) {
     console.log(`🧹 Removed: ${file}`);
   }
 }
-console.log("✅ Cleanup complete.");
+console.log('✅ Cleanup complete.');

@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import useTheme from "../hooks/useTheme";
-import { Link } from "react-router-dom";
-import useCart from "../hooks/useCart";
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import useTheme from '../hooks/useTheme';
+import { Link } from 'react-router-dom';
+import useCart from '../hooks/useCart';
 
 const { cartItems } = useCart();
 <Link to="/cart" className="relative">
@@ -12,7 +12,7 @@ const { cartItems } = useCart();
       {cartItems.length}
     </span>
   )}
-</Link>
+</Link>;
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -23,18 +23,25 @@ export default function Navbar() {
       <h1 className="text-xl font-semibold">AppMat</h1>
 
       <div className="hidden md:flex items-center space-x-4">
-        <a href="#home" className="hover:underline">Home</a>
-        <a href="#menu" className="hover:underline">Menu</a>
-        <a href="#contact" className="hover:underline">Contact</a>
-        <a href="/admin" className="hover:underline">Admin</a>
-
+        <a href="#home" className="hover:underline">
+          Home
+        </a>
+        <a href="#menu" className="hover:underline">
+          Menu
+        </a>
+        <a href="#contact" className="hover:underline">
+          Contact
+        </a>
+        <a href="/admin" className="hover:underline">
+          Admin
+        </a>
 
         {/* Toggle Dark Mode */}
         <button
           onClick={toggleTheme}
           className="ml-4 bg-yellow-400 text-black px-2 py-1 rounded-full hover:bg-yellow-300 transition"
         >
-          {theme === "dark" ? "🌙" : "🌞"}
+          {theme === 'dark' ? '🌙' : '🌞'}
         </button>
       </div>
 

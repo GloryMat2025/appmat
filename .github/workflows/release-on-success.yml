@@ -1,8 +1,8 @@
-name: "Release on Successful Matrix"
+name: 'Release on Successful Matrix'
 
 on:
   workflow_run:
-    workflows: ["Appmat Matrix Parity CI"]
+    workflows: ['Appmat Matrix Parity CI']
     types:
       - completed
 

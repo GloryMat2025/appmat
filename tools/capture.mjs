@@ -14,7 +14,9 @@ const persistent = args.includes('--persistent');
 
 const URL = process.env.URL || 'http://localhost:5173';
 
-function ts() { return new Date().toISOString().replace(/[:.]/g,'-'); }
+function ts() {
+  return new Date().toISOString().replace(/[:.]/g, '-');
+}
 
 async function run() {
   const outDir = path.resolve(process.cwd(), 'shots', `local-${ts()}`);

@@ -1,29 +1,28 @@
-import { supabase } from "../lib/supabaseClient";
-import { sendWhatsAppText } from "../server/whatsappSender";
+import { supabase } from '../lib/supabaseClient';
+import { sendWhatsAppText } from '../server/whatsappSender';
 
 export async function runWeeklyReminder() {
   const customers = await getTopCustomers();
   for (const cust of customers) {
     const message = createWhatsAppMessage(cust);
-    const phone = cust.phone.replace(/^0/, "6");
+    const phone = cust.phone.replace(/^0/, '6');
     await sendWhatsAppText(phone, message);
   }
 }
 
-
 // Fungsi untuk ambil top pelanggan
 export async function getTopCustomers(limit = 5) {
-  const { data, error } = await supabase.from("orders").select("name, phone, total");
+  const { data, error } = await supabase.from('orders').select('name, phone, total');
 
   if (error) {
-    console.error("Ralat ambil data pelanggan:", error);
+    console.error('Ralat ambil data pelanggan:', error);
     return [];
   }
 
   const grouped = {};
   data.forEach((o) => {
-    const name = o.name || "Tidak Dikenali";
-    const phone = o.phone || "-";
+    const name = o.name || 'Tidak Dikenali';
+    const phone = o.phone || '-';
     if (!grouped[name]) grouped[name] = { name, phone, total: 0 };
     grouped[name].total += Number(o.total || 0);
   });
@@ -57,8 +56,8 @@ export async function runWeeklyReminder() {
   const customers = await getTopCustomers();
   customers.forEach((cust) => {
     const message = createWhatsAppMessage(cust);
-    const phone = cust.phone.replace(/^0/, "6");
+    const phone = cust.phone.replace(/^0/, '6');
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank");
+    window.open(url, '_blank');
   });
 }

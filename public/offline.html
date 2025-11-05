@@ -1,7 +1,15 @@
 <div class="offline-wrapper" id="offline-wrapper" hidden>
   <div class="offline-box" role="status" aria-live="polite" aria-label="Offline notification">
     <div class="offline-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="56" height="56" xmlns="http://www.w3.org/2000/svg">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        width="56"
+        height="56"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <path d="M17 17L7 7m10 0L7 17"></path>
       </svg>
     </div>
@@ -20,7 +28,7 @@
 </div>
 
 <script>
-  (function(){
+  (function () {
     const wrapper = document.getElementById('offline-wrapper');
     const retry = document.getElementById('retry-button');
 
@@ -35,10 +43,16 @@
       if (navigator.onLine) location.reload();
       else {
         // small feedback animation
-        wrapper.querySelector('.offline-box').animate(
-          [{ transform: 'translateY(0)' }, { transform: 'translateY(-6px)' }, { transform: 'translateY(0)' }],
-          { duration: 220 }
-        );
+        wrapper
+          .querySelector('.offline-box')
+          .animate(
+            [
+              { transform: 'translateY(0)' },
+              { transform: 'translateY(-6px)' },
+              { transform: 'translateY(0)' },
+            ],
+            { duration: 220 }
+          );
       }
     });
   })();

@@ -21,5 +21,6 @@ powershell -Command "Expand-Archive -LiteralPath .\\tmp\\architecture-png.zip -D
 certutil -hashfile tmp\\architecture-png\\architecture-refined.png SHA256
 
 Notes:
+
 - The committed PNG was removed from the branch; CI artifacts are authoritative for review.
 - The export workflow now posts SHA256 & size for reviewer verification.

@@ -2,9 +2,9 @@
 
 Use the following commit message prefixes to drive automated version bumps and changelogs:
 
-- `feat: add new gallery layout`  (minor bump)
-- `fix: correct zip path`         (patch bump)
-- `docs: update README`          (no bump)
+- `feat: add new gallery layout` (minor bump)
+- `fix: correct zip path` (patch bump)
+- `docs: update README` (no bump)
 - `chore: cleanup workflow cache`(no bump)
 
 To trigger a release manually, push a tag:

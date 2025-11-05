@@ -1,441 +1,898 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en" class="h-full">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#3b82f6" />
-  <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
-  <title>Home</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
+    <title>Home</title>
 
-  <!-- Tailwind & custom CSS (standardized paths) -->
-  <link rel="stylesheet" href="/assets/css/tailwind.min.css" />
-  <link rel="stylesheet" href="/assets/css/receipt.css" />
-  <link rel="stylesheet" href="/assets/css/motion.css" />
-  <link rel="stylesheet" href="/assets/css/invoice.css" />
-  <link rel="stylesheet" href="/assets/css/reports.css" />
-  <link rel="stylesheet" href="/assets/css/a11y.css" />
-  <link rel="stylesheet" href="/assets/css/eta.css" />
+    <!-- Tailwind & custom CSS (standardized paths) -->
+    <link rel="stylesheet" href="/assets/css/tailwind.min.css" />
+    <link rel="stylesheet" href="/assets/css/receipt.css" />
+    <link rel="stylesheet" href="/assets/css/motion.css" />
+    <link rel="stylesheet" href="/assets/css/invoice.css" />
+    <link rel="stylesheet" href="/assets/css/reports.css" />
+    <link rel="stylesheet" href="/assets/css/a11y.css" />
+    <link rel="stylesheet" href="/assets/css/eta.css" />
 
-  <style>
-    /* Focus visibility */
-    :root { --focus-ring: 2px solid #0ea5e9; }
-    :focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+    <style>
+      /* Focus visibility */
+      :root {
+        --focus-ring: 2px solid #0ea5e9;
+      }
+      :focus-visible {
+        outline: var(--focus-ring);
+        outline-offset: 2px;
+      }
 
-    /* Skip link */
-    .skip-link{ position:absolute; left:0; top:0; transform:translateY(-120%); background:#0f172a; color:#fff; padding:.5rem 1rem; border-radius:.5rem; z-index:1000; }
-    .skip-link:focus-visible{ transform:translateY(0); }
+      /* Skip link */
+      .skip-link {
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform: translateY(-120%);
+        background: #0f172a;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        z-index: 1000;
+      }
+      .skip-link:focus-visible {
+        transform: translateY(0);
+      }
 
-    /* Optional fallbacks if Tailwind tokens belum didefinisikan */
-    .bg-bg{ background-color:#f6f8fb; }
-    .dark .bg-darkbg{ background-color:#0b1220; }
-    .text-ink{ color:#0f172a; }
-    .text-muted{ color:#64748b; }
-    .border-ring{ border-color:#e5e7eb; }
-    .bg-primary{ background-color:#3b82f6; }
-  </style>
-</head>
+      /* Optional fallbacks if Tailwind tokens belum didefinisikan */
+      .bg-bg {
+        background-color: #f6f8fb;
+      }
+      .dark .bg-darkbg {
+        background-color: #0b1220;
+      }
+      .text-ink {
+        color: #0f172a;
+      }
+      .text-muted {
+        color: #64748b;
+      }
+      .border-ring {
+        border-color: #e5e7eb;
+      }
+      .bg-primary {
+        background-color: #3b82f6;
+      }
+    </style>
+  </head>
 
-<body class="min-h-screen bg-bg text-ink dark:bg-darkbg dark:text-slate-100 pb-28">
-  <!-- Single skip link (remove duplicates) -->
-  <a href="#mainContent" class="skip-link">Skip to content</a>
+  <body class="min-h-screen bg-bg text-ink dark:bg-darkbg dark:text-slate-100 pb-28">
+    <!-- Single skip link (remove duplicates) -->
+    <a href="#mainContent" class="skip-link">Skip to content</a>
 
-  <!-- Brand Logo -->
-  <header class="w-full flex flex-col items-center py-4 gap-2">
-    <img id="brandLogo" src="/assets/images/logos/logo-primary.svg" alt="Logo" class="h-12 w-auto rounded-lg bg-white/80 p-1 ring-1 ring-white/60" loading="lazy" style="max-width:160px;">
-    <a href="/order-history.html" class="text-sm text-blue-700 underline hover:text-blue-900 mt-1">View Order History</a>
-  </header>
+    <!-- Brand Logo -->
+    <header class="w-full flex flex-col items-center py-4 gap-2">
+      <img
+        id="brandLogo"
+        src="/assets/images/logos/logo-primary.svg"
+        alt="Logo"
+        class="h-12 w-auto rounded-lg bg-white/80 p-1 ring-1 ring-white/60"
+        loading="lazy"
+        style="max-width: 160px"
+      />
+      <a href="/order-history.html" class="text-sm text-blue-700 underline hover:text-blue-900 mt-1"
+        >View Order History</a
+      >
+    </header>
 
-  <!-- PWA install button (keep ONE; the styled one below) -->
-  <!-- (removed the earlier duplicate #btnInstall) -->
+    <!-- PWA install button (keep ONE; the styled one below) -->
+    <!-- (removed the earlier duplicate #btnInstall) -->
 
-  <script>
-    // Dynamic logo from localStorage.app.logoUrl
-    (function(){
-      try {
-        const u = JSON.parse(localStorage.getItem('app.logoUrl')||'null');
-        if(u) document.getElementById('brandLogo').src = u;
-      } catch(_){/* ignore */}
-    })();
-  </script>
+    <script>
+      // Dynamic logo from localStorage.app.logoUrl
+      (function () {
+        try {
+          const u = JSON.parse(localStorage.getItem('app.logoUrl') || 'null');
+          if (u) document.getElementById('brandLogo').src = u;
+        } catch (_) {
+          /* ignore */
+        }
+      })();
+    </script>
 
-  <div id="connectivityBanner" class="fixed top-0 left-0 w-full z-[100] hidden">
-    <div class="mx-auto max-w-sm bg-red-500 text-white text-center py-2 text-sm font-semibold rounded-b-2xl shadow-lg animate-pulse">
-      <span>You're offline. Some features may be unavailable.</span>
+    <div id="connectivityBanner" class="fixed top-0 left-0 w-full z-[100] hidden">
+      <div
+        class="mx-auto max-w-sm bg-red-500 text-white text-center py-2 text-sm font-semibold rounded-b-2xl shadow-lg animate-pulse"
+      >
+        <span>You're offline. Some features may be unavailable.</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Delivery / Pickup Popup Modals -->
-  <div id="deliveryModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="deliveryModalTitle">
-    <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
-      <button type="button" id="closeDeliveryModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
-      <h2 id="deliveryModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.delivery.title">Delivery Info</h2>
-      <p class="text-sm text-gray-600 mb-4" data-i18n="modal.delivery.desc">Choose delivery options, address, and time slot here. (Demo popup)</p>
-      <button type="button" id="okDeliveryModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+    <!-- Delivery / Pickup Popup Modals -->
+    <div
+      id="deliveryModal"
+      class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="deliveryModalTitle"
+    >
+      <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+        <button
+          type="button"
+          id="closeDeliveryModal"
+          class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <h2
+          id="deliveryModalTitle"
+          class="text-lg font-semibold mb-2"
+          data-i18n="modal.delivery.title"
+        >
+          Delivery Info
+        </h2>
+        <p class="text-sm text-gray-600 mb-4" data-i18n="modal.delivery.desc">
+          Choose delivery options, address, and time slot here. (Demo popup)
+        </p>
+        <button
+          type="button"
+          id="okDeliveryModal"
+          class="w-full py-2 rounded bg-blue-600 text-white font-semibold"
+          data-i18n="modal.ok"
+        >
+          OK
+        </button>
+      </div>
     </div>
-  </div>
 
-  <div id="pickupModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden" role="dialog" aria-modal="true" aria-labelledby="pickupModalTitle">
-    <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
-      <button type="button" id="closePickupModal" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center" aria-label="Close">✕</button>
-      <h2 id="pickupModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.pickup.title">Pickup Info</h2>
-      <p class="text-sm text-gray-600 mb-4" data-i18n="modal.pickup.desc">Choose pickup location and time slot here. (Demo popup)</p>
-      <button type="button" id="okPickupModal" class="w-full py-2 rounded bg-blue-600 text-white font-semibold" data-i18n="modal.ok">OK</button>
+    <div
+      id="pickupModal"
+      class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pickupModalTitle"
+    >
+      <div class="bg-white rounded-2xl shadow-lg max-w-xs w-full p-6 relative" tabindex="-1">
+        <button
+          type="button"
+          id="closePickupModal"
+          class="absolute top-2 right-2 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <h2 id="pickupModalTitle" class="text-lg font-semibold mb-2" data-i18n="modal.pickup.title">
+          Pickup Info
+        </h2>
+        <p class="text-sm text-gray-600 mb-4" data-i18n="modal.pickup.desc">
+          Choose pickup location and time slot here. (Demo popup)
+        </p>
+        <button
+          type="button"
+          id="okPickupModal"
+          class="w-full py-2 rounded bg-blue-600 text-white font-semibold"
+          data-i18n="modal.ok"
+        >
+          OK
+        </button>
+      </div>
     </div>
-  </div>
 
-  <a href="#/settings" title="Backup & Restore" class="btn" style="position:fixed;top:16px;right:16px;z-index:10001;min-width:unset;padding:6px 14px;font-size:13px;">Backup</a>
+    <a
+      href="#/settings"
+      title="Backup & Restore"
+      class="btn"
+      style="
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 10001;
+        min-width: unset;
+        padding: 6px 14px;
+        font-size: 13px;
+      "
+      >Backup</a
+    >
 
-  <main id="mainContent" class="max-w-sm mx-auto" tabindex="-1">
-    <!-- Skeleton -->
-    <section data-skeleton class="px-4 mt-4 grid grid-cols-2 gap-4" aria-hidden="true">
-      <template id="skeleton-item-template">
-        <div class="animate-pulse-fast rounded-2xl h-40 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600"></div>
-      </template>
-    </section>
+    <main id="mainContent" class="max-w-sm mx-auto" tabindex="-1">
+      <!-- Skeleton -->
+      <section data-skeleton class="px-4 mt-4 grid grid-cols-2 gap-4" aria-hidden="true">
+        <template id="skeleton-item-template">
+          <div
+            class="animate-pulse-fast rounded-2xl h-40 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-600"
+          ></div>
+        </template>
+      </section>
 
-    <!-- Top toggle + search + theme -->
-    <section class="p-4 pt-5">
-      <div class="bg-white dark:bg-[#162033] dark:text-slate-100 rounded-2xl shadow-soft border border-ring dark:border-slate-700 p-4">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex justify-center gap-2 flex-1">
-            <button id="btnDelivery" role="tab" aria-selected="false" tabindex="0" class="px-4 py-2 rounded-full border border-slate-300 dark:border-slate-600 text-[13px] font-semibold bg-white dark:bg-slate-200 text-slate-900">Delivery</button>
-            <button id="btnPickup" role="tab" aria-selected="false" tabindex="-1" class="px-4 py-2 rounded-full border border-slate-300 dark:border-slate-600 text-[13px] font-semibold text-slate-700 dark:text-slate-200">Pickup</button>
-          </div>
-          <div class="flex items-center gap-2 ml-3" style="flex:1;">
-            <span id="etaMini" class="eta-pill" style="margin-left:auto; display:none">
-              <span class="eta-dot" aria-hidden="true"></span>
-              <span id="etaMiniHms">--:--</span>
-            </span>
-            <select id="themeQuick" class="select" style="padding:4px 8px">
-              <option value="system">System</option>
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-            </select>
-            <button id="langToggle" class="text-[11px] font-semibold px-2 py-2 rounded-lg border border-ring dark:border-slate-600 bg-white dark:bg-slate-700/60">BM/EN</button>
-            <script>
-              // Simple i18n dictionary
-              const translations = {
-                en: {
-                  'lang.toggle': 'BM','nav.home':'Home','nav.menu':'Menu','nav.cart':'Cart','nav.rewards':'Rewards','nav.account':'Account',
-                  'card.wallet':'Wallet Balance','search.placeholder':'Search',
-                  'modal.delivery.title':'Delivery Info','modal.delivery.desc':'Choose delivery options, address, and time slot here. (Demo popup)',
-                  'modal.pickup.title':'Pickup Info','modal.pickup.desc':'Choose pickup location and time slot here. (Demo popup)','modal.ok':'OK'
-                },
-                bm: {
-                  'lang.toggle': 'EN','nav.home':'Laman Utama','nav.menu':'Menu','nav.cart':'Troli','nav.rewards':'Ganjaran','nav.account':'Akaun',
-                  'card.wallet':'Baki Dompet','search.placeholder':'Cari',
-                  'modal.delivery.title':'Maklumat Penghantaran','modal.delivery.desc':'Pilih pilihan penghantaran, alamat, dan slot masa di sini. (Popup demo)',
-                  'modal.pickup.title':'Maklumat Ambil Sendiri','modal.pickup.desc':'Pilih lokasi dan slot masa ambil sendiri di sini. (Popup demo)','modal.ok':'OK'
-                }
-              };
-              let lang = localStorage.getItem('lang') || 'en';
-              function setLang(l) {
-                lang = l; localStorage.setItem('lang', l);
-                document.querySelectorAll('[data-i18n]').forEach(el => {
-                  const key = el.getAttribute('data-i18n'); if (translations[l][key]) el.textContent = translations[l][key];
-                });
-                document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-                  const key = el.getAttribute('data-i18n-placeholder'); if (translations[l][key]) el.setAttribute('placeholder', translations[l][key]);
-                });
-                const btn = document.getElementById('langToggle'); if (btn) btn.textContent = l === 'en' ? 'BM/EN' : 'EN/BM';
-              }
-              document.addEventListener('DOMContentLoaded', () => {
-                setLang(lang);
-                const btn = document.getElementById('langToggle'); if (btn) btn.onclick = () => setLang(lang === 'en' ? 'bm' : 'en');
-              });
-            </script>
-          </div>
-        </div>
-
-        <!-- Outlet Filter Banner -->
-        <div data-outlet-filter-banner class="hidden flex items-center justify-between gap-2 mt-3 mb-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-900 text-xs font-semibold shadow-soft border border-blue-200 dark:bg-blue-900/30 dark:text-blue-100 dark:border-blue-700/40">
-          <span data-outlet-filter-text>Ditapis mengikut outlet: </span>
-          <button type="button" data-outlet-filter-clear class="ml-2 px-2 py-1 rounded bg-blue-200 hover:bg-blue-300 text-blue-900 dark:bg-blue-800 dark:hover:bg-blue-700 dark:text-blue-100 transition">✕</button>
-        </div>
-
-        <!-- Delivery Address Badge -->
-        <div class="mt-3 flex items-center gap-2 hidden" data-address-badge>
-          <span class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-200" data-address-text>Alamat dipilih</span>
-          <button type="button" class="text-[11px] font-semibold text-blue-600 hover:underline" data-address-clear>Kosongkan</button>
-        </div>
-
-        <!-- Pickup Outlet Badge -->
-        <div id="pickupOutletBadge" class="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-semibold shadow-soft border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/40 transition-all min-h-[2.25rem]" style="display:none;">
-          <svg class="w-4 h-4 mr-1 text-emerald-600 dark:text-emerald-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414zM10 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"/></svg>
-          <span data-outlet-text>Set pickup outlet</span>
-        </div>
-
-        <div class="flex items-center gap-2 rounded-full bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 px-4 h-12">
-          <svg class="w-5 h-5 opacity-60" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
-          <input type="text" placeholder="Search" data-i18n-placeholder="search.placeholder" class="flex-1 bg-transparent outline-none text-sm placeholder-slate-400 dark:placeholder-slate-300" />
-        </div>
-      </div>
-    </section>
-
-    <!-- Info cards -->
-    <section class="px-4 mt-2 grid grid-cols-3 gap-3">
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft">
-        <div class="text-[11px] font-medium text-muted" data-i18n="card.wallet">Wallet Balance</div>
-        <div class="mt-1 text-lg font-bold">0.00</div>
-      </div>
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft">
-        <div class="text-[11px] font-medium text-muted" data-i18n="card.vouchers">eVouchers</div>
-        <div class="mt-1 text-lg font-bold">0.00</div>
-      </div>
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft">
-        <div class="text-[11px] font-medium text-muted" data-i18n="card.points">Points</div>
-        <div class="mt-1 text-lg font-bold">0.00</div>
-      </div>
-    </section>
-
-    <!-- Carousel (keep; you can swap to local images later) -->
-    <section class="px-4 mt-4">
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl p-3 shadow-soft relative">
-        <div class="group relative">
-          <div class="rounded-xl overflow-hidden relative">
-            <div class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar gap-3 [scroll-padding:0.5rem]" data-carousel-track>
-              <div class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700">
-                <img class="absolute inset-0 w-full h-full object-cover" src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1200&auto=format&fit=crop" alt="Slide 1" loading="lazy" />
-              </div>
-              <div class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700">
-                <img class="absolute inset-0 w-full h-full object-cover" src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop" alt="Slide 2" loading="lazy" />
-              </div>
-              <div class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700">
-                <img class="absolute inset-0 w-full h-full object-cover" src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=1200&auto=format&fit=crop" alt="Slide 3" loading="lazy" />
-              </div>
+      <!-- Top toggle + search + theme -->
+      <section class="p-4 pt-5">
+        <div
+          class="bg-white dark:bg-[#162033] dark:text-slate-100 rounded-2xl shadow-soft border border-ring dark:border-slate-700 p-4"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex justify-center gap-2 flex-1">
+              <button
+                id="btnDelivery"
+                role="tab"
+                aria-selected="false"
+                tabindex="0"
+                class="px-4 py-2 rounded-full border border-slate-300 dark:border-slate-600 text-[13px] font-semibold bg-white dark:bg-slate-200 text-slate-900"
+              >
+                Delivery
+              </button>
+              <button
+                id="btnPickup"
+                role="tab"
+                aria-selected="false"
+                tabindex="-1"
+                class="px-4 py-2 rounded-full border border-slate-300 dark:border-slate-600 text-[13px] font-semibold text-slate-700 dark:text-slate-200"
+              >
+                Pickup
+              </button>
             </div>
-            <!-- Nav buttons -->
-            <button type="button" data-carousel-prev class="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-2 backdrop-blur bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-full shadow-soft items-center justify-center">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            <button type="button" data-carousel-next class="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-2 backdrop-blur bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-full shadow-soft items-center justify-center">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            <div class="flex items-center gap-2 ml-3" style="flex: 1">
+              <span id="etaMini" class="eta-pill" style="margin-left: auto; display: none">
+                <span class="eta-dot" aria-hidden="true"></span>
+                <span id="etaMiniHms">--:--</span>
+              </span>
+              <select id="themeQuick" class="select" style="padding: 4px 8px">
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+              <button
+                id="langToggle"
+                class="text-[11px] font-semibold px-2 py-2 rounded-lg border border-ring dark:border-slate-600 bg-white dark:bg-slate-700/60"
+              >
+                BM/EN
+              </button>
+              <script>
+                // Simple i18n dictionary
+                const translations = {
+                  en: {
+                    'lang.toggle': 'BM',
+                    'nav.home': 'Home',
+                    'nav.menu': 'Menu',
+                    'nav.cart': 'Cart',
+                    'nav.rewards': 'Rewards',
+                    'nav.account': 'Account',
+                    'card.wallet': 'Wallet Balance',
+                    'search.placeholder': 'Search',
+                    'modal.delivery.title': 'Delivery Info',
+                    'modal.delivery.desc':
+                      'Choose delivery options, address, and time slot here. (Demo popup)',
+                    'modal.pickup.title': 'Pickup Info',
+                    'modal.pickup.desc': 'Choose pickup location and time slot here. (Demo popup)',
+                    'modal.ok': 'OK',
+                  },
+                  bm: {
+                    'lang.toggle': 'EN',
+                    'nav.home': 'Laman Utama',
+                    'nav.menu': 'Menu',
+                    'nav.cart': 'Troli',
+                    'nav.rewards': 'Ganjaran',
+                    'nav.account': 'Akaun',
+                    'card.wallet': 'Baki Dompet',
+                    'search.placeholder': 'Cari',
+                    'modal.delivery.title': 'Maklumat Penghantaran',
+                    'modal.delivery.desc':
+                      'Pilih pilihan penghantaran, alamat, dan slot masa di sini. (Popup demo)',
+                    'modal.pickup.title': 'Maklumat Ambil Sendiri',
+                    'modal.pickup.desc':
+                      'Pilih lokasi dan slot masa ambil sendiri di sini. (Popup demo)',
+                    'modal.ok': 'OK',
+                  },
+                };
+                let lang = localStorage.getItem('lang') || 'en';
+                function setLang(l) {
+                  lang = l;
+                  localStorage.setItem('lang', l);
+                  document.querySelectorAll('[data-i18n]').forEach((el) => {
+                    const key = el.getAttribute('data-i18n');
+                    if (translations[l][key]) el.textContent = translations[l][key];
+                  });
+                  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+                    const key = el.getAttribute('data-i18n-placeholder');
+                    if (translations[l][key]) el.setAttribute('placeholder', translations[l][key]);
+                  });
+                  const btn = document.getElementById('langToggle');
+                  if (btn) btn.textContent = l === 'en' ? 'BM/EN' : 'EN/BM';
+                }
+                document.addEventListener('DOMContentLoaded', () => {
+                  setLang(lang);
+                  const btn = document.getElementById('langToggle');
+                  if (btn) btn.onclick = () => setLang(lang === 'en' ? 'bm' : 'en');
+                });
+              </script>
+            </div>
+          </div>
+
+          <!-- Outlet Filter Banner -->
+          <div
+            data-outlet-filter-banner
+            class="hidden flex items-center justify-between gap-2 mt-3 mb-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-900 text-xs font-semibold shadow-soft border border-blue-200 dark:bg-blue-900/30 dark:text-blue-100 dark:border-blue-700/40"
+          >
+            <span data-outlet-filter-text>Ditapis mengikut outlet: </span>
+            <button
+              type="button"
+              data-outlet-filter-clear
+              class="ml-2 px-2 py-1 rounded bg-blue-200 hover:bg-blue-300 text-blue-900 dark:bg-blue-800 dark:hover:bg-blue-700 dark:text-blue-100 transition"
+            >
+              ✕
             </button>
           </div>
-          <!-- Dots -->
-          <div class="mt-3 flex items-center justify-center gap-2" data-carousel-dots>
-            <button aria-label="Slide 1" data-index="0" class="w-2.5 h-2.5 rounded-full bg-primary/70 data-[active=true]:bg-primary"></button>
-            <button aria-label="Slide 2" data-index="1" class="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500 data-[active=true]:bg-primary"></button>
-            <button aria-label="Slide 3" data-index="2" class="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500 data-[active=true]:bg-primary"></button>
+
+          <!-- Delivery Address Badge -->
+          <div class="mt-3 flex items-center gap-2 hidden" data-address-badge>
+            <span
+              class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 ring-1 ring-blue-200"
+              data-address-text
+              >Alamat dipilih</span
+            >
+            <button
+              type="button"
+              class="text-[11px] font-semibold text-blue-600 hover:underline"
+              data-address-clear
+            >
+              Kosongkan
+            </button>
+          </div>
+
+          <!-- Pickup Outlet Badge -->
+          <div
+            id="pickupOutletBadge"
+            class="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-semibold shadow-soft border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700/40 transition-all min-h-[2.25rem]"
+            style="display: none"
+          >
+            <svg
+              class="w-4 h-4 mr-1 text-emerald-600 dark:text-emerald-300"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414zM10 14a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"
+              />
+            </svg>
+            <span data-outlet-text>Set pickup outlet</span>
+          </div>
+
+          <div
+            class="flex items-center gap-2 rounded-full bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 px-4 h-12"
+          >
+            <svg
+              class="w-5 h-5 opacity-60"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3-3" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search"
+              data-i18n-placeholder="search.placeholder"
+              class="flex-1 bg-transparent outline-none text-sm placeholder-slate-400 dark:placeholder-slate-300"
+            />
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Last Order (dynamic) -->
-    <section class="px-4 mt-4" data-last-order-section>
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl shadow-soft">
-        <div class="flex items-center justify-between p-4 gap-2">
-          <h2 class="font-semibold flex-1" data-i18n="last.title">Your Last Order</h2>
-          <a href="./orders.html" class="text-[11px] font-semibold text-primary hover:underline" data-i18n="last.viewAll">View All</a>
-          <button class="w-8 h-8 grid place-items-center rounded-full border border-ring dark:border-slate-600 bg-white dark:bg-slate-700/60" data-last-order-expand>
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <!-- Info cards -->
+      <section class="px-4 mt-2 grid grid-cols-3 gap-3">
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft"
+        >
+          <div class="text-[11px] font-medium text-muted" data-i18n="card.wallet">
+            Wallet Balance
+          </div>
+          <div class="mt-1 text-lg font-bold">0.00</div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft"
+        >
+          <div class="text-[11px] font-medium text-muted" data-i18n="card.vouchers">eVouchers</div>
+          <div class="mt-1 text-lg font-bold">0.00</div>
+        </div>
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-xl p-3 text-center shadow-soft"
+        >
+          <div class="text-[11px] font-medium text-muted" data-i18n="card.points">Points</div>
+          <div class="mt-1 text-lg font-bold">0.00</div>
+        </div>
+      </section>
+
+      <!-- Carousel (keep; you can swap to local images later) -->
+      <section class="px-4 mt-4">
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl p-3 shadow-soft relative"
+        >
+          <div class="group relative">
+            <div class="rounded-xl overflow-hidden relative">
+              <div
+                class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar gap-3 [scroll-padding:0.5rem]"
+                data-carousel-track
+              >
+                <div
+                  class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700"
+                >
+                  <img
+                    class="absolute inset-0 w-full h-full object-cover"
+                    src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1200&auto=format&fit=crop"
+                    alt="Slide 1"
+                    loading="lazy"
+                  />
+                </div>
+                <div
+                  class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700"
+                >
+                  <img
+                    class="absolute inset-0 w-full h-full object-cover"
+                    src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1200&auto=format&fit=crop"
+                    alt="Slide 2"
+                    loading="lazy"
+                  />
+                </div>
+                <div
+                  class="shrink-0 w-full snap-start rounded-xl overflow-hidden relative aspect-[16/9] bg-slate-200 dark:bg-slate-700"
+                >
+                  <img
+                    class="absolute inset-0 w-full h-full object-cover"
+                    src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=1200&auto=format&fit=crop"
+                    alt="Slide 3"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+              <!-- Nav buttons -->
+              <button
+                type="button"
+                data-carousel-prev
+                class="hidden sm:flex absolute top-1/2 -translate-y-1/2 left-2 backdrop-blur bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-full shadow-soft items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                data-carousel-next
+                class="hidden sm:flex absolute top-1/2 -translate-y-1/2 right-2 backdrop-blur bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 w-9 h-9 rounded-full shadow-soft items-center justify-center"
+              >
+                <svg
+                  class="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </div>
+            <!-- Dots -->
+            <div class="mt-3 flex items-center justify-center gap-2" data-carousel-dots>
+              <button
+                aria-label="Slide 1"
+                data-index="0"
+                class="w-2.5 h-2.5 rounded-full bg-primary/70 data-[active=true]:bg-primary"
+              ></button>
+              <button
+                aria-label="Slide 2"
+                data-index="1"
+                class="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500 data-[active=true]:bg-primary"
+              ></button>
+              <button
+                aria-label="Slide 3"
+                data-index="2"
+                class="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-500 data-[active=true]:bg-primary"
+              ></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Last Order (dynamic) -->
+      <section class="px-4 mt-4" data-last-order-section>
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl shadow-soft"
+        >
+          <div class="flex items-center justify-between p-4 gap-2">
+            <h2 class="font-semibold flex-1" data-i18n="last.title">Your Last Order</h2>
+            <a
+              href="./orders.html"
+              class="text-[11px] font-semibold text-primary hover:underline"
+              data-i18n="last.viewAll"
+              >View All</a
+            >
+            <button
+              class="w-8 h-8 grid place-items-center rounded-full border border-ring dark:border-slate-600 bg-white dark:bg-slate-700/60"
+              data-last-order-expand
+            >
+              <svg
+                class="w-4 h-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+          <div class="px-4 pb-4" data-last-order-container>
+            <div
+              data-last-order-empty
+              class="rounded-xl bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 p-4 text-center text-sm text-muted"
+              data-i18n-html="last.empty"
+            >
+              No last order yet.<br />Start ordering now.
+            </div>
+            <div
+              data-last-order-card
+              class="hidden rounded-xl bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 p-4 text-sm"
+            >
+              <div class="flex justify-between font-semibold mb-1">
+                <span data-order-id>#—</span>
+                <span class="flex flex-col items-end gap-1">
+                  <span data-order-total>RM0.00</span>
+                  <span data-order-status class="hidden"></span>
+                </span>
+              </div>
+              <div class="mt-1 mb-2">
+                <div
+                  data-order-progress-track
+                  class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-600 relative overflow-hidden"
+                >
+                  <div
+                    data-order-progress
+                    class="absolute inset-y-0 left-0 w-0 bg-gradient-to-r from-sky-500 via-amber-500 to-emerald-500 dark:from-sky-400 dark:via-amber-400 dark:to-emerald-400 rounded-full transition-all duration-500"
+                  ></div>
+                  <div
+                    data-order-progress-cancel
+                    class="hidden absolute inset-0 bg-red-500/50 dark:bg-red-600/60 backdrop-blur-[1px]"
+                  ></div>
+                </div>
+                <div class="flex justify-between mt-1 text-[10px] text-muted">
+                  <span data-i18n="status.preparing">Preparing</span>
+                  <span data-i18n="status.ready">Ready</span>
+                  <span data-i18n="status.completed">Completed</span>
+                </div>
+                <div data-order-eta class="mt-1 text-[10px] text-muted hidden"></div>
+              </div>
+              <ul data-order-lines class="text-[12px] leading-relaxed space-y-1"></ul>
+              <div class="mt-2 text-[11px] text-muted" data-i18n-prefix="last.placed">
+                Placed <span data-order-time></span>
+              </div>
+              <button
+                data-last-order-reorder
+                class="mt-3 w-full bg-primary text-white rounded-lg py-2 text-[13px] font-semibold shadow"
+                data-i18n="last.reorder"
+              >
+                Re-order
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Referral banner -->
+      <section class="px-4 mt-4">
+        <div
+          class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl p-4 text-center shadow-soft"
+        >
+          <p class="text-sm" data-i18n-html="referral.msg">
+            Refer your friends and<br /><span class="font-semibold">get up to 80% Off</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- Action button -->
+      <section class="mt-6 flex justify-center">
+        <button
+          class="w-20 h-20 rounded-full bg-white dark:bg-slate-800/60 border border-ring dark:border-slate-700 shadow-soft grid place-items-center"
+        >
+          <svg
+            class="w-8 h-8"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+          </svg>
+        </button>
+      </section>
+    </main>
+
+    <!-- Tab bar -->
+    <nav
+      class="fixed bottom-3 inset-x-0 mx-auto max-w-sm bg-white/90 dark:bg-slate-800/80 backdrop-blur rounded-2xl border border-gray-200 dark:border-slate-600 shadow p-2 grid grid-cols-5 md:grid-cols-7 gap-1"
+    >
+      <a
+        data-tab="home"
+        href="./index.html"
+        class="flex flex-col items-center gap-1 py-2 rounded-xl"
+        aria-current="page"
+        >🏠<span class="text-xs">Home</span></a
+      >
+      <a data-tab="menu" href="./menu.html" class="flex flex-col items-center gap-1 py-2 rounded-xl"
+        >🍽️<span class="text-xs">Menu</span></a
+      >
+      <a
+        data-tab="checkout"
+        href="#/checkout"
+        class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl"
+        >✅<span class="text-xs">Checkout</span></a
+      >
+      <a
+        data-tab="orders"
+        href="#/orders"
+        class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl"
+        >📦<span class="text-xs">My Orders</span></a
+      >
+      <a
+        data-tab="rewards"
+        href="./rewards.html"
+        class="flex flex-col items-center gap-1 py-2 rounded-xl"
+        >🏆<span class="text-xs">Ganjaran</span></a
+      >
+      <!-- FIXED: Cart link -->
+      <a
+        data-tab="cart"
+        href="./cart.html"
+        class="relative flex flex-col items-center gap-1 py-2 rounded-xl"
+      >
+        🛒 <span class="text-xs">Cart</span>
+        <span
+          data-cart-badge
+          class="absolute -top-1 -right-1 text-[10px] min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-rose-600 text-white hidden"
+          >0</span
+        >
+      </a>
+      <a
+        data-tab="account"
+        href="./account.html"
+        class="flex flex-col items-center gap-1 py-2 rounded-xl"
+        >👤<span class="text-xs">Akaun</span></a
+      >
+    </nav>
+
+    <!-- Product Detail Drawer -->
+    <div id="pd" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+      <div class="absolute inset-0 bg-black/50" data-pd-backdrop></div>
+      <div
+        class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto md:w-[480px] bg-white rounded-t-3xl md:rounded-l-3xl shadow-2xl p-4 md:p-6"
+      >
+        <button
+          type="button"
+          data-pd-close
+          class="absolute right-3 top-3 h-9 w-9 rounded-full border border-gray-200 hover:bg-gray-50"
+          aria-label="Tutup"
+        >
+          ×
+        </button>
+        <div class="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100">
+          <img
+            data-pd-img
+            alt=""
+            class="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+        <h2 class="mt-4 text-xl font-semibold" data-pd-name></h2>
+        <div class="text-gray-500 capitalize" data-pd-cat></div>
+        <p class="mt-2 text-gray-700" data-pd-desc></p>
+        <div class="mt-4 flex items-center justify-between">
+          <div class="text-2xl font-bold" data-pd-price></div>
+          <button
+            type="button"
+            data-pd-add
+            class="rounded-2xl bg-black text-white px-5 py-3 hover:opacity-90"
+          >
+            Add to Cart
           </button>
         </div>
-        <div class="px-4 pb-4" data-last-order-container>
-          <div data-last-order-empty class="rounded-xl bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 p-4 text-center text-sm text-muted" data-i18n-html="last.empty">
-            No last order yet.<br/>Start ordering now.
-          </div>
-          <div data-last-order-card class="hidden rounded-xl bg-[#f6f8fb] dark:bg-slate-700/40 border border-ring dark:border-slate-600 p-4 text-sm">
-            <div class="flex justify-between font-semibold mb-1">
-              <span data-order-id>#—</span>
-              <span class="flex flex-col items-end gap-1">
-                <span data-order-total>RM0.00</span>
-                <span data-order-status class="hidden"></span>
-              </span>
-            </div>
-            <div class="mt-1 mb-2">
-              <div data-order-progress-track class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-600 relative overflow-hidden">
-                <div data-order-progress class="absolute inset-y-0 left-0 w-0 bg-gradient-to-r from-sky-500 via-amber-500 to-emerald-500 dark:from-sky-400 dark:via-amber-400 dark:to-emerald-400 rounded-full transition-all duration-500"></div>
-                <div data-order-progress-cancel class="hidden absolute inset-0 bg-red-500/50 dark:bg-red-600/60 backdrop-blur-[1px]"></div>
-              </div>
-              <div class="flex justify-between mt-1 text-[10px] text-muted">
-                <span data-i18n="status.preparing">Preparing</span>
-                <span data-i18n="status.ready">Ready</span>
-                <span data-i18n="status.completed">Completed</span>
-              </div>
-              <div data-order-eta class="mt-1 text-[10px] text-muted hidden"></div>
-            </div>
-            <ul data-order-lines class="text-[12px] leading-relaxed space-y-1"></ul>
-            <div class="mt-2 text-[11px] text-muted" data-i18n-prefix="last.placed">Placed <span data-order-time></span></div>
-            <button data-last-order-reorder class="mt-3 w-full bg-primary text-white rounded-lg py-2 text-[13px] font-semibold shadow" data-i18n="last.reorder">Re-order</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Referral banner -->
-    <section class="px-4 mt-4">
-      <div class="bg-white dark:bg-slate-800/60 dark:border dark:border-slate-700 rounded-2xl p-4 text-center shadow-soft">
-        <p class="text-sm" data-i18n-html="referral.msg">Refer your friends and<br><span class="font-semibold">get up to 80% Off</span></p>
-      </div>
-    </section>
-
-    <!-- Action button -->
-    <section class="mt-6 flex justify-center">
-      <button class="w-20 h-20 rounded-full bg-white dark:bg-slate-800/60 border border-ring dark:border-slate-700 shadow-soft grid place-items-center">
-        <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-      </button>
-    </section>
-  </main>
-
-  <!-- Tab bar -->
-  <nav class="fixed bottom-3 inset-x-0 mx-auto max-w-sm bg-white/90 dark:bg-slate-800/80 backdrop-blur rounded-2xl border border-gray-200 dark:border-slate-600 shadow p-2 grid grid-cols-5 md:grid-cols-7 gap-1">
-    <a data-tab="home" href="./index.html" class="flex flex-col items-center gap-1 py-2 rounded-xl" aria-current="page">🏠<span class="text-xs">Home</span></a>
-    <a data-tab="menu" href="./menu.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🍽️<span class="text-xs">Menu</span></a>
-    <a data-tab="checkout" href="#/checkout" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">✅<span class="text-xs">Checkout</span></a>
-    <a data-tab="orders" href="#/orders" class="hidden md:flex flex-col items-center gap-1 py-2 rounded-xl">📦<span class="text-xs">My Orders</span></a>
-    <a data-tab="rewards" href="./rewards.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">🏆<span class="text-xs">Ganjaran</span></a>
-    <!-- FIXED: Cart link -->
-    <a data-tab="cart" href="./cart.html" class="relative flex flex-col items-center gap-1 py-2 rounded-xl">
-      🛒 <span class="text-xs">Cart</span>
-      <span data-cart-badge class="absolute -top-1 -right-1 text-[10px] min-w-[18px] h-[18px] px-1 grid place-items-center rounded-full bg-rose-600 text-white hidden">0</span>
-    </a>
-    <a data-tab="account" href="./account.html" class="flex flex-col items-center gap-1 py-2 rounded-xl">👤<span class="text-xs">Akaun</span></a>
-  </nav>
-
-  <!-- Product Detail Drawer -->
-  <div id="pd" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-    <div class="absolute inset-0 bg-black/50" data-pd-backdrop></div>
-    <div class="absolute inset-x-0 bottom-0 md:inset-y-0 md:right-0 md:left-auto md:w-[480px] bg-white rounded-t-3xl md:rounded-l-3xl shadow-2xl p-4 md:p-6">
-      <button type="button" data-pd-close class="absolute right-3 top-3 h-9 w-9 rounded-full border border-gray-200 hover:bg-gray-50" aria-label="Tutup">×</button>
-      <div class="aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100">
-        <img data-pd-img alt="" class="h-full w-full object-cover" loading="lazy" decoding="async" />
-      </div>
-      <h2 class="mt-4 text-xl font-semibold" data-pd-name></h2>
-      <div class="text-gray-500 capitalize" data-pd-cat></div>
-      <p class="mt-2 text-gray-700" data-pd-desc></p>
-      <div class="mt-4 flex items-center justify-between">
-        <div class="text-2xl font-bold" data-pd-price></div>
-        <button type="button" data-pd-add class="rounded-2xl bg-black text-white px-5 py-3 hover:opacity-90">Add to Cart</button>
       </div>
     </div>
-  </div>
 
-  <!-- Cart Badge (floating) -->
-  <button id="cartBadge" class="fixed bottom-24 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white shadow-lg text-sm font-semibold transition hover:bg-blue-700" style="display:none;">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-    <span id="cartBadgeCount">0</span>
-  </button>
+    <!-- Cart Badge (floating) -->
+    <button
+      id="cartBadge"
+      class="fixed bottom-24 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white shadow-lg text-sm font-semibold transition hover:bg-blue-700"
+      style="display: none"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </svg>
+      <span id="cartBadgeCount">0</span>
+    </button>
 
-  <!-- PWA Install button (single source of truth) -->
-  <button id="btnInstall" class="btn fixed bottom-20 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg transition hover:bg-blue-700" style="display:none; margin-left:8px">Install App</button>
+    <!-- PWA Install button (single source of truth) -->
+    <button
+      id="btnInstall"
+      class="btn fixed bottom-20 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-xl shadow-lg transition hover:bg-blue-700"
+      style="display: none; margin-left: 8px"
+    >
+      Install App
+    </button>
 
-  <!-- Page scripts (standardized paths + defer) -->
-  <script>
-    // Accessibility: modal focus trap, ESC to close, return focus
-    function trapFocus(modal) {
-      const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-      const first = focusable[0];
-      const last = focusable[focusable.length-1];
-      modal.addEventListener('keydown', function(e) {
-        if(e.key === 'Tab') {
-          if(e.shiftKey) { if(document.activeElement===first){ e.preventDefault(); last.focus(); } }
-          else { if(document.activeElement===last){ e.preventDefault(); first.focus(); } }
+    <!-- Page scripts (standardized paths + defer) -->
+    <script>
+      // Accessibility: modal focus trap, ESC to close, return focus
+      function trapFocus(modal) {
+        const focusable = modal.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        modal.addEventListener('keydown', function (e) {
+          if (e.key === 'Tab') {
+            if (e.shiftKey) {
+              if (document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+              }
+            } else {
+              if (document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+              }
+            }
+          }
+        });
+      }
+      function showModal(modal, opener) {
+        modal.classList.remove('hidden');
+        const dialog = modal.querySelector('[tabindex="-1"]');
+        setTimeout(() => dialog.focus(), 10);
+        trapFocus(dialog);
+        function closeModal() {
+          modal.classList.add('hidden');
+          opener && opener.focus();
+          dialog.removeEventListener('keydown', escListener);
         }
-      });
-    }
-    function showModal(modal, opener) {
-      modal.classList.remove('hidden');
-      const dialog = modal.querySelector('[tabindex="-1"]');
-      setTimeout(()=>dialog.focus(), 10);
-      trapFocus(dialog);
-      function closeModal() {
-        modal.classList.add('hidden');
-        opener && opener.focus();
-        dialog.removeEventListener('keydown', escListener);
+        function escListener(e) {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            closeModal();
+          }
+        }
+        dialog.addEventListener('keydown', escListener);
+        modal
+          .querySelectorAll('[id^="close"],[id^="ok"]')
+          .forEach((btn) => (btn.onclick = closeModal));
+        return closeModal;
       }
-      function escListener(e) { if(e.key==='Escape'){ e.preventDefault(); closeModal(); } }
-      dialog.addEventListener('keydown', escListener);
-      modal.querySelectorAll('[id^="close"],[id^="ok"]').forEach(btn=>btn.onclick=closeModal);
-      return closeModal;
-    }
-    let lastOpener = null;
-    // Delivery/Pickup toggle modal logic for index.html
-    const dBtn = document.getElementById('btnDelivery');
-    const pBtn = document.getElementById('btnPickup');
-    const active = ['bg-blue-600','text-white','border-blue-600'];
-    const idle   = ['bg-white','text-slate-900'];
-    function setMode(m, focusBtn) {
-      if(!dBtn||!pBtn) return;
-      if(m==='delivery'){
-        dBtn.classList.add(...active); dBtn.classList.remove(...idle);
-        pBtn.classList.add(...idle);   pBtn.classList.remove(...active);
-        dBtn.setAttribute('aria-selected','true');
-        pBtn.setAttribute('aria-selected','false');
-        dBtn.tabIndex = 0; pBtn.tabIndex = -1; if(focusBtn) dBtn.focus();
-      } else {
-        pBtn.classList.add(...active); pBtn.classList.remove(...idle);
-        dBtn.classList.add(...idle);   dBtn.classList.remove(...active);
-        dBtn.setAttribute('aria-selected','false');
-        pBtn.setAttribute('aria-selected','true');
-        dBtn.tabIndex = -1; pBtn.tabIndex = 0; if(focusBtn) pBtn.focus();
+      let lastOpener = null;
+      // Delivery/Pickup toggle modal logic for index.html
+      const dBtn = document.getElementById('btnDelivery');
+      const pBtn = document.getElementById('btnPickup');
+      const active = ['bg-blue-600', 'text-white', 'border-blue-600'];
+      const idle = ['bg-white', 'text-slate-900'];
+      function setMode(m, focusBtn) {
+        if (!dBtn || !pBtn) return;
+        if (m === 'delivery') {
+          dBtn.classList.add(...active);
+          dBtn.classList.remove(...idle);
+          pBtn.classList.add(...idle);
+          pBtn.classList.remove(...active);
+          dBtn.setAttribute('aria-selected', 'true');
+          pBtn.setAttribute('aria-selected', 'false');
+          dBtn.tabIndex = 0;
+          pBtn.tabIndex = -1;
+          if (focusBtn) dBtn.focus();
+        } else {
+          pBtn.classList.add(...active);
+          pBtn.classList.remove(...idle);
+          dBtn.classList.add(...idle);
+          dBtn.classList.remove(...active);
+          dBtn.setAttribute('aria-selected', 'false');
+          pBtn.setAttribute('aria-selected', 'true');
+          dBtn.tabIndex = -1;
+          pBtn.tabIndex = 0;
+          if (focusBtn) pBtn.focus();
+        }
+        localStorage.setItem('orderMode', m);
       }
-      localStorage.setItem('orderMode', m);
-    }
-    dBtn?.addEventListener('click', function(e) {
-      e.preventDefault(); setMode('delivery'); lastOpener = dBtn; showModal(document.getElementById('deliveryModal'), dBtn);
-    });
-    pBtn?.addEventListener('click', function(e) {
-      e.preventDefault(); setMode('pickup'); lastOpener = pBtn; showModal(document.getElementById('pickupModal'), pBtn);
-    });
-    [dBtn, pBtn].forEach((btn, idx, arr) => {
-      btn?.addEventListener('keydown', function(e) {
-        if(e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-          e.preventDefault(); const next = (idx + (e.key==='ArrowRight'?1:-1) + arr.length) % arr.length;
-          setMode(next===0?'delivery':'pickup', true);
-        } else if(e.key === ' ' || e.key === 'Enter') { e.preventDefault(); btn.click(); }
+      dBtn?.addEventListener('click', function (e) {
+        e.preventDefault();
+        setMode('delivery');
+        lastOpener = dBtn;
+        showModal(document.getElementById('deliveryModal'), dBtn);
       });
-    });
-    setMode(localStorage.getItem('orderMode') || 'delivery');
+      pBtn?.addEventListener('click', function (e) {
+        e.preventDefault();
+        setMode('pickup');
+        lastOpener = pBtn;
+        showModal(document.getElementById('pickupModal'), pBtn);
+      });
+      [dBtn, pBtn].forEach((btn, idx, arr) => {
+        btn?.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            const next = (idx + (e.key === 'ArrowRight' ? 1 : -1) + arr.length) % arr.length;
+            setMode(next === 0 ? 'delivery' : 'pickup', true);
+          } else if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            btn.click();
+          }
+        });
+      });
+      setMode(localStorage.getItem('orderMode') || 'delivery');
 
-    // Outlet filter banner
-    (() => {
-      const params = new URLSearchParams(location.search);
-      const outlet = params.get('outlet');
-      const outletName = params.get('outletName');
-      const banner = document.querySelector('[data-outlet-filter-banner]');
-      const text = document.querySelector('[data-outlet-filter-text]');
-      const clear = document.querySelector('[data-outlet-filter-clear]');
-      if (!banner || !clear) return;
-      if (outlet) {
-        banner.classList.remove('hidden');
-        if (text && outletName) text.textContent = `Ditapis mengikut outlet: ${outletName}`;
-        clear.addEventListener('click', () => { location.href = location.pathname; });
-      } else { banner.classList.add('hidden'); }
-    })();
+      // Outlet filter banner
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const outlet = params.get('outlet');
+        const outletName = params.get('outletName');
+        const banner = document.querySelector('[data-outlet-filter-banner]');
+        const text = document.querySelector('[data-outlet-filter-text]');
+        const clear = document.querySelector('[data-outlet-filter-clear]');
+        if (!banner || !clear) return;
+        if (outlet) {
+          banner.classList.remove('hidden');
+          if (text && outletName) text.textContent = `Ditapis mengikut outlet: ${outletName}`;
+          clear.addEventListener('click', () => {
+            location.href = location.pathname;
+          });
+        } else {
+          banner.classList.add('hidden');
+        }
+      })();
 
-    // Cart badges sync
-    function updateCartBadges() {
-      if (typeof updateCartBadge === 'function') updateCartBadge();
-      const n = (window.cartCount && window.loadCart) ? cartCount(loadCart()) : 0;
-      const badgeBtn = document.getElementById('cartBadge');
-      const badgeCount = document.getElementById('cartBadgeCount');
-      if (badgeBtn && badgeCount) { badgeCount.textContent = n; badgeBtn.style.display = n > 0 ? '' : 'none'; }
-    }
-    const origUpdateCartBadge = window.updateCartBadge;
-    window.updateCartBadge = function() { if (origUpdateCartBadge) origUpdateCartBadge(); updateCartBadges(); };
-    document.addEventListener('DOMContentLoaded', updateCartBadges);
-    window.addEventListener('storage', function(e){ if(e.key==='cartItems') updateCartBadges(); });
-    document.getElementById('cartBadge')?.addEventListener('click', function(){ window.location.href = './cart.html'; });
+      // Cart badges sync
+      function updateCartBadges() {
+        if (typeof updateCartBadge === 'function') updateCartBadge();
+        const n = window.cartCount && window.loadCart ? cartCount(loadCart()) : 0;
+        const badgeBtn = document.getElementById('cartBadge');
+        const badgeCount = document.getElementById('cartBadgeCount');
+        if (badgeBtn && badgeCount) {
+          badgeCount.textContent = n;
+          badgeBtn.style.display = n > 0 ? '' : 'none';
+        }
+      }
+      const origUpdateCartBadge = window.updateCartBadge;
+      window.updateCartBadge = function () {
+        if (origUpdateCartBadge) origUpdateCartBadge();
+        updateCartBadges();
+      };
+      document.addEventListener('DOMContentLoaded', updateCartBadges);
+      window.addEventListener('storage', function (e) {
+        if (e.key === 'cartItems') updateCartBadges();
+      });
+      document.getElementById('cartBadge')?.addEventListener('click', function () {
+        window.location.href = './cart.html';
+      });
 
-    // PWA install cue
-    window.addEventListener("pwa:install-available", () => {
-      const b = document.getElementById("btnInstall");
-      if (b) b.style.display = '';
-    });
-    document.getElementById("btnInstall")?.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("pwa:install-click"));
-    });
-  </script>
+      // PWA install cue
+      window.addEventListener('pwa:install-available', () => {
+        const b = document.getElementById('btnInstall');
+        if (b) b.style.display = '';
+      });
+      document.getElementById('btnInstall')?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('pwa:install-click'));
+      });
+    </script>
 
-  <!-- External scripts (ensure these files exist in /assets/js/) -->
-  <script src="/assets/js/home-inline.js" defer></script>
-  <script src="/assets/js/app.js" defer></script>
-  <script src="/assets/js/cart.js" defer></script>
-  <script src="/assets/js/product-detail.js" defer></script>
-  <script src="/assets/js/sw-register.js" defer></script>
-  <script src="/assets/js/toast.js" defer></script>
-  <script src="/assets/js/min.js" defer></script>
-</body>
+    <!-- External scripts (ensure these files exist in /assets/js/) -->
+    <script src="/assets/js/home-inline.js" defer></script>
+    <script src="/assets/js/app.js" defer></script>
+    <script src="/assets/js/cart.js" defer></script>
+    <script src="/assets/js/product-detail.js" defer></script>
+    <script src="/assets/js/sw-register.js" defer></script>
+    <script src="/assets/js/toast.js" defer></script>
+    <script src="/assets/js/min.js" defer></script>
+  </body>
 </html>

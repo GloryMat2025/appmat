@@ -1,1 +1,1 @@
-console.log("✅ AppMat CI test passed — ready for Playwright export");
+console.log('✅ AppMat CI test passed — ready for Playwright export');

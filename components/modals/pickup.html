@@ -1,4 +1,3 @@
-
 <div id="modal-pickup" class="modal" aria-hidden="true">
   <div class="sheet">
     <div class="container">
@@ -9,17 +8,17 @@
   </div>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const outlets = [
-    {id:'KB', name:'Kota Bharu'},
-    {id:'DAB', name:'Dabong'},
-    {id:'MCH', name:'Machang'}
-  ];
-  const list = document.getElementById('pickup-outlets');
-  if(list){
-    list.innerHTML = outlets.map(o=>\`
-      <div class="card"><strong>\${o.name}</strong><br/><button class="btn btn-primary" data-close="#modal-pickup">Select</button></div>
-    \`).join('');
-  }
-});
+  document.addEventListener('DOMContentLoaded',()=>{
+    const outlets = [
+      {id:'KB', name:'Kota Bharu'},
+      {id:'DAB', name:'Dabong'},
+      {id:'MCH', name:'Machang'}
+    ];
+    const list = document.getElementById('pickup-outlets');
+    if(list){
+      list.innerHTML = outlets.map(o=>\`
+        <div class="card"><strong>\${o.name}</strong><br/><button class="btn btn-primary" data-close="#modal-pickup">Select</button></div>
+      \`).join('');
+    }
+  });
 </script>

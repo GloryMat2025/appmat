@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import "../styles/offline.css";
+import React, { useEffect, useState } from 'react';
+import '../styles/offline.css';
 
 export default function OfflineStatus() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -9,12 +9,12 @@ export default function OfflineStatus() {
     const handleOffline = () => setIsOffline(true);
     const handleOnline = () => setIsOffline(false);
 
-    window.addEventListener("offline", handleOffline);
-    window.addEventListener("online", handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
 
     return () => {
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("online", handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
     };
   }, []);
 

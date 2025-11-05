@@ -75,9 +75,7 @@ git push origin --tags
 
 - If you want the changelog included as an asset instead of the body, ask and I can add an upload step to the workflow.
 
-
-Contributing Quick Steps
------------------------
+## Contributing Quick Steps
 
 Follow these quick steps to contribute:
 
@@ -111,3 +109,9 @@ git push origin feature-xyz
 5. CI will automatically run tests, enforce conventional commits for versioning, and (on tag/release) publish artifacts.
 
 See `CONTRIBUTING-EXTRA.md` for extended examples, commit message templates, and release-trigger notes.
+
+## v0.1.1
+
+- Added frontend linting & formatting checks in CI
+- Improved audit reporting and artifact upload
+- Removed legacy .npmrc backups

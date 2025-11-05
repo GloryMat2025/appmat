@@ -1,17 +1,14 @@
 export default function Features() {
   const data = [
-    { title: "Cepat & Mudah", desc: "Tempahan pantas hanya beberapa klik." },
-    { title: "Reka Bentuk Moden", desc: "Antaramuka mesra pengguna dan bergaya." },
-    { title: "Sokongan 24/7", desc: "Kami sedia membantu bila-bila masa." },
+    { title: 'Cepat & Mudah', desc: 'Tempahan pantas hanya beberapa klik.' },
+    { title: 'Reka Bentuk Moden', desc: 'Antaramuka mesra pengguna dan bergaya.' },
+    { title: 'Sokongan 24/7', desc: 'Kami sedia membantu bila-bila masa.' },
   ];
 
   return (
     <section id="features" className="py-20 bg-white dark:bg-gray-800">
       <div className="max-w-6xl mx-auto px-4 text-center">
-        <h2
-          data-aos="fade-up"
-          className="text-3xl font-bold mb-8 text-gray-800 dark:text-white"
-        >
+        <h2 data-aos="fade-up" className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">
           Ciri Utama Kami
         </h2>
 

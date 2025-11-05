@@ -16,7 +16,9 @@ function rmDirIfOld(p) {
       fs.rmSync(p, { recursive: true, force: true });
       console.log('Removed', p);
     }
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 for (const t of targets) {

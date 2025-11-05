@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import useCart from "../hooks/useCart";
+import { motion } from 'framer-motion';
+import useCart from '../hooks/useCart';
 
 export default function Card({ id, title, desc, price }) {
   const { addToCart } = useCart();
@@ -11,9 +11,7 @@ export default function Card({ id, title, desc, price }) {
     >
       <h2 className="font-semibold text-lg">{title}</h2>
       <p className="text-gray-600 dark:text-gray-300 mt-2">{desc}</p>
-      <p className="mt-2 font-bold text-blue-600 dark:text-yellow-400">
-        RM {price.toFixed(2)}
-      </p>
+      <p className="mt-2 font-bold text-blue-600 dark:text-yellow-400">RM {price.toFixed(2)}</p>
 
       <button
         onClick={() => addToCart({ id, title, price })}

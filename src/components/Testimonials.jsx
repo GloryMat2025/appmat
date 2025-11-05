@@ -1,8 +1,8 @@
 export default function Testimonials() {
   const people = [
-    { name: "Ali", msg: "AppMat memang memudahkan urusan saya!" },
-    { name: "Siti", msg: "Reka bentuk cantik, respons cepat." },
-    { name: "Rahman", msg: "Saya suka dark mode dia 😄" },
+    { name: 'Ali', msg: 'AppMat memang memudahkan urusan saya!' },
+    { name: 'Siti', msg: 'Reka bentuk cantik, respons cepat.' },
+    { name: 'Rahman', msg: 'Saya suka dark mode dia 😄' },
   ];
 
   return (
@@ -20,9 +20,7 @@ export default function Testimonials() {
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"
             >
               <p className="italic mb-3">“{p.msg}”</p>
-              <h4 className="font-semibold text-blue-700 dark:text-yellow-400">
-                — {p.name}
-              </h4>
+              <h4 className="font-semibold text-blue-700 dark:text-yellow-400">— {p.name}</h4>
             </div>
           ))}
         </div>

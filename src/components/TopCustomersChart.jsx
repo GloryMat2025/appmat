@@ -1,33 +1,23 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export default function TopCustomersChart() {
   const [data, setData] = useState([]);
 
   useEffect(() => {
     const fetchTopCustomers = async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select("name, total");
+      const { data, error } = await supabase.from('orders').select('name, total');
 
       if (error) {
-        console.error("Ralat ambil data pelanggan:", error);
+        console.error('Ralat ambil data pelanggan:', error);
         return;
       }
 
       // Kumpul jumlah jualan ikut pelanggan
       const grouped = {};
       data.forEach((order) => {
-        const name = order.name || "Tidak Dikenali";
+        const name = order.name || 'Tidak Dikenali';
         grouped[name] = (grouped[name] || 0) + Number(order.total || 0);
       });
 

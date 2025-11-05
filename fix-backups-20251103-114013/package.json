@@ -12,7 +12,6 @@
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
     "postinstall": "node ./scripts/rebuild-esbuild.cjs"
-
   },
   "dependencies": {
     "react": "^18.3.1",

@@ -1,9 +1,9 @@
-import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import Features from "./components/Features";
-import Testimonials from "./components/Testimonials";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import Features from './components/Features';
+import Testimonials from './components/Testimonials';
+import Footer from './components/Footer';
+import Home from './pages/Home';
 
 export default function App() {
   return (

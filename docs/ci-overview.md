@@ -7,18 +7,21 @@ This document explains the structure, flow, and usage of the **Playwright Parity
 ## 🚀 Workflow Summary
 
 ### File
+
 `.github/workflows/playwright-parity-matrix.yml`
 
 ### Triggers
+
 - `push` to `main`
 - `pull_request` to `main`
 - `workflow_dispatch` (manual trigger)
 
 ### Jobs Overview
-| Job Name | Purpose | Matrix |
-|-----------|----------|--------|
+
+| Job Name           | Purpose                                                           | Matrix       |
+| ------------------ | ----------------------------------------------------------------- | ------------ |
 | **build-and-test** | Exports Playwright PNG screenshots and builds the visual gallery. | OS × Node.js |
-| **parity** | Runs browser-specific parity tests and posts PR comment summary. | Browsers |
+| **parity**         | Runs browser-specific parity tests and posts PR comment summary.  | Browsers     |
 
 ---
 
@@ -43,3 +46,4 @@ flowchart TD
     D2[PR comment: thumbnails + link]
   end
   D1 --> D2
+```

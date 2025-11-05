@@ -37,4 +37,3 @@ Notes & follow-ups
 - If you'd like the guard to initially warn (instead of fail) for raw `child_process` usage, I can change the workflow to only print matches and succeed.
 
 Reviewed-by: automated CI smoke workflow
-

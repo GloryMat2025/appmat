@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 
 export default function SalesChart() {
   const [data, setData] = useState([]);
@@ -12,18 +12,18 @@ export default function SalesChart() {
       const from = startOfWeek.toISOString().slice(0, 10);
 
       const { data, error } = await supabase
-        .from("orders")
-        .select("total, created_at")
-        .gte("created_at", from);
+        .from('orders')
+        .select('total, created_at')
+        .gte('created_at', from);
 
       if (error) return console.error(error);
 
       // Kumpulkan jualan ikut tarikh
       const grouped = {};
       data.forEach((o) => {
-        const day = new Date(o.created_at).toLocaleDateString("ms-MY", {
-          day: "2-digit",
-          month: "short",
+        const day = new Date(o.created_at).toLocaleDateString('ms-MY', {
+          day: '2-digit',
+          month: 'short',
         });
         grouped[day] = (grouped[day] || 0) + Number(o.total || 0);
       });

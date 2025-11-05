@@ -1,14 +1,14 @@
-name: "Appmat Artifact Verification & Diff"
+name: 'Appmat Artifact Verification & Diff'
 
 on:
   workflow_run:
-    workflows: ["Appmat Matrix Parity CI", "Appmat Docker Repro Build"]
+    workflows: ['Appmat Matrix Parity CI', 'Appmat Docker Repro Build']
     types:
       - completed
 
 jobs:
   verify:
-    name: "Compare CI vs Docker Artifacts"
+    name: 'Compare CI vs Docker Artifacts'
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

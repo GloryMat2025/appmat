@@ -1,6 +1,6 @@
-import useCart from "../hooks/useCart";
-import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import useCart from '../hooks/useCart';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 <Link to="/checkout">
   <motion.button
@@ -10,16 +10,13 @@ import { Link } from "react-router-dom";
   >
     Teruskan ke Checkout
   </motion.button>
-</Link>
+</Link>;
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
 
   return (
-    <section
-      id="cart"
-      className="py-16 px-4 bg-gray-50 dark:bg-gray-900 min-h-screen"
-    >
+    <section id="cart" className="py-16 px-4 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center text-blue-700 dark:text-yellow-400">
           Troli Belian Anda 🛒
@@ -47,18 +44,14 @@ export default function Cart() {
 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, item.quantity - 1)
-                    }
+                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
                     className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300"
                   >
                     -
                   </button>
                   <span>{item.quantity}</span>
                   <button
-                    onClick={() =>
-                      updateQuantity(item.id, item.quantity + 1)
-                    }
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
                     className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300"
                   >
                     +
@@ -75,7 +68,7 @@ export default function Cart() {
 
             <div className="text-right pt-4">
               <h4 className="text-lg font-semibold">
-                Jumlah:{" "}
+                Jumlah:{' '}
                 <span className="text-blue-700 dark:text-yellow-400">
                   RM {totalPrice.toFixed(2)}
                 </span>

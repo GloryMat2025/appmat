@@ -2,9 +2,9 @@ name: Frontend CI (pnpm + Vite)
 
 on:
   push:
-    branches: [ main, add-java-setup-readme ]
+    branches: [main, add-java-setup-readme]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
