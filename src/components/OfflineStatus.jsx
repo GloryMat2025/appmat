@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/offline.css';
 
+OfflineStatus.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function OfflineStatus() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [seconds, setSeconds] = useState(5);

@@ -1,3 +1,7 @@
+Features.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Features() {
   const data = [
     { title: 'Cepat & Mudah', desc: 'Tempahan pantas hanya beberapa klik.' },

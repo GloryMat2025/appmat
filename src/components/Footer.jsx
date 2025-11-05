@@ -4,6 +4,11 @@ const { cartItems, totalPrice } = useCart();
 <span className="ml-3 bg-yellow-400 text-black px-2 py-1 rounded-full">
   🛒 {cartItems.length} | RM {totalPrice.toFixed(2)}
 </span>;
+
+Footer.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Footer() {
   return (
     <footer className="bg-blue-700 text-white py-6 mt-10">

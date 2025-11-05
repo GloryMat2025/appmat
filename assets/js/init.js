@@ -1,4 +1,4 @@
-// Detect environment
+// 🌍 Detect environment (DEV / PROD)
 const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 
 if (isDev) {
@@ -7,13 +7,15 @@ if (isDev) {
 } else {
   console.log('🚀 AppMat running in PROD mode');
   const script = document.createElement('script');
+  script.type = 'module';
   script.defer = true;
   script.src = '/assets/js/app.js';
   document.head.appendChild(script);
 }
 
-// Wait until DOM is ready
+// Wait for DOM ready
 document.addEventListener('DOMContentLoaded', async () => {
+  // 🔹 Helper to load component by selector + URL
   const loadComponent = async (selector, url) => {
     const el = document.querySelector(selector);
     if (!el) return;
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // 🧠 Dynamically detect all site-part elements
+  // 🧩 Auto-load all [site-part] sections
   const parts = document.querySelectorAll('[site-part]');
   await Promise.all(
     Array.from(parts).map((el) => {
@@ -37,94 +39,56 @@ document.addEventListener('DOMContentLoaded', async () => {
   );
 
   console.log('✅ All site-part components loaded successfully.');
-});
 
-// ✅ After components are loaded
-console.log('✅ Header & Footer loaded successfully.');
+  // =========================================
+  // 🔸 Sidebar Toggle Logic (single instance)
+  // =========================================
+  const sidebarBtn = document.getElementById('menu-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
 
-// 🔹 Sidebar & menu toggle logic
-const toggleButton = document.getElementById('menu-toggle');
-const mobileMenu = document.getElementById('mobile-menu');
+  if (sidebarBtn && sidebar && overlay) {
+    const toggleSidebar = () => {
+      const isActive = sidebar.classList.toggle('active');
+      overlay.classList.toggle('hidden');
+      overlay.classList.toggle('active');
+      sidebarBtn.textContent = isActive ? '✕' : '☰';
+      document.body.style.overflow = isActive ? 'hidden' : '';
+    };
 
-if (toggleButton && mobileMenu) {
-  toggleButton.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
-    toggleButton.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
-  });
-}
-// After components load successfully
-console.log('✅ Header & Footer loaded successfully.');
+    sidebarBtn.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', toggleSidebar);
+  }
 
-// Sidebar & menu toggle
-const toggleButton = document.getElementById('menu-toggle');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
+  // =========================================
+  // 🌗 Theme Toggle + System Preference
+  // =========================================
+  const themeToggle = document.getElementById('theme-toggle');
 
-if (toggleButton && sidebar && overlay) {
-  const toggleSidebar = () => {
-    const isActive = sidebar.classList.toggle('active');
-    overlay.classList.toggle('hidden');
-    overlay.classList.toggle('active');
-    toggleButton.textContent = isActive ? '✕' : '☰';
-
-    // 🔹 Lock/unlock scroll pada body
-    document.body.style.overflow = isActive ? 'hidden' : '';
+  const applyTheme = (mode) => {
+    if (mode === 'dark') {
+      document.body.classList.add('dark');
+      if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
+    } else {
+      document.body.classList.remove('dark');
+      if (themeToggle) themeToggle.textContent = '🌙 Tukar ke Dark Mode';
+    }
+    localStorage.setItem('theme', mode);
   };
 
-  toggleButton.addEventListener('click', toggleSidebar);
-  overlay.addEventListener('click', toggleSidebar);
-}
-// Selepas sidebar, header, footer dimuat...
-const themeToggle = document.getElementById('theme-toggle');
-
-// Semak tema tersimpan
-const currentTheme = localStorage.getItem('theme');
-if (currentTheme === 'dark') {
-  document.body.classList.add('dark');
-  if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
-}
-
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    const isDark = document.body.classList.contains('dark');
-
-    // Tukar teks & simpan pilihan user
-    themeToggle.textContent = isDark ? '☀️ Tukar ke Light Mode' : '🌙 Tukar ke Dark Mode';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  });
-}
-// 🌗 Dark Mode System Detection + Toggle
-const themeToggle = document.getElementById('theme-toggle');
-
-// Fungsi set tema
-const applyTheme = (mode) => {
-  if (mode === 'dark') {
-    document.body.classList.add('dark');
-    if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
-  } else {
-    document.body.classList.remove('dark');
-    if (themeToggle) themeToggle.textContent = '🌙 Tukar ke Dark Mode';
+  // Check saved theme
+  let savedTheme = localStorage.getItem('theme');
+  if (!savedTheme) {
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    savedTheme = systemPrefersDark ? 'dark' : 'light';
   }
-  localStorage.setItem('theme', mode);
-};
 
-// 1️⃣ Semak localStorage dulu
-let savedTheme = localStorage.getItem('theme');
+  applyTheme(savedTheme);
 
-if (!savedTheme) {
-  // 2️⃣ Kalau tiada, ikut sistem (auto detect)
-  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  savedTheme = systemPrefersDark ? 'dark' : 'light';
-}
-
-// 3️⃣ Gunakan tema semasa
-applyTheme(savedTheme);
-
-// 4️⃣ Event listener untuk tukar tema manual
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark');
-    applyTheme(isDark ? 'dark' : 'light');
-  });
-}
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle('dark');
+      applyTheme(isDark ? 'dark' : 'light');
+    });
+  }
+});

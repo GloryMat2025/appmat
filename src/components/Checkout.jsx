@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabaseClient';
 
+Checkout.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Checkout() {
   const { cartItems, totalPrice } = useCart();
   const [form, setForm] = useState({

@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { motion } from 'framer-motion';
 
+TopCustomersActions.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function TopCustomersActions() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);

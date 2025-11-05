@@ -1,5 +1,9 @@
 import { motion } from 'framer-motion';
 
+Hero.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Hero() {
   return (
     <section className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20 px-6 text-center relative overflow-hidden">

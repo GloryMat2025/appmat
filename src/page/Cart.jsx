@@ -12,6 +12,10 @@ import { Link } from 'react-router-dom';
   </motion.button>
 </Link>;
 
+Cart.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, totalPrice } = useCart();
 

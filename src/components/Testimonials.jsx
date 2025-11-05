@@ -1,3 +1,7 @@
+Testimonials.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function Testimonials() {
   const people = [
     { name: 'Ali', msg: 'AppMat memang memudahkan urusan saya!' },

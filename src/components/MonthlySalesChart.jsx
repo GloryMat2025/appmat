@@ -10,6 +10,10 @@ import {
   CartesianGrid,
 } from 'recharts';
 
+MonthlySalesChart.propTypes = {
+  // TODO: define props here (auto added)
+};
+
 export default function MonthlySalesChart() {
   const [data, setData] = useState([]);
 
