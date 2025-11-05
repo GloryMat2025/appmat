@@ -7,3 +7,9 @@
 
 ### 🐛 Fixes
 - ignore node_modules in git
+
+## v0.1.0 - 2025-11-05
+- Upgrade Java runtime to 21 (docs added).
+- Add CI workflows for Java and frontend.
+- Fix frontend App.jsx duplicate imports and render.
+- Fix Java source/tests and pass Maven tests.
