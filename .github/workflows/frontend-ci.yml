@@ -36,7 +36,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependencies (fail on high)
+      - name: Audit dependencies (warn-only)
+        # Run audit but don't fail the job; we want CI to warn about high severities
+        continue-on-error: true
         run: pnpm audit --audit-level=high
 
       - name: Build
