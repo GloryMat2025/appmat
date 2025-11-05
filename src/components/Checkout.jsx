@@ -4,28 +4,39 @@ import { motion } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Checkout() {
+  const { cartItems, totalPrice } = useCart();
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // Simpan order dalam Supabase
-  const { error } = await supabase.from("orders").insert([
-    {
-      name: form.name,
-      phone: form.phone,
-      address: form.address,
-      items: cartItems,
-      total: totalPrice,
-    },
-  ]);
+    // Simpan order dalam Supabase
+    const { error } = await supabase.from("orders").insert([
+      {
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        items: cartItems,
+        total: totalPrice,
+      },
+    ]);
 
-  if (error) {
-    console.error(error);
-    alert("Ralat menyimpan pesanan: " + error.message);
-    return;
-  }
+    if (error) {
+      console.error(error);
+      alert("Ralat menyimpan pesanan: " + error.message);
+      return;
+    }
 
-  // Format mesej WhatsApp
-  const message = `
+    // Format mesej WhatsApp
+    const message = `
 Assalamualaikum, saya ingin membuat pesanan 👇
 
 👤 Nama: ${form.name}
@@ -35,23 +46,26 @@ Assalamualaikum, saya ingin membuat pesanan 👇
 🛍️ Senarai Item:
 ${cartItems
   .map(
-    (item) => `• ${item.title} x${item.quantity} = RM${(
-      item.price * item.quantity
-    ).toFixed(2)}`
+    (item) =>
+      `• ${item.title} x${item.quantity} = RM${(
+        item.price * item.quantity
+      ).toFixed(2)}`
   )
   .join("\n")}
 
 💰 Jumlah: RM ${totalPrice.toFixed(2)}
 
 Terima kasih! 🙏
-  `.trim();
+    `.trim();
 
-  const phone = "60123456789"; // ganti nombor ni dgn nombor bisnes kau
-  const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-  window.open(whatsappURL, "_blank");
+    const phone = "60123456789"; // ganti nombor ni dgn nombor bisnes kau
+    const whatsappURL = `https://wa.me/${phone}?text=${encodeURIComponent(
+      message
+    )}`;
+    window.open(whatsappURL, "_blank");
 
-  alert("Pesanan berjaya disimpan & dihantar ke WhatsApp ✅");
-};
+    alert("Pesanan berjaya disimpan & dihantar ke WhatsApp ✅");
+  };
 
   return (
     <section
