@@ -5,7 +5,6 @@ import SalesChart from '../components/SalesChart';
 import MonthlySalesChart from '../components/MonthlySalesChart';
 import TopCustomersChart from '../components/TopCustomersChart';
 import TopCustomersActions from '../components/TopCustomersActions';
-import { useEffect } from 'react';
 import { runWeeklyReminder } from '../utils/weeklyReminder';
 
 useEffect(() => {
@@ -110,6 +109,7 @@ export default function Admin() {
         </h2>
 
         {/* Popup Notifikasi */}
+        {loading && <div className="text-center mb-4 text-gray-600">Memuat data pesanan…</div>}
         {newOrder && (
           <motion.div
             initial={{ opacity: 0, y: -50 }}

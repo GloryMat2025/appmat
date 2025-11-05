@@ -85,7 +85,7 @@ Terima kasih & semoga terus sihat selalu!
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={runWeeklyReminder}
+                onClick={() => sendWhatsApp(cust)}
                 className="bg-blue-600 text-white px-6 py-2 rounded mt-4 hover:bg-blue-700 transition"
               >
                 🚀 Jalankan Reminder Mingguan Sekarang

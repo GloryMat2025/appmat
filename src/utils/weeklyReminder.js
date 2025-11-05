@@ -52,12 +52,7 @@ Terima kasih & semoga hari anda diberkati 🌸
 }
 
 // Jalankan scheduler mingguan
-export async function runWeeklyReminder() {
-  const customers = await getTopCustomers();
-  customers.forEach((cust) => {
-    const message = createWhatsAppMessage(cust);
-    const phone = cust.phone.replace(/^0/, '6');
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-    window.open(url, '_blank');
-  });
-}
+// Note: removed duplicate browser-side runWeeklyReminder that used window.open.
+// The server-side `runWeeklyReminder` above should be used for sending via server
+// utilities (sendWhatsAppText). If a browser trigger is needed, call the server
+// endpoint instead.

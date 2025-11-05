@@ -52,3 +52,79 @@ if (toggleButton && mobileMenu) {
     toggleButton.textContent = mobileMenu.classList.contains('hidden') ? '☰' : '✕';
   });
 }
+// After components load successfully
+console.log('✅ Header & Footer loaded successfully.');
+
+// Sidebar & menu toggle
+const toggleButton = document.getElementById('menu-toggle');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+if (toggleButton && sidebar && overlay) {
+  const toggleSidebar = () => {
+    const isActive = sidebar.classList.toggle('active');
+    overlay.classList.toggle('hidden');
+    overlay.classList.toggle('active');
+    toggleButton.textContent = isActive ? '✕' : '☰';
+
+    // 🔹 Lock/unlock scroll pada body
+    document.body.style.overflow = isActive ? 'hidden' : '';
+  };
+
+  toggleButton.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
+}
+// Selepas sidebar, header, footer dimuat...
+const themeToggle = document.getElementById('theme-toggle');
+
+// Semak tema tersimpan
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme === 'dark') {
+  document.body.classList.add('dark');
+  if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+
+    // Tukar teks & simpan pilihan user
+    themeToggle.textContent = isDark ? '☀️ Tukar ke Light Mode' : '🌙 Tukar ke Dark Mode';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  });
+}
+// 🌗 Dark Mode System Detection + Toggle
+const themeToggle = document.getElementById('theme-toggle');
+
+// Fungsi set tema
+const applyTheme = (mode) => {
+  if (mode === 'dark') {
+    document.body.classList.add('dark');
+    if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
+  } else {
+    document.body.classList.remove('dark');
+    if (themeToggle) themeToggle.textContent = '🌙 Tukar ke Dark Mode';
+  }
+  localStorage.setItem('theme', mode);
+};
+
+// 1️⃣ Semak localStorage dulu
+let savedTheme = localStorage.getItem('theme');
+
+if (!savedTheme) {
+  // 2️⃣ Kalau tiada, ikut sistem (auto detect)
+  const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  savedTheme = systemPrefersDark ? 'dark' : 'light';
+}
+
+// 3️⃣ Gunakan tema semasa
+applyTheme(savedTheme);
+
+// 4️⃣ Event listener untuk tukar tema manual
+if (themeToggle) {
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark');
+    applyTheme(isDark ? 'dark' : 'light');
+  });
+}

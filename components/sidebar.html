@@ -1,10 +1,15 @@
 <!-- /components/sidebar.html -->
-<aside id="sidebar" class="sidebar hidden md:block">
-  <nav class="flex flex-col gap-4 p-4 bg-gray-100 dark:bg-gray-800 h-full">
-    <a href="/pages/home.html" class="hover:text-blue-600">🏠 Home</a>
-    <a href="/pages/menu.html" class="hover:text-blue-600">🍔 Menu</a>
-    <a href="/pages/rewards.html" class="hover:text-blue-600">🎁 Rewards</a>
-    <a href="/pages/cart.html" class="hover:text-blue-600">🛒 Cart</a>
-    <a href="/pages/account.html" class="hover:text-blue-600">👤 Account</a>
+<div id="overlay" class="overlay hidden"></div>
+
+<aside id="sidebar" class="sidebar">
+  <nav class="flex flex-col gap-4 p-6 text-lg font-medium">
+    <a href="/pages/home.html" class="hover:text-blue-600 transition">🏠 Home</a>
+    <a href="/pages/menu.html" class="hover:text-blue-600 transition">🍔 Menu</a>
+    <a href="/pages/rewards.html" class="hover:text-blue-600 transition">🎁 Rewards</a>
+    <a href="/pages/cart.html" class="hover:text-blue-600 transition">🛒 Cart</a>
+    <a href="/pages/account.html" class="hover:text-blue-600 transition">👤 Account</a>
   </nav>
 </aside>
+<hr style="margin: 1.5rem 0; opacity: 0.3" />
+
+<button id="theme-toggle" class="theme-toggle-btn">🌙 Tukar ke Dark Mode</button>

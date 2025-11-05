@@ -1,8 +1,12 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from '../App.jsx';
 import Cart from './pages/Cart.jsx';
 import Checkout from './pages/Checkout.jsx';
 import Admin from './pages/Admin.jsx';
+import { ThemeProvider } from './context/ThemeContext';
+import { CartProvider } from './context/CartContext';
 import './styles/main.css';
 import './styles/offline.css';
 import './scripts/registerSW';
