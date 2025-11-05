@@ -13,6 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Ensure .npmrc is a file
+        run: |
+          # Sometimes a directory named .npmrc is accidentally created and breaks pnpm
+          if [ -d .npmrc ]; then
+            echo ".npmrc is a directory. This will break pnpm installs. Renaming to .npmrc.dir.bak and failing the job for manual review."
+            mv .npmrc .npmrc.dir.bak || true
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
