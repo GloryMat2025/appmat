@@ -38,18 +38,19 @@
     "cross-env": "^7.0.3",
     "esbuild": "^0.25.12",
     "esbuild-wasm": "^0.25.12",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.33.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.6",
     "pixelmatch": "^7.1.0",
     "playwright": "^1.56.0",
     "pngjs": "^7.0.0",
     "postcss": "^8.5.6",
+    "prettier": "^2.8.8",
+    "prop-types": "^15.8.1",
     "sharp": "^0.34.4",
     "tailwindcss": "4.1.16",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
-    "prettier": "^2.8.8",
-    "eslint": "^8.45.0",
-    "eslint-plugin-react": "^7.33.1"
+    "vite": "^7.1.12"
   }
 }
