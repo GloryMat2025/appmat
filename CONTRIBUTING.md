@@ -115,3 +115,11 @@ See `CONTRIBUTING-EXTRA.md` for extended examples, commit message templates, and
 - Added frontend linting & formatting checks in CI
 - Improved audit reporting and artifact upload
 - Removed legacy .npmrc backups
+
+- name: Commit updated CHANGELOG.md and package.json
+  run: |
+  git config user.name "github-actions[bot]"
+  git config user.email "github-actions[bot]@users.noreply.github.com"
+  git add CHANGELOG.md package.json
+  git commit -m "docs: update changelog [skip ci]" || echo "No changes"
+  git push origin main
