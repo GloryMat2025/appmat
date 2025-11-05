@@ -1,11 +1,11 @@
-name: Version Bump & Auto Tag
+name: Version Bump & Auto Release
 
 on:
   push:
     branches: [main]
 
 jobs:
-  bump-version:
+  release:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,21 +19,27 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install standard-version
-        run: npm install -g standard-version
-
-      - name: Bump version & generate changelog
-        id: bump
+      - name: Install dependencies
         run: |
-          standard-version
+          npm install -g conventional-changelog-cli standard-version
+
+      - name: Determine release type
+        id: determine
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 || echo "v0.0.0")
+          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s")
+          echo "$COMMITS" | grep -q "BREAKING CHANGE" && echo "TYPE=major" >> $GITHUB_ENV && exit 0
+          echo "$COMMITS" | grep -q "^feat" && echo "TYPE=minor" >> $GITHUB_ENV && exit 0
+          echo "TYPE=patch" >> $GITHUB_ENV
+
+      - name: Bump version based on commit type
+        run: |
+          standard-version --release-as $TYPE
           git push --follow-tags origin main
 
-      - name: Extract version dynamically
+      - name: Get current version
         id: version
         run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> $GITHUB_ENV
-
-      - name: Show new version
-        run: echo "📦 Released version $VERSION"
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v1
