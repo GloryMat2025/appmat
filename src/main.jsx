@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import App from '../App.jsx';
@@ -11,6 +11,20 @@ import './styles/main.css';
 import './styles/offline.css';
 import './scripts/registerSW';
 
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('/sw.js')
+    .then(() => console.log('✅ Service Worker didaftarkan'))
+    .catch((err) => console.error('❌ SW gagal:', err));
+}
+
+useEffect(() => {
+  if (typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+    Notification.requestPermission().then((perm) => {
+      if (perm === 'granted') console.log('🔔 Notifikasi dibenarkan!');
+    });
+  }
+}, []);
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider>
