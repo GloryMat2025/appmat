@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prepare": "husky install",
     "test": "echo \"No test defined\" && exit 0",
     "test:playwright": "playwright test",
     "capture": "echo \"(placeholder for screenshot capture)\"",
@@ -14,6 +15,9 @@
     "rebuild-esbuild": "node ./scripts/rebuild-esbuild.cjs",
     "fix:esbuild": "powershell -ExecutionPolicy Bypass -File ./fix-esbuild-rescue.ps1",
     "postinstall": "node ./scripts/rebuild-esbuild.cjs"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "pnpm -s test"
   },
   "husky": {
     "hooks": {
