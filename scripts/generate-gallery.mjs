@@ -137,6 +137,55 @@ const html = `
   <footer>Generated automatically on ${new Date().toLocaleString()}</footer>
 <script>
   // simple slider handler
-  document.querySelectorAll(".compare-container").forEach(container => {
+  document.querySelectorAll(".compare-container").forEach((container) => {
     const overlay = container.querySelector(".compare-overlay");
-    const slider =
+    const slider = container.querySelector(".slider");
+
+    const update = (clientX) => {
+      const rect = container.getBoundingClientRect();
+      let x = clientX - rect.left;
+      x = Math.max(0, Math.min(x, rect.width));
+      const pct = (x / rect.width) * 100;
+      overlay.style.width = pct + "%";
+      slider.style.left = pct + "%";
+    };
+
+    let dragging = false;
+
+    slider.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      slider.setPointerCapture && slider.setPointerCapture(e.pointerId);
+    });
+
+    container.addEventListener("pointerup", (e) => {
+      dragging = false;
+      try { container.releasePointerCapture && container.releasePointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    container.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      update(e.clientX);
+    });
+
+    // touch support
+    slider.addEventListener("touchstart", (e) => {
+      dragging = true;
+    });
+    document.addEventListener("touchend", () => (dragging = false));
+    document.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      update(e.touches[0].clientX);
+    });
+
+    // initialize center
+    const rect = container.getBoundingClientRect();
+    update(rect.left + rect.width / 2);
+  });
+</script>
+</body>
+</html>`;
+
+// write output
+fs.writeFileSync(OUTPUT_HTML, html, "utf8");
+console.log(`Gallery written to ${OUTPUT_HTML}`);
+
