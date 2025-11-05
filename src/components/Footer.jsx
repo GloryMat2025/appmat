@@ -23,6 +23,7 @@ export default function Footer() {
             href="https://facebook.com"
             target="_blank"
             className="hover:text-yellow-300 transition"
+            rel="noreferrer"
           >
             <i className="fa-brands fa-facebook-f"></i>
           </a>
@@ -30,6 +31,7 @@ export default function Footer() {
             href="https://instagram.com"
             target="_blank"
             className="hover:text-yellow-300 transition"
+            rel="noreferrer"
           >
             <i className="fa-brands fa-instagram"></i>
           </a>
@@ -37,6 +39,7 @@ export default function Footer() {
             href="https://wa.me/60123456789"
             target="_blank"
             className="hover:text-yellow-300 transition"
+            rel="noreferrer"
           >
             <i className="fa-brands fa-whatsapp"></i>
           </a>

@@ -25,10 +25,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Guard: detect raw child_process usage (warn)
-        # Print matches (if any) but don't fail the CI — useful for initial rollouts
-        run: |
-          echo "Searching for raw child_process usage (warning only)..."
-          pnpm exec --silent -- grep -R --line-number -E "require\\(['\"]child_process['\"]\\)|from ['\"]child_process['\"]" -- '*.js' '*.mjs' '*.ts' || true
+  # Print matches (if any) but don't fail the CI — useful for initial rollouts
+  run: |
+    echo "Searching for raw child_process usage (warning only)..."
+    pnpm exec --silent -- grep -R --line-number -E "require\\(['\"]child_process['\"]\\)|from ['\"]child_process['\"]" -- '*.js' '*.mjs' '*.ts' || true
 
       - name: Run health-check
         run: pnpm run hc

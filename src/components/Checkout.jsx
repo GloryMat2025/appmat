@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Checkout() {
-  onst handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
   e.preventDefault();
 
   // Simpan order dalam Supabase

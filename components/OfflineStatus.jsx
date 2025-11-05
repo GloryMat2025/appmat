@@ -1,3 +1,0 @@
-import OfflineStatus from './components/OfflineStatus';
-...
-<OfflineStatus />

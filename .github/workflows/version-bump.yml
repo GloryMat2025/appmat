@@ -46,25 +46,16 @@ on:
 jobs:
   bump-version:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # important so it can find previous tags
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install semantic-release tools
+      - name: Install standard-version
+        run: npm install -g standard-version
+      - name: Bump version & generate changelog
         run: |
-          npm install -g standard-version
-
-      - name: Bump version based on commits
-        run: |
-          standard-version --release-as auto
+          standard-version
           git push --follow-tags origin main
 
       - name: Show new version
