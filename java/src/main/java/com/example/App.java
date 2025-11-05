@@ -2,8 +2,8 @@ package com.example;
 
 public class App {
     public static String greet(String name) {
-        if (name == null || name.isBlank()) return \"Hello, world!\";
-        return \"Hello, \" + name + \"!\";
+        if (name == null || name.isBlank()) return "Hello, world!";
+        return "Hello, " + name + "!";
     }
 
     public static void main(String[] args) {
