@@ -1,0 +1,19 @@
+name: "Release on Successful Matrix"
+
+on:
+  workflow_run:
+    workflows: ["Appmat Matrix Parity CI"]
+    types:
+      - completed
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag and Release
+        run: |
+          git tag v$(date +'%Y.%m.%d-%H%M')
+          git push origin --tags
+          echo "✅ Release tagged automatically after matrix success!"
