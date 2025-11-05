@@ -1,0 +1,52 @@
+name: Frontend CI (pnpm + Vite)
+
+on:
+  push:
+    branches: [ main, add-java-setup-readme ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure .npmrc is a file
+        run: |
+          # Sometimes a directory named .npmrc is accidentally created and breaks pnpm
+          if [ -d .npmrc ]; then
+            echo ".npmrc is a directory. This will break pnpm installs. Renaming to .npmrc.dir.bak and failing the job for manual review."
+            mv .npmrc .npmrc.dir.bak || true
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependencies (warn-only)
+        # Run audit but don't fail the job; we want CI to warn about high severities
+        continue-on-error: true
+        run: pnpm audit --audit-level=high
+
+      - name: Build
+        run: pnpm build
+
+      - name: Upload dist
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist

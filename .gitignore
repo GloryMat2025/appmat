@@ -1,3 +1,20 @@
+## Build / packaging
+**/target/
+*.jar
+
+## IDE/project files
+.idea/
+.vscode/
+*.iml
+
+## Node / lockfiles (workspace contains pnpm)
+node_modules/
+pnpm-lock.yaml
+
+## OS
+*.log
+Thumbs.db
+ehthumbs.db
 node_modules/
 .pw-profile/
 patches/
