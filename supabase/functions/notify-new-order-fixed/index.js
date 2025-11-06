@@ -15,8 +15,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_KEY" }), { status: 500 });
     }
 
-      const restUrlBase = `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions`;
-      const restUrl = `${restUrlBase}?select=id,subscription`;
+    const restUrl = `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions?select=subscription`;
 
     const res = await fetch(restUrl, {
       method: "GET",
@@ -35,39 +34,6 @@ serve(async (req) => {
 
     const rows = await res.json();
     const subs = Array.isArray(rows) ? rows : [];
-
-    // Debug mode: return the raw subscriptions list for inspection
-    if (debug === "list") {
-      return new Response(JSON.stringify({ ok: true, rows: subs }), { status: 200 });
-    }
-    
-      // Debug delete mode: accept { endpoint } in body or query and delete matching rows
-      if (debug === "delete") {
-        const endpointToDelete = payload && (payload.endpoint || payload.subscriptionEndpoint) || new URL(req.url).searchParams.get("endpoint");
-        if (!endpointToDelete) {
-          return new Response(JSON.stringify({ error: 'missing endpoint' }), { status: 400 });
-        }
-
-        const matches = subs.filter(r => r && r.subscription && r.subscription.endpoint === endpointToDelete);
-        let deleted = 0;
-        for (const m of matches) {
-          const id = m.id;
-          try {
-            const delRes = await fetch(`${restUrlBase}?id=eq.${id}`, {
-              method: 'DELETE',
-              headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-              },
-            });
-            if (delRes.ok) deleted++;
-          } catch (e) {
-            console.error('delete error', e);
-          }
-        }
-
-        return new Response(JSON.stringify({ ok: true, deleted }), { status: 200 });
-      }
     console.log(`Found ${subs.length} subscribers.`);
 
     for (const row of subs) {
