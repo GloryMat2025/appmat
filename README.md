@@ -647,3 +647,7 @@ Langkah seterusnya, aku boleh bantu kau:
 
 Nak saya terus buat versi “Developer CI Guide” untuk folder `docs/`?
 ```
+
+## Notifications
+
+Appmat includes an edge notification pipeline. See supabase/NOTIFICATIONS.md for setup, required secrets, and local integration instructions.
