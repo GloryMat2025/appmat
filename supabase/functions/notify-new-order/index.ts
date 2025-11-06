@@ -93,6 +93,7 @@ serve(async (req: Request) => {
           Authorization: `Bearer ${SUPABASE_KEY}`,
         },
       });
+      if (delRes.status === 204) return new Response(null, { status: 204 });
       const txt = await delRes.text().catch(() => "");
       return new Response(txt || JSON.stringify({ status: delRes.status }), { status: delRes.status });
     }
@@ -107,6 +108,7 @@ serve(async (req: Request) => {
           Authorization: `Bearer ${SUPABASE_KEY}`,
         },
       });
+      if (delRes.status === 204) return new Response(null, { status: 204 });
       const txt = await delRes.text().catch(() => "");
       return new Response(txt || JSON.stringify({ status: delRes.status }), { status: delRes.status });
     }
