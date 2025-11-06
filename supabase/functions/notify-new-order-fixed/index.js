@@ -34,6 +34,35 @@ serve(async (req) => {
 
     const rows = await res.json();
     const subs = Array.isArray(rows) ? rows : [];
+
+    // Debug insert mode: create a test subscription row using the runtime service key
+    if (debug === "insert_test") {
+      const testSub = {
+        subscription: {
+          endpoint: "https://example.com/push/test-endpoint-abc123",
+          keys: { p256dh: "testp256dh", auth: "testauth" },
+        },
+      };
+
+      try {
+        const createRes = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(testSub),
+        });
+
+        const body = await createRes.text();
+        return new Response(JSON.stringify({ ok: createRes.ok, status: createRes.status, body: JSON.parse(body || "null") }), { status: 200 });
+      } catch (e) {
+        console.error("insert_test error", e);
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500 });
+      }
+    }
     console.log(`Found ${subs.length} subscribers.`);
 
     for (const row of subs) {
