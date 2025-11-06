@@ -1,94 +1,63 @@
-// 🌍 Detect environment (DEV / PROD)
-const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+import { loadAllParts } from "./parts.js";
+import { setupSidebar } from "./sidebar.js";
+import { setupTheme } from "./theme.js";
+import { prefetchComponents } from "./prefetch.js";
+
+const isDev = location.hostname === "localhost" || location.hostname === "127.0.0.1";
 
 if (isDev) {
-  console.log('🔧 AppMat running in DEV mode');
-  import('/src/main.js');
+  console.log("🔧 AppMat running in DEV mode");
+  import("/src/main.js");
 } else {
-  console.log('🚀 AppMat running in PROD mode');
-  const script = document.createElement('script');
-  script.type = 'module';
+  console.log("🚀 AppMat running in PROD mode");
+  const script = document.createElement("script");
+  script.type = "module";
   script.defer = true;
-  script.src = '/assets/js/app.js';
+  script.src = "/assets/js/app.js";
   document.head.appendChild(script);
 }
 
-// Wait for DOM ready
-document.addEventListener('DOMContentLoaded', async () => {
-  // 🔹 Helper to load component by selector + URL
-  const loadComponent = async (selector, url) => {
-    const el = document.querySelector(selector);
-    if (!el) return;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Failed to load ${url}`);
-      el.innerHTML = await res.text();
-    } catch (err) {
-      console.error(`Error loading ${url}:`, err);
-    }
-  };
+document.addEventListener("DOMContentLoaded", async () => {
+  // 🕒 Prefetch HTML parts in background
+  prefetchComponents();
 
-  // 🧩 Auto-load all [site-part] sections
-  const parts = document.querySelectorAll('[site-part]');
-  await Promise.all(
-    Array.from(parts).map((el) => {
-      const tag = el.tagName.toLowerCase();
-      const src = el.getAttribute('data-src') || `/components/${tag}.html`;
-      return loadComponent(`${tag}[site-part]`, src);
-    })
-  );
+  // Load main components
+  await loadAllParts();
 
-  console.log('✅ All site-part components loaded successfully.');
+  // Init UI behavior
+  setupSidebar();
+  setupTheme();
 
-  // =========================================
-  // 🔸 Sidebar Toggle Logic (single instance)
-  // =========================================
-  const sidebarBtn = document.getElementById('menu-toggle');
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('overlay');
-
-  if (sidebarBtn && sidebar && overlay) {
-    const toggleSidebar = () => {
-      const isActive = sidebar.classList.toggle('active');
-      overlay.classList.toggle('hidden');
-      overlay.classList.toggle('active');
-      sidebarBtn.textContent = isActive ? '✕' : '☰';
-      document.body.style.overflow = isActive ? 'hidden' : '';
-    };
-
-    sidebarBtn.addEventListener('click', toggleSidebar);
-    overlay.addEventListener('click', toggleSidebar);
-  }
-
-  // =========================================
-  // 🌗 Theme Toggle + System Preference
-  // =========================================
-  const themeToggle = document.getElementById('theme-toggle');
-
-  const applyTheme = (mode) => {
-    if (mode === 'dark') {
-      document.body.classList.add('dark');
-      if (themeToggle) themeToggle.textContent = '☀️ Tukar ke Light Mode';
-    } else {
-      document.body.classList.remove('dark');
-      if (themeToggle) themeToggle.textContent = '🌙 Tukar ke Dark Mode';
-    }
-    localStorage.setItem('theme', mode);
-  };
-
-  // Check saved theme
-  let savedTheme = localStorage.getItem('theme');
-  if (!savedTheme) {
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    savedTheme = systemPrefersDark ? 'dark' : 'light';
-  }
-
-  applyTheme(savedTheme);
-
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const isDark = document.body.classList.toggle('dark');
-      applyTheme(isDark ? 'dark' : 'light');
-    });
-  }
+  console.log("✅ All site parts and UI initialized with prefetch.");
 });
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then(() => console.log("✅ Service Worker registered."))
+      .catch((err) => console.error("SW registration failed:", err));
+  });
+}
+if ("serviceWorker" in navigator && "PushManager" in window) {
+  navigator.serviceWorker.ready.then(async (reg) => {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      console.warn("🔕 Notification permission denied.");
+      return;
+    }
+
+    // Subscribe user
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: "<Your_Public_VAPID_Key_Base64>",
+    });
+
+    console.log("✅ Push subscribed:", JSON.stringify(subscription));
+    // Hantar subscription ke backend
+    await fetch("/api/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription),
+    });
+  });
+}

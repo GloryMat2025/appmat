@@ -1,59 +1,31 @@
-<div class="offline-wrapper" id="offline-wrapper" hidden>
-  <div class="offline-box" role="status" aria-live="polite" aria-label="Offline notification">
-    <div class="offline-icon" aria-hidden="true">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        width="56"
-        height="56"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M17 17L7 7m10 0L7 17"></path>
-      </svg>
-    </div>
-
-    <h1 class="offline-title">Offline</h1>
-
-    <p class="offline-message">
-      You're offline or the network is unstable.<br />
-      Please check your connection and try again.
-    </p>
-
-    <div class="offline-actions">
-      <button id="retry-button" class="btn-retry" type="button">Retry</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  (function () {
-    const wrapper = document.getElementById('offline-wrapper');
-    const retry = document.getElementById('retry-button');
-
-    function updateVisibility() {
-      wrapper.hidden = navigator.onLine;
-    }
-    window.addEventListener('online', updateVisibility);
-    window.addEventListener('offline', updateVisibility);
-    updateVisibility();
-
-    retry.addEventListener('click', () => {
-      if (navigator.onLine) location.reload();
-      else {
-        // small feedback animation
-        wrapper
-          .querySelector('.offline-box')
-          .animate(
-            [
-              { transform: 'translateY(0)' },
-              { transform: 'translateY(-6px)' },
-              { transform: 'translateY(0)' },
-            ],
-            { duration: 220 }
-          );
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Offline – AppMat</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: #f2f2f2;
+        font-family: sans-serif;
+        text-align: center;
+        color: #333;
       }
-    });
-  })();
-</script>
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>📴 You're offline</h1>
+      <p>Your order is saved. It will be automatically sent once you're back online.</p>
+      <p>Don't worry, AppMat will reconnect automatically when you're back online.</p>
+    </main>
+  </body>
+</html>

@@ -34,6 +34,30 @@ app.post('/api/subscribe', (req, res) => {
   res.status(201).json({});
 });
 
+// Accept notify requests from relay (Edge Function). Body: { subscription } or { subscriptions: [...], record }
+app.post('/api/notify', async (req, res) => {
+  const body = req.body || {};
+  const targets = body.subscriptions || (body.subscription ? [body.subscription] : []);
+  if (!Array.isArray(targets) || targets.length === 0) {
+    return res.status(400).json({ error: 'missing subscription(s)' });
+  }
+
+  const payload = body.record ? JSON.stringify({ title: 'Pesanan Baru!', body: `Order baru: RM${body.record.total ?? ''}`, url: '/admin/orders' }) : JSON.stringify({ title: 'Pesanan Baru!', body: 'Order baru', url: '/admin/orders' });
+
+  const promises = targets.map((sub) =>
+    webpush
+      .sendNotification(sub, payload)
+      .then(() => ({ ok: true }))
+      .catch((err) => {
+        console.error('webpush send error', err);
+        return { ok: false, error: String(err) };
+      })
+  );
+
+  const results = await Promise.all(promises);
+  return res.json({ ok: true, results });
+});
+
 // Helper: get all push subscribers (prefer DB lookup, fallback to memory)
 const getPushSubscribers = async () => {
   try {
