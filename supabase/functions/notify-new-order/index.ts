@@ -96,6 +96,20 @@ serve(async (req: Request) => {
       const txt = await delRes.text().catch(() => "");
       return new Response(txt || JSON.stringify({ status: delRes.status }), { status: delRes.status });
     }
+    // Debug: delete by id
+    if (debugMode === "delete_by_id") {
+      const id = url.searchParams.get("id") || "";
+      if (!id) return new Response(JSON.stringify({ error: "missing id" }), { status: 400 });
+      const delRes = await fetch(`${baseRest}?id=eq.${id}`, {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+        },
+      });
+      const txt = await delRes.text().catch(() => "");
+      return new Response(txt || JSON.stringify({ status: delRes.status }), { status: delRes.status });
+    }
 
     const res = await fetch(restUrl, {
       method: "GET",
