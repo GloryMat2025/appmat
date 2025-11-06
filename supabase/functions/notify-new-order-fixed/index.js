@@ -3,6 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 serve(async (req) => {
   try {
     const payload = await req.json().catch(() => ({}));
+    const urlObj = new URL(req.url);
+    const debug = urlObj.searchParams.get("debug");
     console.log("New order received:", payload);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -32,6 +34,11 @@ serve(async (req) => {
 
     const rows = await res.json();
     const subs = Array.isArray(rows) ? rows : [];
+
+    // Debug mode: return the raw subscriptions list for inspection
+    if (debug === "list") {
+      return new Response(JSON.stringify({ ok: true, rows: subs }), { status: 200 });
+    }
     console.log(`Found ${subs.length} subscribers.`);
 
     for (const row of subs) {
