@@ -15,6 +15,30 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_KEY" }), { status: 500 });
     }
 
+    // Temporary debug: delete a subscription by id using the runtime service key
+    // Usage: call with ?debug=delete&id=<uuid> or JSON body { id: "..." }
+    if (urlObj.searchParams.get("debug") === "delete") {
+      const deleteId = urlObj.searchParams.get("id") || (payload && payload.id);
+      if (!deleteId) {
+        return new Response(JSON.stringify({ error: 'missing id' }), { status: 400 });
+      }
+
+      try {
+        const delRes = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions?id=eq.${deleteId}`, {
+          method: 'DELETE',
+          headers: {
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+          },
+        });
+        const text = await delRes.text();
+        return new Response(JSON.stringify({ ok: delRes.ok, status: delRes.status, body: text }), { status: 200 });
+      } catch (e) {
+        console.error('delete error', e);
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500 });
+      }
+    }
+
     const restUrl = `${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions?select=subscription`;
 
     const res = await fetch(restUrl, {
