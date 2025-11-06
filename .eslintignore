@@ -1,0 +1,2 @@
+# Ignore Supabase Edge Functions (Deno/TypeScript) from Node ESLint checks
+supabase/functions/**
