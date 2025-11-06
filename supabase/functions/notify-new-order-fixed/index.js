@@ -59,6 +59,51 @@ serve(async (req) => {
     const rows = await res.json();
     const subs = Array.isArray(rows) ? rows : [];
 
+    // Temporary debug helper modes (insert_test / delete_by_endpoint)
+    // insert_test: adds a test subscription and returns the created row
+    // delete_by_endpoint: deletes subscriptions matching an endpoint provided via query or body
+    if (debug === "insert_test") {
+      const testSub = {
+        subscription: {
+          endpoint: "https://example.com/push/runtime-inserted-test",
+          keys: { p256dh: "ins-p256dh", auth: "ins-auth" },
+        },
+      };
+      try {
+        const createRes = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_KEY,
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(testSub),
+        });
+        const body = await createRes.text();
+        return new Response(JSON.stringify({ ok: createRes.ok, status: createRes.status, body: JSON.parse(body || "null") }), { status: 200 });
+      } catch (e) {
+        console.error('insert_test error', e);
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500 });
+      }
+    }
+
+    if (debug === "delete_by_endpoint") {
+      const endpoint = urlObj.searchParams.get("endpoint") || (payload && payload.endpoint);
+      if (!endpoint) return new Response(JSON.stringify({ error: 'missing endpoint' }), { status: 400 });
+      try {
+        const delRes = await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/push_subscriptions?subscription->>endpoint=eq.${encodeURIComponent(endpoint)}` , {
+          method: 'DELETE',
+          headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+        });
+        const text = await delRes.text();
+        return new Response(JSON.stringify({ ok: delRes.ok, status: delRes.status, body: text }), { status: 200 });
+      } catch (e) {
+        console.error('delete_by_endpoint error', e);
+        return new Response(JSON.stringify({ ok: false, error: String(e) }), { status: 500 });
+      }
+    }
+
     // Debug insert mode: create a test subscription row using the runtime service key
     if (debug === "insert_test") {
       const testSub = {
