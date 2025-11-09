@@ -1,0 +1,7 @@
+node_modules
+relay.log
+relay.err.log
+relay.prod.log
+relay.prod.err.log
+.env.local
+*.bak
