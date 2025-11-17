@@ -1,4 +1,9 @@
-## Build / packaging
+.kube/
+.github/workflows/_patches/
+deploy/prod/
+docs/feature-flags/
+src/scripts/model-tests/
+src/services/model/## Build / packaging
 **/target/
 *.jar
 
