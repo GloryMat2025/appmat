@@ -3,7 +3,9 @@
 deploy/prod/
 docs/feature-flags/
 src/scripts/model-tests/
-src/services/model/## Build / packaging
+src/services/model/
+
+## Build / packaging
 **/target/
 *.jar
 
