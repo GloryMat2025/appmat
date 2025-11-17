@@ -8,6 +8,212 @@
 
 ## 🧭 Overview
 
+Appmat is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions. It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
+
+```mermaid
+flowchart LR
+    Dev[Developer] --> Branch[Feature branch]
+    Branch --> Commit[Conventional Commit]
+    Commit --> PR[Open PR]
+    PR --> CI[Shots Smoke (shots-smoke.yml)]
+    CI --> Report[Generate gallery + zip]
+    Report --> Artifacts[Artifacts uploaded]
+    Tagging[Push tag vX.Y.Z] --> ReleaseWorkflow[release.yml]
+    ReleaseWorkflow --> Changelog[Generate CHANGELOG]
+    Changelog --> GitHubRelease[Create GitHub Release]
+    Merge[Merge to main] --> VersionBump[version-bump.yml]
+    VersionBump --> Tagging
+```
+
+---
+
+## 🧩 Features
+
+- Automated screenshots and HTML gallery
+- Cross-platform CI with `pnpm`, Node 20+
+- Automatic semantic version bumping
+- Auto-generated `CHANGELOG.md`
+- GitHub Release with artifacts
+- Release guards to prevent empty/broken artifacts
+
+---
+
+## 🗂 Folder Structure (excerpt)
+
+```
+index.html
+package.json
+pnpm-lock.yaml
+README.md
+tailwind.config.js
+appmat/
+  index.html
+  package.json
+  public/
+  src/
+    counter.js
+    main.js
+    style.css
+assets/
+  css/base.css
+  js/app.js
+components/
+  footer.html
+  header.html
+  modals/
+    delivery.html
+    pickup.html
+    product-detail.html
+data/
+  outlets.json
+  products.json
+pages/
+  account.html
+  cart.html
+  checkout.html
+  home.html
+  menu.html
+  rewards.html
+scripts/
+  fix-all.js
+src/
+  index.css
+```
+
+---
+
+## ▶️ Usage
+
+Run a fast, local mock capture:
+
+```bash
+pnpm run shots:mock
+```
+
+Full capture/report pipeline (requires Playwright browsers & dev server):
+
+```bash
+pnpm run capture       # tools/capture.mjs -> screenshots/traces
+pnpm run shots:report
+pnpm run shots:zip
+```
+
+Helpful shortcuts:
+
+| Command                   | Description               |
+| ------------------------- | ------------------------- |
+| `pnpm run shots:mock`     | Generate mock screenshots |
+| `pnpm run shots:report`   | Create HTML gallery       |
+| `pnpm run shots:zip`      | Archive latest run        |
+| `pnpm run shots:merge`    | Merge and index results   |
+| `npm version patch|minor|major` | Manual version bump |
+
+---
+
+## 🧪 CI/CD Workflows
+
+1) Smoke Test — `.github/workflows/shots-smoke.yml`
+
+- Runs on push/PR to `main` or `shots-final`.
+- Steps:
+  ```bash
+  pnpm install --frozen-lockfile
+  pnpm run shots:mock
+  pnpm run shots:report
+  pnpm run shots:zip
+  pnpm run shots:merge
+  ```
+
+2) Version Bump — `.github/workflows/version-bump.yml`
+
+- Runs on pushes/merges to `main`.
+- Uses Conventional Commits to infer patch/minor/major, updates `package.json` and `CHANGELOG.md`, and pushes tag `vX.Y.Z`.
+
+3) Release — `.github/workflows/release.yml`
+
+- Triggers on tag push (`v*`).
+- Generates/validates gallery + zip, creates changelog, publishes GitHub Release, uploads artifacts.
+
+---
+
+## 🔖 Version Bump & CHANGELOG
+
+Prefix mapping:
+
+| Prefix              | Bump  |
+| ------------------- | ----- |
+| `fix:`              | Patch |
+| `feat:`             | Minor |
+| `BREAKING CHANGE:`  | Major |
+
+Workflow steps:
+1. Inspect recent commits on `main`.
+2. Determine bump level.
+3. Update `package.json` + `CHANGELOG.md`.
+4. Commit and push tag `vX.Y.Z` (triggers release).
+
+---
+
+## 🚀 Deployment (Kubernetes patch)
+
+Enable Claude Sonnet 4.5 via env var patch.
+
+- Patch file: `deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json`
+- GitHub Actions workflow: `.github/workflows/apply-claude-sonnet-4-5.yml`
+- Local scripts (fallback): `src/scripts/k8s/apply_patch.*`, `src/scripts/k8s/rollback.*`
+
+Via GitHub Actions (recommended):
+- Run the `apply-claude-sonnet-4-5` workflow (workflow_dispatch) with inputs:
+  - `namespace`: e.g. `staging`
+  - `deployment`: e.g. `my-api`
+  - `patch_path`: `deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json`
+  - optional `smoke_api_url`
+- The workflow uses repository secret `KUBECONFIG` to connect to the cluster and waits for rollout.
+
+Locally with kubeconfig (Windows CMD example):
+
+```cmd
+src\scripts\k8s\apply_patch.cmd -n staging -d my-api -p deploy\k8s-patches\my-api-enable-claude-sonnet-4-5.patch.json -k .kube\config
+```
+
+Rollback (previous revision):
+
+```cmd
+src\scripts\k8s\rollback.cmd -n staging -d my-api -k .kube\config
+```
+
+Notes:
+- `.kube/config.template` is provided. Do not commit real kubeconfigs; `.kube/` is gitignored.
+- Slack notifications are optional and only run if `SLACK_WEBHOOK` is set in repo secrets.
+
+---
+
+## 📣 Notifications
+
+Edge notification pipeline docs are in `supabase/NOTIFICATIONS.md` (setup, secrets, local integration).
+
+---
+
+## 🤖 AI Integration
+
+Claude Sonnet 4.5 is controlled by `ENABLE_CLAUDE_SONNET_4_5=true` (added by the K8s patch). Optional model configs can be placed in `.env` (see `.env.example`).
+
+---
+
+## 👨‍💻 Contributing
+
+- Follow Conventional Commits (e.g., `feat: ...`, `fix: ...`, `docs: ...`).
+- PRs run smoke tests; merges to `main` trigger version bumps; tags trigger releases.
+# 🚀 Appmat Automation
+
+[![Shots Smoke Test](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/shots-smoke.yml)
+[![Release Workflow](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/release.yml)
+[![Version Bump](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml/badge.svg)](https://github.com/GloryMat2025/appmat/actions/workflows/version-bump.yml)
+
+---
+
+## 🧭 Overview
+
 **Appmat** is an automated screenshot, reporting, and release pipeline powered by Node.js and GitHub Actions.  
 It streamlines project snapshots, HTML gallery generation, version bumping, changelog creation, and GitHub releases — all without manual steps.
 
@@ -651,3 +857,66 @@ Nak saya terus buat versi “Developer CI Guide” untuk folder `docs/`?
 ## Notifications
 
 Appmat includes an edge notification pipeline. See supabase/NOTIFICATIONS.md for setup, required secrets, and local integration instructions.
+
+
+# 🍽️ AppMat — Mobile Ordering Platform (2025 Edition)
+
+AppMat is a modern food ordering platform featuring:
+- Real-time push notifications
+- Online payment (Billplz)
+- Order tracking
+- Supabase backend
+- Claude Sonnet 4.5 AI integration
+- Kubernetes deployment
+- Enterprise CI/CD pipelines
+
+---
+
+## 📁 Project Structure
+Refer to `docs/appmat-docs/03_directory-structure.md`.
+
+---
+
+## 🚀 Deployment
+Use GitHub Actions:
+- `apply-claude-sonnet-4-5.yml`
+- `promote-to-prod.yml`
+- `rollback.yml`
+
+---
+
+## 🔥 AI Model Fallback Logic
+Located under:
+
+
+Order:
+1. Claude Sonnet 4.5  
+2. Claude Sonnet 3.7  
+3. GPT-4.1-mini  
+
+---
+
+## 📡 Push Notification System
+3 Components:
+- Client listener
+- Push relay
+- Edge Functions
+
+Details in `docs/appmat-docs/05_push-system.md`.
+
+---
+
+## 🧪 Tests
+CLI tests under `/scripts`:
+- Model tests
+- Smoke tests
+- K8s rollout checks
+
+---
+
+## 👨‍💻 Contributing
+Use the migration guide:
+
+
+
+
