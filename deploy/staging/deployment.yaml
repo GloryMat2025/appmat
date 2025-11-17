@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-api
+  labels:
+    app: my-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-api
+  template:
+    metadata:
+      labels:
+        app: my-api
+    spec:
+      containers:
+        - name: my-api
+          image: myregistry.io/my-api:latest
+          env:
+            - name: NODE_ENV
+              value: "staging"
+            - name: ENABLE_CLAUDE_SONNET_4_5
+              value: "false"   # patched later by workflow
+            - name: MODEL_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: model_api_url
+          ports:
+            - containerPort: 3000
