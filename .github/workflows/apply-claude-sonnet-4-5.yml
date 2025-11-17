@@ -71,6 +71,7 @@ jobs:
           if grep -qi '"error"' /tmp/smoke.out; then echo "❌ Model error"; exit 1; fi
 
       - name: Notify Staging Success
+        if: ${{ secrets.SLACK_WEBHOOK != '' }}
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
