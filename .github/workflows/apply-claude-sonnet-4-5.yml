@@ -1,40 +1,57 @@
-name: "Apply Claude Sonnet 4.5 patch" 
-"on:"
-"  workflow_dispatch:"
-"    inputs:"
-"      namespace:"
-"        description: 'Kubernetes namespace to patch'" 
-"        required: true"
-"        default: 'my-namespace'"
-"      deployment:"
-"        description: 'Deployment name to patch'"
-"        required: true"
-"        default: 'my-api'"
-"      patch_path:"
-"        description: 'Path to json patch file relative to repo'" 
-"        required: true"
-"        default: 'deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json'"
-"jobs:"
-"  apply_patch:"
-"    runs-on: ubuntu-latest"
-"    steps:"
-"      - name: Checkout"
-"        uses: actions/checkout@v4"
-"      - name: Set kubeconfig from secret"
-"        env:"
-"          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}"
-"        run: |"
-"          mkdir -p $HOME/.kube"
-"          echo \"$KUBECONFIG_CONTENT\" > $HOME/.kube/config"
-"      - name: Show inputs and confirm"
-"        run: |"
-"          echo Deployment: ${{ github.event.inputs.deployment }}"
-"          echo Namespace: ${{ github.event.inputs.namespace }}"
-"          echo Patch path: ${{ github.event.inputs.patch_path }}"
-"      - name: Apply k8s patch"
-"        run: |"
-"          kubectl patch deployment ${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }} --type=json --patch-file=${{ github.event.inputs.patch_path }}"
-"      - name: Verify rollout"
-"        run: |"
-"          kubectl rollout status deployment/${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }}"
-"          kubectl get pods -n ${{ github.event.inputs.namespace }} -l app=${{ github.event.inputs.deployment }} -o wide"
+name: Apply Claude Sonnet 4.5 patch
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Kubernetes namespace to patch'
+        required: true
+        default: 'my-namespace'
+      deployment:
+        description: 'Deployment name to patch'
+        required: true
+        default: 'my-api'
+      patch_path:
+        description: 'Path to json patch file relative to repo'
+        required: true
+        default: 'deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json'
+      smoke_api_url:
+        description: 'Optional smoke test API URL'
+        required: false
+
+jobs:
+  apply_patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set kubeconfig from secret
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+
+      - name: Show inputs and confirm
+        run: |
+          echo Deployment: ${{ github.event.inputs.deployment }}
+          echo Namespace: ${{ github.event.inputs.namespace }}
+          echo Patch path: ${{ github.event.inputs.patch_path }}
+
+      - name: Apply k8s patch
+        run: |
+          kubectl patch deployment ${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }} --type=json --patch-file=${{ github.event.inputs.patch_path }}
+
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }}
+          kubectl get pods -n ${{ github.event.inputs.namespace }} -l app=${{ github.event.inputs.deployment }} -o wide
+
+      - name: Optional smoke test
+        if: ${{ github.event.inputs.smoke_api_url != '' }}
+        env:
+          MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
+        run: |
+          echo 'Running smoke test...'
+          curl -s -X POST -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"input":"ping"}' "${{ github.event.inputs.smoke_api_url }}" | tee /tmp/smoke.out
+          if grep -i '"error"' /tmp/smoke.out; then echo 'Smoke test failed' ; exit 1; fi
