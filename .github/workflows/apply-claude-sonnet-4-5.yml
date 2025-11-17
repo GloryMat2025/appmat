@@ -1,57 +1,78 @@
-name: Apply Claude Sonnet 4.5 patch
+name: Apply Claude Sonnet 4.5 to Staging
+
 on:
   workflow_dispatch:
     inputs:
       namespace:
-        description: 'Kubernetes namespace to patch'
+        description: 'Staging namespace'
+        default: 'staging'
         required: true
-        default: 'my-namespace'
       deployment:
-        description: 'Deployment name to patch'
-        required: true
+        description: 'Deployment name'
         default: 'my-api'
-      patch_path:
-        description: 'Path to json patch file relative to repo'
         required: true
+      patch_path:
+        description: 'Path to JSON patch file'
         default: 'deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json'
+        required: true
       smoke_api_url:
-        description: 'Optional smoke test API URL'
+        description: 'Optional smoke test URL'
         required: false
 
 jobs:
-  apply_patch:
+  deploy_staging:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set kubeconfig from secret
+      - name: Set kubeconfig
         env:
           KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
         run: |
           mkdir -p $HOME/.kube
           echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
 
-      - name: Show inputs and confirm
+      - name: Validate patch exists
         run: |
-          echo Deployment: ${{ github.event.inputs.deployment }}
-          echo Namespace: ${{ github.event.inputs.namespace }}
-          echo Patch path: ${{ github.event.inputs.patch_path }}
+          test -f "${{ github.event.inputs.patch_path }}" \
+            || { echo "❌ Patch file missing"; exit 1; }
 
-      - name: Apply k8s patch
+      - name: Apply patch
         run: |
-          kubectl patch deployment ${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }} --type=json --patch-file=${{ github.event.inputs.patch_path }}
+          kubectl patch deployment ${{ github.event.inputs.deployment }} \
+            -n ${{ github.event.inputs.namespace }} \
+            --type=json \
+            --patch-file=${{ github.event.inputs.patch_path }}
 
-      - name: Verify rollout
+      - name: Check rollout
         run: |
-          kubectl rollout status deployment/${{ github.event.inputs.deployment }} -n ${{ github.event.inputs.namespace }}
-          kubectl get pods -n ${{ github.event.inputs.namespace }} -l app=${{ github.event.inputs.deployment }} -o wide
+          kubectl rollout status deployment/${{ github.event.inputs.deployment }} \
+            -n ${{ github.event.inputs.namespace }} --timeout=180s
 
       - name: Optional smoke test
         if: ${{ github.event.inputs.smoke_api_url != '' }}
         env:
           MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
         run: |
-          echo 'Running smoke test...'
-          curl -s -X POST -H "Authorization: Bearer $MODEL_API_KEY" -H "Content-Type: application/json" -d '{"input":"ping"}' "${{ github.event.inputs.smoke_api_url }}" | tee /tmp/smoke.out
-          if grep -i '"error"' /tmp/smoke.out; then echo 'Smoke test failed' ; exit 1; fi
+          echo "Running smoke test..."
+          HTTP=$(curl -s -o /tmp/smoke.out -w "%{http_code}" \
+            -X POST "${{ github.event.inputs.smoke_api_url }}" \
+            -H "Authorization: Bearer $MODEL_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"input":"ping"}')
+
+          echo "HTTP code: $HTTP"
+          cat /tmp/smoke.out
+
+          if [ "$HTTP" -ge 400 ]; then echo "❌ Smoke test failed"; exit 1; fi
+          if grep -qi '"error"' /tmp/smoke.out; then echo "❌ Model error"; exit 1; fi
+
+      - name: Notify Staging Success
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: good
+          SLACK_MESSAGE: "Staging deployed: Claude Sonnet 4.5 patch applied successfully."
