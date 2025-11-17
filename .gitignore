@@ -43,4 +43,7 @@ hashes-*.txt
 *.bak.*
 run-*-full.log
 step-install-*.log
+.env
+.env.*
+!.env.example
 

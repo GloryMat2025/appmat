@@ -1,1 +1,10 @@
-[{"op":"add","path":"/spec/template/spec/containers/0/env/-","value":{"name":"ENABLE_CLAUDE_SONNET_4_5","value":"true"}}] 
+[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/env/-",
+    "value": {
+      "name": "ENABLE_CLAUDE_SONNET_4_5",
+      "value": "true"
+    }
+  }
+]
