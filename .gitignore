@@ -49,3 +49,10 @@ step-install-*.log
 .env.*
 !.env.example
 
+# Supabase local/CLI temp files
+supabase/.temp/
+
+# Gradle caches (do not commit)
+**/.gradle/
+**/nb-cache/
+
