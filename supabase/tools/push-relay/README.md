@@ -1,3 +1,66 @@
+# Push Relay (WebPush/FCM)
+
+A minimal relay used by the Supabase function to fan out notifications.
+
+- CommonJS Node app (Node 18+ required for global `fetch`).
+- Endpoints:
+  - `GET /health` – liveness probe
+  - `POST /order-status` – optional FCM fan-out if configured
+  - `POST /api/notify` – WebPush (simulated when VAPID keys missing)
+
+## Environment
+
+- `PORT` (default `4000`)
+- `RELAY_TOKEN` (optional) – if set, callers must pass `x-relay-token`
+- `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` – WebPush keys; if missing, delivery is simulated
+- `SUBSCRIPTION_ENDPOINT` – URL returning JSON array of `{ token }` for FCM fan-out
+- `FCM_SERVER_KEY` – server key for FCM when using `/order-status`
+
+## Run
+
+```cmd
+set PORT=4000
+node supabase\tools\push-relay\index.js
+```
+
+Health check:
+```cmd
+curl http://localhost:4000/health
+```
+
+## Windows CMD test examples
+
+Important: In CMD, escape JSON quotes with `\"` and keep everything on one line.
+
+- Simulated WebPush notify:
+```cmd
+curl -X POST http://localhost:4000/api/notify -H "Content-Type: application/json" -d "{\"subscription\":{\"endpoint\":\"https://example\"},\"message\":{\"title\":\"Test\"}}"
+```
+
+- Order status (FCM fan-out if configured):
+```cmd
+curl -X POST http://localhost:4000/order-status -H "Content-Type: application/json" -d "{\"order_id\":\"abc123\",\"status\":\"ready\"}"
+```
+
+## PowerShell equivalents
+
+- Simulated WebPush notify:
+```powershell
+$body = @{ subscription = @{ endpoint = "https://example" }; message = @{ title = "Test" } } | ConvertTo-Json
+curl -Method POST -Uri http://localhost:4000/api/notify -ContentType 'application/json' -Body $body
+```
+
+- Order status:
+```powershell
+$body = @{ order_id = "abc123"; status = "ready" } | ConvertTo-Json
+curl -Method POST -Uri http://localhost:4000/order-status -ContentType 'application/json' -Body $body
+```
+
+## Notes
+
+- When `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY` are missing, `/api/notify` logs and returns `{ simulated: true }`.
+- If `RELAY_TOKEN` is set, include `-H "x-relay-token: YOUR_TOKEN"` in requests.
+
 # appmat push relay
 
 Small, local push relay to deliver WebPush notifications using VAPID keys.

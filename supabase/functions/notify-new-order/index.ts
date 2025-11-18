@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
-    const payload = await req.json().catch(() => ({}));
+    const payload = await req.json().catch(() => ({} as any));
     console.log("notify-new-order payload:", payload);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -20,6 +20,26 @@ serve(async (req: Request) => {
         JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_KEY" }),
         { status: 500, headers: { "content-type": "application/json" } }
       );
+    }
+
+    // Fire-and-forget call to Push Relay (if configured) for raw order updates
+    try {
+      const relay = Deno.env.get("PUSH_RELAY_URL");
+      const relayToken = Deno.env.get("PUSH_RELAY_TOKEN") || Deno.env.get("RELAY_TOKEN");
+      const orderId = payload?.record?.id;
+      const status = payload?.record?.status;
+      if (relay && orderId) {
+        await fetch(relay, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(relayToken ? { "x-relay-token": relayToken } : {}),
+          },
+          body: JSON.stringify({ order_id: orderId, status, type: "status_update" }),
+        }).catch((e) => console.warn("relay post failed:", e));
+      }
+    } catch (e) {
+      console.warn("relay block error:", e);
     }
 
     // Admin-only debug actions guarded by ADMIN_TEST_TOKEN

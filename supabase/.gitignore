@@ -1,0 +1,12 @@
+# Supabase CLI temp/cache
+.temp/
+
+# Logs
+*.log
+
+# Node deps if installed locally for tools
+tools/push-relay/node_modules/
+
+# OS junk
+.DS_Store
+Thumbs.db
