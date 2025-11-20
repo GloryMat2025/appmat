@@ -14,42 +14,82 @@ This script will:
 Important: This script does not store secrets in the repository.
 #>
 
-param()
+param(
+  [string]$InputJson
+)
 
 function Read-Secret([string]$prompt) {
-    $secure = Read-Host -AsSecureString -Prompt $prompt
-    $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-    try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
+  $secure = Read-Host -AsSecureString -Prompt $prompt
+  $ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+  try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr) }
 }
 
 Write-Host "Supabase Secrets Updater" -ForegroundColor Cyan
 
-$projRef = Read-Host "Enter Supabase project ref (e.g. qtoiur...)"
-if (-not $projRef) { Write-Host "No project ref provided, aborting."; exit 1 }
+# Support non-interactive mode via environment variables or an optional JSON file.
+# Environment variables checked: SUPABASE_PROJECT_REF, SUPABASE_SERVICE_ROLE_KEY, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
 
-$serviceKey = Read-Secret "Enter new SERVICE_ROLE_KEY (input hidden)"
-$vapidPub = Read-Secret "Enter new VAPID_PUBLIC_KEY (input hidden)"
-$vapidPriv = Read-Secret "Enter new VAPID_PRIVATE_KEY (input hidden)"
+$envProjRef = $env:SUPABASE_PROJECT_REF
+$envServiceKey = $env:SUPABASE_SERVICE_ROLE_KEY
+$envVapidPub = $env:VAPID_PUBLIC_KEY
+$envVapidPriv = $env:VAPID_PRIVATE_KEY
 
-Write-Host "\nYou entered values for project ref and keys. About to update Supabase project secrets and GitHub secrets. Proceed? (y/n)" -NoNewline
-$ok = Read-Host
-if ($ok -ne 'y') { Write-Host 'Aborted by user.'; exit 0 }
+if ($InputJson) {
+  if (-Not (Test-Path $InputJson)) { Write-Host "Input JSON file not found: $InputJson"; exit 1 }
+  $json = Get-Content $InputJson -Raw | ConvertFrom-Json
+  $envProjRef = $json.project_ref
+  $envServiceKey = $json.service_role_key
+  $envVapidPub = $json.vapid_public_key
+  $envVapidPriv = $json.vapid_private_key
+}
+
+if ($envProjRef -and $envServiceKey -and $envVapidPub -and $envVapidPriv) {
+  Write-Host "Non-interactive mode: using environment variables or provided JSON file." -ForegroundColor Yellow
+  $projRef = $envProjRef
+  $serviceKey = $envServiceKey
+  $vapidPub = $envVapidPub
+  $vapidPriv = $envVapidPriv
+  $interactive = $false
+} else {
+  # Interactive fallback
+  $projRef = Read-Host "Enter Supabase project ref (e.g. qtoiur...)"
+  if (-not $projRef) { Write-Host "No project ref provided, aborting."; exit 1 }
+
+  $serviceKey = Read-Secret "Enter new SERVICE_ROLE_KEY (input hidden)"
+  $vapidPub = Read-Secret "Enter new VAPID_PUBLIC_KEY (input hidden)"
+  $vapidPriv = Read-Secret "Enter new VAPID_PRIVATE_KEY (input hidden)"
+
+  Write-Host "\nYou entered values for project ref and keys. About to update Supabase project secrets and GitHub secrets. Proceed? (y/n)" -NoNewline
+  $ok = Read-Host
+  if ($ok -ne 'y') { Write-Host 'Aborted by user.'; exit 0 }
+  $interactive = $true
+}
 
 # Update Supabase project secrets using supabase CLI (npx supabase)
 Write-Host "Updating Supabase project secrets..." -ForegroundColor Yellow
 $cmd = "npx supabase secrets set --project-ref $projRef SERVICE_ROLE_KEY=\"$serviceKey\" VAPID_PUBLIC_KEY=\"$vapidPub\" VAPID_PRIVATE_KEY=\"$vapidPriv\""
 Write-Host "Running: $cmd"
-Invoke-Expression $cmd
+try {
+  Invoke-Expression $cmd
+} catch {
+  Write-Host "Failed to run supabase CLI: $_" -ForegroundColor Red
+  if (-not $interactive) { exit 1 }
+}
 
-# Update GitHub secrets (optional)
-$pushGh = Read-Host "Update GitHub Actions secrets for this repo? (y/n)"
-if ($pushGh -eq 'y') {
+# Update GitHub secrets (optional) — in non-interactive mode we'll skip unless GH env var is present
+if ($interactive) {
+  $pushGh = Read-Host "Update GitHub Actions secrets for this repo? (y/n)"
+} else {
+  $pushGh = $env:GITHUB_UPDATE_SECRETS
+}
+
+if ($pushGh -eq 'y' -or $pushGh -eq 'true') {
   Write-Host "Updating GitHub secrets (requires 'gh' CLI authenticated)..." -ForegroundColor Yellow
   # Determine repo based on git config
   $repo = git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>$null
   if (-not $repo) {
-    Write-Host "Could not determine upstream repo. Please enter owner/repo (e.g. me/appmat):"
-    $repo = Read-Host
+  Write-Host "Could not determine upstream repo. Please enter owner/repo (e.g. me/appmat):"
+  $repo = Read-Host
   }
   if (-not $repo) { Write-Host "No repo provided, skipping GitHub secret updates."; exit 0 }
 
