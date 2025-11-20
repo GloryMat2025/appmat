@@ -2,4 +2,4 @@
 ref = "qtoiurlefwodxjcichgz"
 
 [api]
-endpoint = "https://qtoiurlefwodxjcichgz.supabase.co"
+endpoint = "https://<your-project>.supabase.co"

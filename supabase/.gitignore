@@ -1,6 +1,10 @@
 # Supabase CLI temp/cache
 .temp/
 
+# Environment files
+env.local
+.env.local
+
 # Logs
 *.log
 
