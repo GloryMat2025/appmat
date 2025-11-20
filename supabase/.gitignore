@@ -11,6 +11,9 @@ env.local
 # Node deps if installed locally for tools
 tools/push-relay/node_modules/
 
+# Local secrets JSON (do not commit)
+secrets.json
+
 # OS junk
 .DS_Store
 Thumbs.db
