@@ -53,10 +53,33 @@ if ($UseActions) {
         throw "Workflow .github/workflows/apply-claude-sonnet-4-5.yml not found."
     }
 
+    # Check gh authentication
+    Write-Host "Checking gh auth status..." -ForegroundColor DarkGray
+    & gh auth status --show-token 1>$null 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "gh is not authenticated. Run 'gh auth login' and try again, or trigger from the Actions UI."
+        exit 2
+    }
+
+    # Verify workflow exists in repo
+    Write-Host "Verifying workflow is registered in repo..." -ForegroundColor DarkGray
+    $wfList = & gh workflow list --repo "GloryMat2025/appmat" 2>$null
+    if ($LASTEXITCODE -ne 0 -or ($wfList -join "`n") -notmatch "apply-claude-sonnet-4-5") {
+        Write-Error "Workflow 'apply-claude-sonnet-4-5' not registered in repo. Push the workflow file to main, then retry."
+        exit 3
+    }
+
+    Write-Host "Running gh workflow with inputs..." -ForegroundColor DarkGray
     & gh workflow run apply-claude-sonnet-4-5.yml --repo "GloryMat2025/appmat" --ref main `
-        -f namespace=$Namespace `
-        -f deployment=$Deployment `
-        -f patch_path=$PatchPath
+            -f namespace=$Namespace `
+            -f deployment=$Deployment `
+            -f patch_path=$PatchPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "gh workflow run failed. Try running the command manually or trigger from Actions UI."
+        Write-Host "Manual command:" -ForegroundColor Yellow
+        Write-Host "gh workflow run apply-claude-sonnet-4-5.yml --repo GloryMat2025/appmat --ref main -f namespace=$Namespace -f deployment=$Deployment -f patch_path=$PatchPath" -ForegroundColor Yellow
+        exit $LASTEXITCODE
+    }
 
     Write-Host "Opened workflow run. View status:" -ForegroundColor Green
     Write-Host "https://github.com/GloryMat2025/appmat/actions/workflows/apply-claude-sonnet-4-5.yml" -ForegroundColor Blue

@@ -42,6 +42,16 @@ if "%KUBECONFIG%"=="" (
   echo Using default kubeconfig
 ) else (
   echo Using KUBECONFIG=%KUBECONFIG%
+  if not exist "%KUBECONFIG%" (
+    echo ERROR: kubeconfig not found at %KUBECONFIG%
+    exit /b 4
+  )
+  rem Fail early if kubeconfig still contains placeholders
+  findstr /I /C:"REPLACE-WITH" /C:"YOUR-K8S-API-SERVER" "%KUBECONFIG%" >NUL 2>&1
+  if not errorlevel 1 (
+    echo ERROR: kubeconfig contains placeholder values. Please replace all placeholders and retry.
+    exit /b 4
+  )
 )
 
 echo Verifying cluster connectivity...

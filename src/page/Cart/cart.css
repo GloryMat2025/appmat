@@ -1,0 +1,35 @@
+.cart-container {
+  padding: 16px;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-cart img {
+  width: 180px;
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+.cart-total-box {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #fafafa;
+  box-shadow: 0px 1px 6px rgba(0,0,0,0.05);
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.checkout-btn {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}

@@ -1,0 +1,49 @@
+.admin-order-detail-container {
+  padding: 12px;
+}
+
+.admin-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.timeline-box {
+  margin: 20px 0;
+}
+
+.timeline-item {
+  display: flex;
+  margin-bottom: 14px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 100%;
+  background: #ccc;
+  margin-right: 12px;
+}
+
+.dot.active {
+  background: var(--ion-color-primary);
+}
+
+.timeline-text p {
+  margin: 4px 0 0;
+  color: #777;
+  font-size: 13px;
+}
+
+.admin-item-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.admin-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+}
