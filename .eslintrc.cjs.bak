@@ -1,3 +1,4 @@
+@'
 module.exports = {
   root: true,
   env: { browser: true, node: true, es2022: true, jest: true },
@@ -72,3 +73,4 @@ module.exports = {
     }
   ]
 };
+'@ | Set-Content -Path .eslintrc.cjs -Encoding UTF8

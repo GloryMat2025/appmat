@@ -4,13 +4,6 @@ import PropTypes from 'prop-types';
 
 /* eslint-disable react/prop-types */
 
-Card.propTypes = {
-  id: PropTypes.string,
-  title: PropTypes.string,
-  desc: PropTypes.string,
-  price: PropTypes.number,
-};
-
 export default function Card({ id, title, desc, price }) {
   const { addToCart } = useCart();
 
@@ -32,3 +25,14 @@ export default function Card({ id, title, desc, price }) {
     </motion.div>
   );
 }
+
+Card.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  title: PropTypes.string,
+  desc: PropTypes.string,
+  price: PropTypes.number,
+};
+
+Card.defaultProps = {
+  price: 0,
+};

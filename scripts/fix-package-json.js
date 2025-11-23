@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape, @typescript-eslint/no-unused-vars */
 // Safe cleaner: backs up package.json and removes invalid dependency specs
 const fs = require('fs');
 const path = require('path');

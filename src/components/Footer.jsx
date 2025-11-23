@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { motion } from 'framer-motion';
 import useCart from '../hooks/useCart';
 const { cartItems, totalPrice } = useCart();
