@@ -1,0 +1,15 @@
+*** Begin Patch
+*** Update File: scripts/rebuild-esbuild.js
+@@
+-try {
++let serialized; let local;
++try {
+@@
+-  } catch (err) {
+-    console.error(err)
+-  }
++  } catch (_err) {
++    void _err;
++    console.error(_err)
++  }
+*** End Patch
