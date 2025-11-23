@@ -78,7 +78,7 @@ async function main() {
         console.log('health ok', res.body);
         break;
       }
-    } catch (error) {
+    } catch (e) {
       // intentionally empty
     }
     await wait(500);

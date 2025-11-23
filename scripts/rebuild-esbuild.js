@@ -19,3 +19,10 @@ if (run('npm rebuild esbuild --update-binary')) process.exit(0);
 
 console.error('ERROR: esbuild rebuild failed for both pnpm and npm.');
 process.exit(1);
+
+try {
+  local = JSON.parse(serialized);
+} catch (_e) {
+  void _e;
+  // ignore
+}
