@@ -79,7 +79,7 @@ async function main() {
         break;
       }
     } catch (e) {
-      // intentionally empty
+      // swallow
     }
     await wait(500);
   }
@@ -103,6 +103,7 @@ async function main() {
     console.log('/api/notify ->', r.status, r.body);
   } catch (_e) {
     void _e;
+    console.error(_e);
   }
 
   // POST /order-status
