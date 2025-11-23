@@ -6,6 +6,9 @@
 const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const r = run('gh', ['secret','set',k,'--repo',repo,'--body',v]);
+const r = run('npx', ['-y','supabase','secrets','set','--project-ref',projectRef,arg]);
+
 
 function run(cmd, args, opts={}){
   const r = spawnSync(cmd, args, Object.assign({ stdio: 'pipe', encoding: 'utf8' }, opts));
