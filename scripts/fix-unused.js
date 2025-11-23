@@ -32,8 +32,8 @@ function applyReplacements(file, replacers) {
 // 1) Declare missing vars in scripts/rebuild-esbuild.js
 const rebuild = 'scripts/rebuild-esbuild.js';
 let s = read(rebuild);
-if (s && !/\\blet\\s+serialized\\b/.test(s)) {
-  s = s.replace(/(try\\s*\\{)/, 'let serialized; let local;\\n$1');
+if (s && !/\blet\s+serialized\b/.test(s)) {
+  s = s.replace(/(try\s*\{)/, 'let serialized; let local;\n$1');
   write(rebuild, s);
 } else {
   if (s) console.log('rebuild already fixed');
@@ -41,13 +41,9 @@ if (s && !/\\blet\\s+serialized\\b/.test(s)) {
 
 // Common catch replacers
 const catchReplacers = [
-  { type: 'regex', from: /catch\\s*\\(\\s*err\\s*\\)\\s*\\{/g, to: 'catch (_err) { void _err;' },
-  {
-    type: 'regex',
-    from: /catch\\s*\\(\\s*error\\s*\\)\\s*\\{/g,
-    to: 'catch (_error) { void _error;',
-  },
-  { type: 'regex', from: /catch\\s*\\(\\s*e\\s*\\)\\s*\\{/g, to: 'catch (_e) { void _e;' },
+  { type: 'regex', from: /catch\s*\(\s*err\s*\)\s*\{/g, to: 'catch (_err) { void _err;' },
+  { type: 'regex', from: /catch\s*\(\s*error\s*\)\s*\{/g, to: 'catch (_error) { void _error;' },
+  { type: 'regex', from: /catch\s*\(\s*e\s*\)\s*\{/g, to: 'catch (_e) { void _e;' },
 ];
 
 // Apply to files that showed warnings/errors
@@ -62,8 +58,8 @@ const catchReplacers = [
 const checkout = 'src/components/Checkout.jsx';
 s = read(checkout);
 if (s) {
-  s = s.replace(/\\{\\s*removeFromCart\\s*\\}/g, '{ removeFromCart: _removeFromCart }');
-  s = s.replace(/,\\s*removeFromCart(?=(\\s*[},]))/g, ', removeFromCart: _removeFromCart');
+  s = s.replace(/\{\s*removeFromCart\s*\}/g, '{ removeFromCart: _removeFromCart }');
+  s = s.replace(/,\s*removeFromCart(?=(\s*[},]))/g, ', removeFromCart: _removeFromCart');
   write(checkout, s);
 }
 
@@ -71,9 +67,9 @@ if (s) {
 const indexReal = 'supabase/tools/push-relay/index.real.js';
 s = read(indexReal);
 if (s) {
-  s = s.replace(/\\bRELAY_TOKENS\\b/g, '_RELAY_TOKENS');
-  s = s.replace(/\\blet\\s+ts\\s*=/g, 'let _ts =');
-  s = s.replace(/\\blet\\s+token\\s*=/g, 'let _token =');
+  s = s.replace(/\bRELAY_TOKENS\b/g, '_RELAY_TOKENS');
+  s = s.replace(/\blet\s+ts\s*=/g, 'let _ts =');
+  s = s.replace(/\blet\s+token\s*=/g, 'let _token =');
   write(indexReal, s);
 }
 
