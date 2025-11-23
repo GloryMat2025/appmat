@@ -98,3 +98,11 @@ if (projectRef){
 }
 
 safeLog('rotate_and_validate finished. If you rotated the exposed Service Role Key in the Supabase UI, verify that old key is revoked in the dashboard now.');
+
+// Diagnostic guard: detect problematic secret values that can break CLI parsing
+for (const [k,v] of Object.entries(data)){
+  if (/\r|\n/.test(String(v))) {
+    console.error(`DEBUG: secret ${k} contains ${String(v).split(/\r?\n/).length - 1} newline(s) — may break supabase CLI when passed inline.`);
+    console.error('DEBUG sample:', String(v).slice(0, 120).replace(/\r?\n/g, '\\n'), '... (truncated)');
+  }
+}
