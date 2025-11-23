@@ -1,5 +1,15 @@
 import { motion } from 'framer-motion';
 import useCart from '../hooks/useCart';
+import PropTypes from 'prop-types';
+
+/* eslint-disable react/prop-types */
+
+Card.propTypes = {
+  id: PropTypes.string,
+  title: PropTypes.string,
+  desc: PropTypes.string,
+  price: PropTypes.number,
+};
 
 export default function Card({ id, title, desc, price }) {
   const { addToCart } = useCart();
