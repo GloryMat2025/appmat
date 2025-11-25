@@ -1,0 +1,21 @@
+{
+  "src/**/*.{js,jsx,ts,tsx": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "supabase/**/*.{js,jsx,ts,tsx": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "scripts/**/*.{js,jsx,ts,tsx": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "*.{js,jsx,ts,tsx": [
+    "eslint --fix",
+    "prettier --write"
+  ],
+  "**/*.{json,md,css,html": [
+    "prettier --write"
+  ]
+}
