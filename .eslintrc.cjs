@@ -23,35 +23,17 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     tsconfigRootDir: __dirname,
-    ecmaVersion: 2020,
+    ecmaVersion: 2021,
     sourceType: 'module',
     ecmaFeatures: { jsx: true }
   },
-  plugins: ['@typescript-eslint', 'react', 'react-hooks'],
+  plugins: ['@typescript-eslint'],
   settings: { react: { version: 'detect' } },
-  extends: [
-    'eslint:recommended',
-    'plugin:react/recommended',
-    'plugin:react-hooks/recommended',
-    'plugin:@typescript-eslint/recommended'
-  ],
-  rules: {
-    'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-    'no-empty': ['error', { allowEmptyCatch: false }],
-    'no-unsafe-negation': 'error',
-
-    // Noise reduction (temporary)
-    'react/react-in-jsx-scope': 'off',
-    '@typescript-eslint/no-require-imports': 'off',
-    '@typescript-eslint.no-var-requires': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    'react-hooks/set-state-in-effect': 'off',
-    'react-hooks/exhaustive-deps': 'warn'
-  },
+  extends: ['plugin:@typescript-eslint/recommended'],
+  rules: {},
   overrides: [
     {
-      files: ['**/*.ts', '**/*.tsx'],
+      files: ['*.ts', '*.tsx'],
       parserOptions: { project: './tsconfig.json' }
     },
     {
