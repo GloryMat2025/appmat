@@ -46,7 +46,4 @@ function tryDecodeEnvBase64(name) {
   }
 }
 
-module.exports = {
-  decodeEnvBase64,
-  tryDecodeEnvBase64,
-};
+export { decodeEnvBase64, tryDecodeEnvBase64 };
