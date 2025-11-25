@@ -50,8 +50,10 @@ function tryDecodeEnvBase64(name) {
     return null;
   }
 }
-
-module.exports = {
+const { decodeEnvBase64 } = require('./supabase/scripts/decode-secret');
+const SERVICE_ROLE_KEY = decodeEnvBase64('SUPABASE_SERVICE_ROLE_KEY_B64');
+module.exports = 
+{
   decodeEnvBase64,
   tryDecodeEnvBase64,
 };
