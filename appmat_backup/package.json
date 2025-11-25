@@ -1,0 +1,110 @@
+{
+  "name": "appmat",
+  "version": "1.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+<<<<<<< HEAD
+    "capture": "node tools/capture.mjs",
+    "capture:skip": "node tools/capture.mjs --skip-on-error",
+    "capture:persistent": "node tools/capture.mjs --persistent",
+    "capture:stable": "DEFAULT_TIMEOUT_MS=15000 NAV_TIMEOUT_MS=45000 IDLE_WAIT_MS=12000 node tools/capture.mjs --skip-on-error --persistent",
+    "report:latest": "node tools/report-latest-shots.mjs",
+    "report:latest:html": "node tools/report-latest-shots.mjs --make-html",
+    "report:latest:zip": "node tools/report-latest-shots.mjs --zip",
+    "report:latest:all": "node tools/report-latest-shots.mjs --make-html --zip",
+    "compare:latest": "node tools/compare-runs.mjs",
+    "compare:runs": "node tools/compare-runs.mjs --runs=",
+    "shots:newest": "node scripts/newest-shots.mjs",
+    "shots:mock": "node scripts/mock-shots.mjs --label=local --count=3",
+    "shots:report": "node tools/report-latest-shots.mjs",
+    "shots:zip": "node scripts/zip-latest.mjs",
+    "shots:merge": "node tools/merge-reports.mjs",
+    "shots:comment": "node scripts/pr-comment-latest.mjs",
+    "hc": "node scripts/health-check.mjs",
+    "shots:all": "node tools/report-latest-shots.mjs --make-html --zip",
+    "traces:latest": "node tools/traces-latest.mjs",
+    "capture:shard": "node tools/capture.mjs --skip-on-error --shards=$SHARDS --shard=$SHARD --concurrency=$CONCURRENCY",
+    "merge:reports": "node tools/merge-reports.mjs",
+    "fast:local": "CONCURRENCY=2 node tools/capture.mjs --skip-on-error",
+    "traces:prune:newest": "TRACE_SCOPE=newest TRACE_KEEP_PER_RUN=40 TRACE_MAX_MB=150 node tools/traces-prune.mjs",
+    "traces:prune:all": "TRACE_SCOPE=all TRACE_KEEP_PER_RUN=20 TRACE_MAX_MB=100 node tools/traces-prune.mjs",
+    "shots:prune": "KEEP_LAST=10 node tools/shots-prune.mjs",
+    "rerun:failed": "node tools/rerun-failed.mjs",
+    "rerun:failed:stable": "REUSE_PERSISTENT=1 DEFAULT_TIMEOUT_MS=15000 NAV_TIMEOUT_MS=45000 IDLE_WAIT_MS=12000 node tools/rerun-failed.mjs",
+    "notify:latest": "node tools/notify-latest.mjs",
+    "notify:latest:dry": "DRY_RUN=1 node tools/notify-latest.mjs",
+    "s3:latest": "node tools/s3-upload-latest.mjs",
+    "s3:latest:dry": "DRY_RUN=1 node tools/s3-upload-latest.mjs",
+    "summary:latest": "node tools/summary-latest.mjs",
+    "delta:latest": "node tools/delta-report.mjs",
+    "delta:guard": "MAX_CHANGED=999 MAX_SIZE_PCT=25 node tools/delta-report.mjs",
+    "delta:warn": "cross-env WARN_ONLY=1 node tools/delta-report.mjs",
+    "delta:policy": "cross-env POLICY_FILE=tools/delta-policy.json node tools/delta-report.mjs",
+    "delta:baseline": "cross-env BASELINE_RUN=CHANGE_ME node tools/delta-report.mjs",
+    "baseline:get": "node tools/baseline-get.mjs",
+    "baseline:set": "node tools/baseline-set.mjs",
+    "baseline:set:latest": "node tools/baseline-set-latest.mjs"
+=======
+    "build": "vite build",
+    "prepare": "husky install",
+    "test": "echo \"No test defined\" && exit 0",
+    "test:playwright": "playwright test",
+    "capture": "echo \"(placeholder for screenshot capture)\"",
+    "shots:report": "echo \"(placeholder for report generation)\"",
+    "shots:zip": "echo \"(placeholder for zipping screenshots)\"",
+    "rebuild-esbuild": "node ./scripts/rebuild-esbuild.cjs",
+    "fix:esbuild": "powershell -ExecutionPolicy Bypass -File ./fix-esbuild-rescue.ps1",
+    "postinstall": "node ./scripts/rebuild-esbuild.cjs"
+>>>>>>> f21627f04ad8552970a779d3f1c2b161aae1a46b
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "node ./node_modules/eslint/bin/eslint.js --fix",
+      "node ./node_modules/prettier/bin-prettier.js --write"
+    ],
+    "*.{json,md,css,html}": "node ./node_modules/prettier/bin-prettier.js --write"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.19",
+    "@vitejs/plugin-react": "^5.1.0",
+    "archiver": "^5.3.1",
+    "autoprefixer": "^10.4.21",
+    "cross-env": "^7.0.3",
+    "esbuild": "^0.25.12",
+    "esbuild-wasm": "^0.25.12",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.33.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "pixelmatch": "^7.1.0",
+    "playwright": "^1.56.0",
+    "pngjs": "^7.0.0",
+    "postcss": "^8.5.6",
+<<<<<<< HEAD
+    "tailwindcss": "3.4.14",
+    "vite": "^7.1.10",
+    "archiver": "^5.3.1",
+    "cross-env": "^7.0.3"
+=======
+    "prettier": "^2.8.8",
+    "prop-types": "^15.8.1",
+    "sharp": "^0.34.4",
+    "tailwindcss": "4.1.16",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+>>>>>>> f21627f04ad8552970a779d3f1c2b161aae1a46b
+  }
+}

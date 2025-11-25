@@ -1,0 +1,33 @@
+name: Rollback API Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        default: "production"
+      deployment:
+        default: "my-api"
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure kubeconfig
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG_PROD }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Rollback last deployment
+        run: |
+          kubectl rollout undo deployment/${{ github.event.inputs.deployment }} \
+            -n ${{ github.event.inputs.namespace }}
+
+      - name: Slack - Rollback
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: danger
+          SLACK_MESSAGE: "🚨 Rollback executed for `${{ github.event.inputs.deployment }}` in *${{ github.event.inputs.namespace }}*"

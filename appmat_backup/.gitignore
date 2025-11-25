@@ -1,0 +1,58 @@
+.kube/
+.github/workflows/_patches/
+deploy/prod/
+docs/feature-flags/
+src/scripts/model-tests/
+src/services/model/
+
+## Build / packaging
+**/target/
+*.jar
+
+## IDE/project files
+.idea/
+.vscode/
+*.iml
+
+## Node / lockfiles (workspace contains pnpm)
+node_modules/
+pnpm-lock.yaml
+
+## OS
+*.log
+Thumbs.db
+ehthumbs.db
+node_modules/
+.pw-profile/
+patches/
+backups/
+dist/
+*.tar.gz
+*.zip
+*.log
+/.vscode/
+/.idea/
+coverage/
+npm-debug.log*
+pnpm-debug.log*
+latest-mock-*.zip
+shots/
+node_modules/
+
+# CI artifacts and generated hashes
+artifacts-*/
+hashes-*.txt
+*.bak.*
+run-*-full.log
+step-install-*.log
+.env
+.env.*
+!.env.example
+
+# Supabase local/CLI temp files
+supabase/.temp/
+
+# Gradle caches (do not commit)
+**/.gradle/
+**/nb-cache/
+
