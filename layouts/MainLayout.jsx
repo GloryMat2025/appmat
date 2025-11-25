@@ -1,5 +1,6 @@
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import PropTypes from 'prop-types';
 
 export default function MainLayout({ children }) {
   return (
@@ -10,3 +11,11 @@ export default function MainLayout({ children }) {
     </div>
   );
 }
+
+MainLayout.propTypes = {
+  children: PropTypes.node,
+};
+
+MainLayout.defaultProps = {
+  children: null,
+};

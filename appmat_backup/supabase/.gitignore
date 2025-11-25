@@ -1,0 +1,19 @@
+# Supabase CLI temp/cache
+.temp/
+
+# Environment files
+env.local
+.env.local
+
+# Logs
+*.log
+
+# Node deps if installed locally for tools
+tools/push-relay/node_modules/
+
+# Local secrets JSON (do not commit)
+secrets.json
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -1,0 +1,16 @@
+name: Send Slack Message
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        required: true
+
+jobs:
+  slack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_MESSAGE: ${{ github.event.inputs.message }}

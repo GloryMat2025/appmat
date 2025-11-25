@@ -1,0 +1,8 @@
+- name: Publish GitHub Release
+  uses: softprops/action-gh-release@v1
+  with:
+    tag_name: v0.1.1
+    name: "Release v0.1.1"
+    body_path: CHANGELOG.md
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

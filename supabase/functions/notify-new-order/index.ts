@@ -1,6 +1,11 @@
 // notify-new-order production function with optional admin-only debug actions
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// When this file is edited/checked by TypeScript in non-Deno environments
+// the `Deno` global may not be defined. Declare a loose type to avoid
+// type-checker errors in the workspace tooling (this does not affect runtime).
+declare const Deno: any;
+
 serve(async (req: Request) => {
   try {
     const url = new URL(req.url);
@@ -8,11 +13,13 @@ serve(async (req: Request) => {
     console.log("notify-new-order payload:", payload);
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    // Prefer explicit service role key names, fall back to other common names
     const SUPABASE_KEY =
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
       Deno.env.get("SERVICE_ROLE_KEY") ||
+      Deno.env.get("SUPABASE_SERVICE_KEY") ||
       Deno.env.get("SUPABASE_ANON_KEY");
-    const ADMIN_TOKEN = Deno.env.get("ADMIN_TEST_TOKEN");
+    const ADMIN_TOKEN = Deno.env.get("ADMIN_TEST_TOKEN") || Deno.env.get("ADMIN_TOKEN");
 
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error("Missing SUPABASE_URL or SUPABASE_KEY");
@@ -29,14 +36,23 @@ serve(async (req: Request) => {
       const orderId = payload?.record?.id;
       const status = payload?.record?.status;
       if (relay && orderId) {
-        await fetch(relay, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(relayToken ? { "x-relay-token": relayToken } : {}),
-          },
-          body: JSON.stringify({ order_id: orderId, status, type: "status_update" }),
-        }).catch((e) => console.warn("relay post failed:", e));
+        try {
+          // add a short timeout so a slow relay doesn't block the function
+          const controller = new AbortController();
+          const id = setTimeout(() => controller.abort(), 3000);
+          await fetch(relay, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(relayToken ? { "x-relay-token": relayToken } : {}),
+            },
+            body: JSON.stringify({ order_id: orderId, status, type: "status_update" }),
+            signal: controller.signal,
+          }).catch((e) => console.warn("relay post failed:", e));
+          clearTimeout(id);
+        } catch (e) {
+          console.warn("relay post error:", e);
+        }
       }
     } catch (e) {
       console.warn("relay block error:", e);
@@ -109,9 +125,11 @@ serve(async (req: Request) => {
     }
 
     // Normal runtime behavior: fetch subscriptions and attempt delivery
-    const restUrl = SUPABASE_URL.replace(/\/$/, "") +
-      "/rest/v1/push_subscriptions?select=subscription";
+    const restUrl = SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/push_subscriptions?select=subscription";
 
+    // Use a short timeout for the Supabase REST call too
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     const res = await fetch(restUrl, {
       method: "GET",
       headers: {
@@ -119,11 +137,17 @@ serve(async (req: Request) => {
         Authorization: `Bearer ${SUPABASE_KEY}`,
         Accept: "application/json",
       },
+      signal: controller.signal,
+    }).catch((e) => {
+      clearTimeout(timeoutId);
+      console.error("Failed to fetch push_subscriptions (fetch error):", e);
+      return null;
     });
+    clearTimeout(timeoutId);
 
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error("Failed to fetch push_subscriptions:", res.status, text);
+    if (!res || !res.ok) {
+      const text = res ? await res.text().catch(() => "") : "(no response)";
+      console.error("Failed to fetch push_subscriptions:", res ? res.status : "no-response", text);
       return new Response(JSON.stringify({ error: "Failed to fetch subscriptions", detail: text }), {
         status: 500,
         headers: { "content-type": "application/json" },

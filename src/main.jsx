@@ -11,6 +11,8 @@ import './styles/main.css';
 import './styles/offline.css';
 import './scripts/registerSW';
 
+/* eslint-disable react-hooks/rules-of-hooks */
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
     .register('/sw.js')

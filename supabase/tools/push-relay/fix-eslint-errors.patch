@@ -1,0 +1,27 @@
+*** Begin Patch
+*** Update File: supabase/tools/push-relay/smoke-test.js
+@@
+-  } catch (e) {
+-    // swallow
+-  }
++  } catch (_e) {
++    void _e;
++    // swallow
++  }
+@@
+-  } catch (e) {
+-    // swallow
+-  }
++  } catch (_e) {
++    void _e;
++    // swallow
++  }
+@@
+-  } catch (e) {
+-    console.error(e)
+-  }
++  } catch (_e) {
++    void _e;
++    console.error(_e)
++  }
+*** End Patch

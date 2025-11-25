@@ -1,2 +1,8 @@
 # Ignore Supabase Edge Functions (Deno/TypeScript) from Node ESLint checks
 supabase/functions/**
+dist/
+public/
+appmat/
+node_modules/
+supabase/.temp
+appmat_backup/ 

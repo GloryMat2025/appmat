@@ -56,3 +56,5 @@ supabase/.temp/
 **/.gradle/
 **/nb-cache/
 
+"supabase/secrets.json" 
+"supabase/.temp" 

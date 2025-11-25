@@ -1,19 +1,18 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { createContext, useContext } from 'react';
 import PropTypes from 'prop-types';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('cart');
-    if (saved) setCartItems(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   const addToCart = (item) => {
     setCartItems((prev) => [...prev, item]);

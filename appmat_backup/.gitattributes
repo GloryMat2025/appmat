@@ -1,0 +1,8 @@
+* text=auto eol=lf
+*.svg text
+docs/* text
+.github/* text
+*.png binary
+LICENSE text
+README.md text
+CONTRIBUTING.md text

@@ -1,3 +1,5 @@
+/* eslint-env jest */
+
 test('AppMat main page loads', async ({ page }) => {
   await page.goto('http://localhost:5173');
   console.log(await page.content()); // 👉 print HTML sebenar
