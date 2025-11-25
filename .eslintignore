@@ -5,3 +5,4 @@ public/
 appmat/
 node_modules/
 supabase/.temp
+appmat_backup/ 
