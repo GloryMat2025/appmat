@@ -1,5 +1,4 @@
 import { IonCard, IonCardContent, IonImg } from "@ionic/react";
-import { useHistory } from "react-router-dom";
 
 interface Props {
   product: any;

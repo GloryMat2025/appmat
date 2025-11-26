@@ -1,0 +1,81 @@
+From ac2dd2bc961ac1ae3706140092c2eb5dd4b4292e Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Sun, 23 Nov 2025 12:03:22 +0800
+Subject: [PATCH 12/34] chore: fix eslint no-undef and normalize catch params
+
+---
+ backend/src/.gradle/nb-cache/subprojects.ser  | Bin 666 -> 666 bytes
+ scripts/fix-eslint-errors.patch               |  15 ++++++++++
+ .../tools/push-relay/fix-eslint-errors.patch  |  27 ++++++++++++++++++
+ 3 files changed, 42 insertions(+)
+ create mode 100644 scripts/fix-eslint-errors.patch
+ create mode 100644 supabase/tools/push-relay/fix-eslint-errors.patch
+
+diff --git a/backend/src/.gradle/nb-cache/subprojects.ser b/backend/src/.gradle/nb-cache/subprojects.ser
+index 64b0695ad0f270c44d4884ba2d24915f63d930b9..4af6a6a9fb8941382f56956496f30da978f9f377 100644
+GIT binary patch
+delta 14
+WcmbQmI*WC}I_7%@w>EBk$p`>09tN}k
+
+delta 14
+WcmbQmI*WC}I_A(FNgFr5WCQ>!HwHTZ
+
+diff --git a/scripts/fix-eslint-errors.patch b/scripts/fix-eslint-errors.patch
+new file mode 100644
+index 00000000..4f751e02
+--- /dev/null
++++ b/scripts/fix-eslint-errors.patch
+@@ -0,0 +1,15 @@
++*** Begin Patch
++*** Update File: scripts/rebuild-esbuild.js
++@@
++-try {
+++let serialized; let local;
+++try {
++@@
++-  } catch (err) {
++-    console.error(err)
++-  }
+++  } catch (_err) {
+++    void _err;
+++    console.error(_err)
+++  }
++*** End Patch
+\ No newline at end of file
+diff --git a/supabase/tools/push-relay/fix-eslint-errors.patch b/supabase/tools/push-relay/fix-eslint-errors.patch
+new file mode 100644
+index 00000000..a3c2b2c5
+--- /dev/null
++++ b/supabase/tools/push-relay/fix-eslint-errors.patch
+@@ -0,0 +1,27 @@
++*** Begin Patch
++*** Update File: supabase/tools/push-relay/smoke-test.js
++@@
++-  } catch (e) {
++-    // swallow
++-  }
+++  } catch (_e) {
+++    void _e;
+++    // swallow
+++  }
++@@
++-  } catch (e) {
++-    // swallow
++-  }
+++  } catch (_e) {
+++    void _e;
+++    // swallow
+++  }
++@@
++-  } catch (e) {
++-    console.error(e)
++-  }
+++  } catch (_e) {
+++    void _e;
+++    console.error(_e)
+++  }
++*** End Patch
+\ No newline at end of file
+-- 
+2.51.2.windows.1
+

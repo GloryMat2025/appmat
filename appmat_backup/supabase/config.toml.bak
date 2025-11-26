@@ -1,0 +1,5 @@
+[project]
+ref = "qtoiurlefwodxjcichgz"
+
+[api]
+endpoint = "https://qtoiurlefwodxjcichgz.supabase.co"

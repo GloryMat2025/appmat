@@ -1,0 +1,14 @@
+node_modules/
+dist/
+build/
+.pnp/
+.pnpm-debug.log
+pnpm-lock.yaml
+package-lock.json
+appmat_backup/
+*.min.js
+*.bundle.js
+coverage/
+.vscode/
+.idea/
+*.log

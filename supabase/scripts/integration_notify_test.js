@@ -62,7 +62,8 @@ function loadEnv() {
     let inserted;
     try {
       inserted = JSON.parse(insertText)[0];
-    } catch (e) {
+    } catch (_e) {
+      void _e;
       inserted = null;
     }
     if (!inserted || !inserted.id) {

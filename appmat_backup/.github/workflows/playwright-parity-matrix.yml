@@ -1,0 +1,97 @@
+name: Playwright Parity Matrix
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Manual run id to use in artifact names (optional)'
+        required: false
+        default: ''
+
+env:
+  NODE_VERSION: '18'
+  RUN_ID: ${{ github.event.inputs.run_id || github.run_id }}
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Node & Git info
+        run: |
+          node --version
+          npm --version || true
+          git --version
+          echo "RUN_ID=${RUN_ID}"
+
+      - name: Cache pnpm store and node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            node_modules
+            .pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ matrix.browser }}-${{ env.RUN_ID }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: Install pnpm and project deps (robust + verbose)
+        run: |
+          set -e
+          echo "Installing pnpm@8..."
+          npm install -g pnpm@8
+
+          echo "pnpm version: $(pnpm --version)"
+          echo "Using registry: $(pnpm config get registry || npm config get registry)"
+
+          retries=3
+          delay=5
+          i=1
+          until [ $i -gt $retries ]
+          do
+            echo "pnpm install attempt #$i ..."
+            pnpm install --frozen-lockfile --reporter=ndjson && break
+            echo "pnpm install failed, printing diagnostics..."
+            pnpm -v || true
+            pnpm store status || true
+            pnpm config list || true
+            i=$((i+1))
+            echo "Sleeping ${delay}s before retry..."
+            sleep $delay
+            delay=$((delay * 2))
+          done
+
+          if [ $i -gt $retries ]; then
+            echo "pnpm install failed after $retries attempts, listing workspace for debugging:"
+            ls -la
+            echo "Printing last 200 lines of pnpm logs (if any):"
+            find . -type f -name "pnpm-debug.log" -maxdepth 4 -print -exec tail -n 200 {} \; || true
+            exit 1
+          fi
+        shell: bash
+
+      - name: Ensure Playwright browsers
+        run: |
+          pnpm exec playwright install --with-deps
+        shell: bash
+
+      - name: Run Playwright exporter (per-browser)
+        run: |
+          mkdir -p artifacts || true
+          echo "Running exporter for ${matrix.browser} with RUN_ID=${RUN_ID}"
+          node --version
+          pnpm exec node scripts/svg-to-png-pw.mjs --browser=${{ matrix.browser }} --out=artifacts/${{ matrix.browser }}-${{ env.RUN_ID }}
+        shell: bash
+
+      - name: Upload parity artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: parity-${{ matrix.browser }}-${{ env.RUN_ID }}
+          path: artifacts/${{ matrix.browser }}-${{ env.RUN_ID }}/*.png

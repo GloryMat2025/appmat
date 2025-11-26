@@ -1,0 +1,11 @@
+--- a/src/services/admin.ts
++++ b/src/services/admin.ts
+@@ -20,7 +20,7 @@ export async function getAdminStats() {
+     const res = await api.get('/admin/stats');
+     return res.data;
+   } catch (err) {
+-    console.error('admin stats error', err as any);
++    console.error('admin stats error', err as unknown);
+     return null;
+   }
+ }

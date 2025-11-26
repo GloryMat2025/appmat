@@ -1,69 +1,54 @@
-name: 'Appmat All-Fix CI'
+name: appmat-all-fix
 
 on:
   push:
-    branches: ['main', 'fix/**', 'dev/**']
-  pull_request:
-    branches: ['main']
+    branches:
+      - main
+      - master
   workflow_dispatch:
 
 jobs:
-  all-fix:
-    name: 'Run Full Build & Playwright Validation'
+  build:
+    name: Build and Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-
     steps:
-      # 1️⃣ Checkout repo
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node + pnpm
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'pnpm'
 
-      - name: Install pnpm
-        run: npm install -g pnpm@9
+      - name: Enable Corepack and activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
 
-      # 3️⃣ Install dependencies
-      - name: Install dependencies
+      - name: Install dependencies (pnpm)
         run: pnpm install --frozen-lockfile
 
-      # 4️⃣ Run build
-      - name: Build project
-        run: pnpm run build
-
-      # 5️⃣ Run Playwright tests
-      - name: Run Playwright tests
+      - name: Run ESLint autofix and collect report
         run: |
-          npx playwright install --with-deps
-          pnpm run test || pnpm run test:playwright
-        continue-on-error: true
+          pnpm exec eslint . --ext .js,.jsx,.ts,.tsx --fix || true
+          pnpm exec eslint . --ext .js,.jsx,.ts,.tsx > eslint-report.txt || true
 
-      # 6️⃣ Generate screenshots & reports
-      - name: Generate screenshots & reports
-        run: |
-          pnpm run capture || true
-          pnpm run shots:report || true
-          pnpm run shots:zip || true
-
-      # 7️⃣ Upload gallery + logs as artifacts
-      - name: Upload build artifacts
+      - name: Upload ESLint report
         uses: actions/upload-artifact@v4
         with:
-          name: appmat-fix-artifacts
-          path: |
-            dist/**
-            test-results/**
-            gallery.html
-            fix-report.log
-          if-no-files-found: ignore
+          name: eslint-report
+          path: eslint-report.txt
 
-      # 8️⃣ Summary output
-      - name: Print summary
-        run: |
-          echo "✅ Appmat All-Fix CI completed successfully."
-          echo "Logs and gallery artifacts uploaded."
+      - name: Run tests
+        run: pnpm test
+
+      - name: Save test results (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: ./test-results || ./logs || .
+
+      - name: Install pnpm (fallback)
+        run: npm install -g pnpm

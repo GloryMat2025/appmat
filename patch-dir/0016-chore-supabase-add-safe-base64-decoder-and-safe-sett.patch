@@ -1,0 +1,29 @@
+From b8310d9ece6ad5321299a858839505b99211eb09 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Sun, 23 Nov 2025 14:24:07 +0800
+Subject: [PATCH 16/34] chore(supabase): add safe base64 decoder and safe
+ setter; prefer <NAME>_B64 in runtime
+
+---
+ supabase/scripts/rotate_and_validate.cjs | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/supabase/scripts/rotate_and_validate.cjs b/supabase/scripts/rotate_and_validate.cjs
+index 4ce926a3..558f99f6 100644
+--- a/supabase/scripts/rotate_and_validate.cjs
++++ b/supabase/scripts/rotate_and_validate.cjs
+@@ -98,3 +98,11 @@ if (projectRef){
+ }
+ 
+ safeLog('rotate_and_validate finished. If you rotated the exposed Service Role Key in the Supabase UI, verify that old key is revoked in the dashboard now.');
++
++// Diagnostic guard: detect problematic secret values that can break CLI parsing
++for (const [k,v] of Object.entries(data)){
++  if (/\r|\n/.test(String(v))) {
++    console.error(`DEBUG: secret ${k} contains ${String(v).split(/\r?\n/).length - 1} newline(s) — may break supabase CLI when passed inline.`);
++    console.error('DEBUG sample:', String(v).slice(0, 120).replace(/\r?\n/g, '\\n'), '... (truncated)');
++  }
++}
+-- 
+2.51.2.windows.1
+

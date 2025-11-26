@@ -1,0 +1,79 @@
+name: Apply Claude Sonnet 4.5 to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Staging namespace'
+        default: 'staging'
+        required: true
+      deployment:
+        description: 'Deployment name'
+        default: 'my-api'
+        required: true
+      patch_path:
+        description: 'Path to JSON patch file'
+        default: 'deploy/k8s-patches/my-api-enable-claude-sonnet-4-5.patch.json'
+        required: true
+      smoke_api_url:
+        description: 'Optional smoke test URL'
+        required: false
+
+jobs:
+  deploy_staging:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set kubeconfig
+        env:
+          KUBECONFIG_CONTENT: ${{ secrets.KUBECONFIG }}
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Validate patch exists
+        run: |
+          test -f "${{ github.event.inputs.patch_path }}" \
+            || { echo "❌ Patch file missing"; exit 1; }
+
+      - name: Apply patch
+        run: |
+          kubectl patch deployment ${{ github.event.inputs.deployment }} \
+            -n ${{ github.event.inputs.namespace }} \
+            --type=json \
+            --patch-file=${{ github.event.inputs.patch_path }}
+
+      - name: Check rollout
+        run: |
+          kubectl rollout status deployment/${{ github.event.inputs.deployment }} \
+            -n ${{ github.event.inputs.namespace }} --timeout=180s
+
+      - name: Optional smoke test
+        if: ${{ github.event.inputs.smoke_api_url != '' }}
+        env:
+          MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
+        run: |
+          echo "Running smoke test..."
+          HTTP=$(curl -s -o /tmp/smoke.out -w "%{http_code}" \
+            -X POST "${{ github.event.inputs.smoke_api_url }}" \
+            -H "Authorization: Bearer $MODEL_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"input":"ping"}')
+
+          echo "HTTP code: $HTTP"
+          cat /tmp/smoke.out
+
+          if [ "$HTTP" -ge 400 ]; then echo "❌ Smoke test failed"; exit 1; fi
+          if grep -qi '"error"' /tmp/smoke.out; then echo "❌ Model error"; exit 1; fi
+
+      - name: Notify Staging Success
+        if: ${{ secrets.SLACK_WEBHOOK != '' }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: good
+          SLACK_MESSAGE: "Staging deployed: Claude Sonnet 4.5 patch applied successfully."

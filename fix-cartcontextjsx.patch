@@ -1,0 +1,8 @@
+@@ -10,7 +10,7 @@ export const CartContext = createContext();
+ export function CartProvider({ children }) {
+   const [cart, setCart] = useState([]);
+
+-  const handleError = (e) => {
++  const handleError = (_e) => {
+     // ignore
+   };

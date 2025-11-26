@@ -1,0 +1,24 @@
+From 807632e00e1db523a60d0c4f1c2e14f657033ca5 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Tue, 25 Nov 2025 10:07:32 +0800
+Subject: [PATCH 21/34] chore: remove broken submodule path/to/submodule and
+ fix .gitmodules
+
+---
+ supabase/.gitmodules | 3 +++
+ 1 file changed, 3 insertions(+)
+ create mode 100644 supabase/.gitmodules
+
+diff --git a/supabase/.gitmodules b/supabase/.gitmodules
+new file mode 100644
+index 00000000..224a8ef7
+--- /dev/null
++++ b/supabase/.gitmodules
+@@ -0,0 +1,3 @@
++[submodule "appmat"]
++  path = C:\Users\DESIGNER 1\Desktop\appmat
++  url = https://github.com/owner/repo.git
+\ No newline at end of file
+-- 
+2.51.2.windows.1
+

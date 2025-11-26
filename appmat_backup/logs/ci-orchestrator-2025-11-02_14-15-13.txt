@@ -1,0 +1,26 @@
+**********************
+PowerShell transcript start
+Start time: 20251102141513
+Username: DESKTOP-2GO6ABK\DESIGNER 1
+RunAs User: DESKTOP-2GO6ABK\DESIGNER 1
+Configuration Name: 
+Machine: DESKTOP-2GO6ABK (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll
+Process ID: 19932
+PSVersion: 7.5.4
+PSEdition: Core
+GitCommitId: 7.5.4
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+🧩 Cleaning package.json...
+No invalid dependency entries found. package.json unchanged.
+❌ No package-fix-report.*.json found.
+**********************
+PowerShell transcript end
+End time: 20251102141513
+**********************

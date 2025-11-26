@@ -1,0 +1,18 @@
+{
+  "name": "appmat-push-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Push relay for appmat: attempts real WebPush via web-push, falls back to simulated responses.",
+  "main": "index.real.js",
+  "scripts": {
+    "start": "node index.real.js"
+  },
+  "dependencies": {
+    "body-parser": "1.20.2",
+    "express": "4.18.2",
+    "web-push": "3.6.7",
+    "dotenv": "17.2.3"
+  },
+  "author": "",
+  "license": "MIT"
+}

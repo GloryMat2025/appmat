@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+// supabase/scripts/set-secrets-safe.cjs
+// Safe setter for GitHub + Supabase secrets.
+// - Reads supabase/secrets.json
+// - For problematic values (multiline / quotes / backticks) it base64-encodes them by default.
+// - Sets GitHub secrets with `gh secret set` and Supabase secrets with `npx supabase secrets set`.
+// Usage:
+//  node supabase\\scripts\\set-secrets-safe.cjs --projectRef <REF> --repo GloryMat2025/appmat --dry-run
+//  node supabase\\scripts\\set-secrets-safe.cjs --projectRef <REF> --repo GloryMat2025/appmat
+// Flags:
+//  --dry-run            : show what would be done without making changes
+//  --no-encode-multiline: do NOT base64-encode problematic values (may fail on supabase CLI)
+//  --input <path>       : path to secrets.json (default supabase/secrets.json)
+
+const { spawnSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const argv = require('minimist')(process.argv.slice(2));
+
+function run(cmd, args, opts={}) {
+  const r = spawnSync(cmd, args, Object.assign({ stdio: 'pipe', encoding: 'utf8' }, opts));
+  return { status: r.status, stdout: r.stdout && r.stdout.toString(), stderr: r.stderr && r.stderr.toString() };
+}
+
+function safeLog(...args){ console.log(...args); }
+
+const input = argv.input || argv.i || 'supabase/secrets.json';
+const repo = argv.repo || process.env.GH_REPO || 'GloryMat2025/appmat';
+const projectRef = argv.projectRef || argv.project || argv.p || process.env.SUPABASE_PROJECT_REF || '';
+const dryRun = !!argv['dry-run'];
+const encodeMultiline = argv['no-encode-multiline'] ? false : true;
+
+if (!fs.existsSync(input)) {
+  console.error('Input file not found:', input);
+  process.exit(2);
+}
+
+const raw = fs.readFileSync(input, 'utf8');
+let data;
+try {
+  data = JSON.parse(raw);
+} catch (err) {
+  console.error('Failed to parse JSON:', err.message || err);
+  process.exit(3);
+}
+
+const results = { github: [], supabase: [], skipped: [], encoded: [] };
+
+for (const [k, v] of Object.entries(data)) {
+  const s = String(v);
+  const hasNewline = /\r|\n/.test(s);
+  const hasBacktick = /`/.test(s);
+  const hasQuote = /["']/.test(s);
+  const problematic = hasNewline || hasBacktick || hasQuote;
+
+  let toSet = s;
+  let encoded = false;
+
+  if (problematic && encodeMultiline) {
+    toSet = Buffer.from(s, 'utf8').toString('base64');
+    encoded = true;
+  }
+
+  safeLog(`\nKey: ${k}`);
+  if (problematic) {
+    safeLog(' - problematic characters detected:', [
+      hasNewline ? 'newline' : null,
+      hasBacktick ? 'backtick' : null,
+      hasQuote ? 'quote' : null
+    ].filter(Boolean).join(', '));
+  }
+
+  // GitHub secret
+  if (dryRun) {
+    safeLog(`DRY-RUN: gh secret set ${k} --repo ${repo} --body <${encoded ? 'base64-encoded' : 'value'}>`);
+    results.github.push({ key: k, status: 'dry-run' });
+  } else {
+    try {
+      const r = run('gh', ['secret','set', k, '--repo', repo, '--body', toSet]);
+      if (r.status !== 0) {
+        console.error(`gh secret set ${k} failed:`, r.stderr || r.stdout || r.status);
+        results.github.push({ key: k, status: 'failed', detail: r.stderr || r.stdout || r.status });
+      } else {
+        safeLog(`gh secret set ${k} ✓`);
+        results.github.push({ key: k, status: 'ok' });
+      }
+    } catch (e) {
+      console.error('gh command failed:', e && e.message || e);
+      results.github.push({ key: k, status: 'exception', detail: String(e) });
+    }
+  }
+
+  // Supabase secret (if projectRef provided)
+  if (projectRef) {
+    if (dryRun) {
+      safeLog(`DRY-RUN: npx -y supabase secrets set --project-ref ${projectRef} ${k}=${encoded ? '<base64>' : '<value>'}`);
+      results.supabase.push({ key: k, status: 'dry-run' });
+    } else {
+      try {
+        const arg = `${k}=${toSet}`;
+        const r = run('npx', ['-y','supabase','secrets','set','--project-ref', projectRef, arg]);
+        if (r.status !== 0) {
+          console.error(`supabase secrets set ${k} failed (exit ${r.status}):`);
+          if (r.stdout) console.error('stdout:', r.stdout.trim());
+          if (r.stderr) console.error('stderr:', r.stderr.trim());
+          results.supabase.push({ key: k, status: 'failed', detail: r.stderr || r.stdout || r.status });
+        } else {
+          safeLog(`supabase secrets set ${k} ✓`);
+          if (r.stdout) safeLog((r.stdout || '').trim());
+          results.supabase.push({ key: k, status: 'ok' });
+        }
+      } catch (e) {
+        console.error('supabase CLI call failed:', e && e.message || e);
+        results.supabase.push({ key: k, status: 'exception', detail: String(e) });
+      }
+    }
+  } else {
+    safeLog('Skipping supabase secrets set (no projectRef provided).');
+    results.skipped.push(k);
+  }
+
+  if (encoded) results.encoded.push(k);
+}
+
+// Summary
+safeLog('\nSummary:');
+safeLog(' GitHub: ', results.github.length, 'items processed');
+safeLog(' Supabase:', projectRef ? results.supabase.length + ' attempted' : 'skipped (no projectRef)');
+if (results.encoded.length) {
+  safeLog('\nEncoded keys (base64):', results.encoded.join(', '));
+  safeLog('Note: encoded secrets were stored base64. To decode in Node at runtime:');
+  safeLog('  const decoded = Buffer.from(process.env.YOUR_SECRET, "base64").toString("utf8");');
+}
+
+if (dryRun) safeLog('\nDRY-RUN mode — no secrets were modified.');

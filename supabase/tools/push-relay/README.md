@@ -231,3 +231,23 @@ $env:VAPID_PRIVATE_KEY='your_private_key_here'
 $env:RELAY_TOKEN='super-secret-token'
 node index.js
 ```
+
+## Smoke-test scripts
+
+Two smoke-test helpers are included to make local verification simple:
+
+- `smoke-test.ps1` (PowerShell): starts the relay, waits for `/health`, posts a simulated `/api/notify` and `/order-status`, then stops the relay. Useful on Windows with PowerShell.
+- `smoke-test.js` (Node): cross-platform smoke-test that does the same as above and can be run where Node is available.
+
+Run the Node smoke test from the repo root:
+```cmd
+cd supabase\tools\push-relay
+node smoke-test.js
+```
+
+Or run the PowerShell smoke test (PowerShell required):
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\supabase\tools\push-relay\smoke-test.ps1 -Port 4020
+```
+
+Both scripts use port `4020` by default to avoid colliding with a dev server on `4000`. Set the `PORT` env var or pass `-Port` to the PowerShell script to change it.

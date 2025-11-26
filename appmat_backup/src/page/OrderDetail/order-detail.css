@@ -1,0 +1,53 @@
+.order-detail-container {
+  padding: 12px;
+}
+
+.status-title,
+.detail-title {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.timeline-box {
+  margin-top: 20px;
+}
+
+.timeline-item {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 100%;
+  background: #ccc;
+  margin-right: 12px;
+}
+
+.dot.active {
+  background: var(--ion-color-primary);
+}
+
+.timeline-text p {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.item-total {
+  font-weight: 600;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+}

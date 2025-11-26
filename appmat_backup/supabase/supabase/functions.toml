@@ -1,0 +1,12 @@
+# Supabase Functions metadata
+# This file contains lightweight metadata for local tooling and documentation.
+# Do NOT store secrets or keys in this file. Use project secrets or `supabase/.env.local` instead.
+
+base_path = "../functions"
+
+[[functions]]
+name = "notify-new-order-fixed"
+path = "../functions/notify-new-order-fixed"
+runtime = "deno"
+entry = "index.ts"
+description = "Edge Function that queries push_subscriptions and delivers notifications. Use project secrets for keys."

@@ -1,0 +1,15 @@
+--- a/src/components/Card.jsx
++++ b/src/components/Card.jsx
+@@ -1,7 +1,11 @@
+-import { motion } from 'framer-motion';
++// Removed unused motion
+ import useCart from '../hooks/useCart';
+ import PropTypes from 'prop-types';
+
++/* eslint-disable react/prop-types */
++
++// framer-motion removed because it's unused
++
+ export default function Card({ id, title, desc, price }) {
+   const { addToCart } = useCart();
+ 

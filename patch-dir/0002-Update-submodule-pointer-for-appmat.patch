@@ -1,0 +1,19 @@
+From 75803afe9720b41bac34ea8c79ca996096b48e0d Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Thu, 20 Nov 2025 15:34:09 +0800
+Subject: [PATCH 02/34] Update submodule pointer for appmat
+
+---
+ appmat | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/appmat b/appmat
+index 9f4694a6..03e31730 160000
+--- a/appmat
++++ b/appmat
+@@ -1 +1 @@
+-Subproject commit 9f4694a6ee2e109dd2eb9f7f36ea5541a25f808f
++Subproject commit 03e31730c3d228657cd2b562e032b2b30cab3cdc
+-- 
+2.51.2.windows.1
+

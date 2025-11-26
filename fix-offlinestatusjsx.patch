@@ -1,0 +1,7 @@
+--- a/src/components/OfflineStatus.jsx
++++ b/src/components/OfflineStatus.jsx
+@@ -1,5 +1,4 @@
+-import React from 'react';
++// removed unused React
+
+ export default function OfflineStatus() {

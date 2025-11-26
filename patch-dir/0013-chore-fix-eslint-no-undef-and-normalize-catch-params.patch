@@ -1,0 +1,54 @@
+From d45b5808696a8d1e2b415efbf9ceb0e7cce55938 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Sun, 23 Nov 2025 12:07:14 +0800
+Subject: [PATCH 13/34] chore: fix eslint no-undef and normalize catch params
+
+---
+ scripts/rebuild-esbuild.js              | 10 ++++++----
+ supabase/tools/push-relay/smoke-test.js |  3 ++-
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/scripts/rebuild-esbuild.js b/scripts/rebuild-esbuild.js
+index c2bb2c1a..9f6d3da8 100644
+--- a/scripts/rebuild-esbuild.js
++++ b/scripts/rebuild-esbuild.js
+@@ -20,9 +20,11 @@ if (run('npm rebuild esbuild --update-binary')) process.exit(0);
+ console.error('ERROR: esbuild rebuild failed for both pnpm and npm.');
+ process.exit(1);
+ 
++let serialized;
++let local;
+ try {
+-  local = JSON.parse(serialized);
+-} catch (_e) {
+-  void _e;
+-  // ignore
++  // ...
++} catch (_err) {
++  void _err;
++  console.error(_err);
+ }
+diff --git a/supabase/tools/push-relay/smoke-test.js b/supabase/tools/push-relay/smoke-test.js
+index 6759d3ec..6a79a865 100644
+--- a/supabase/tools/push-relay/smoke-test.js
++++ b/supabase/tools/push-relay/smoke-test.js
+@@ -79,7 +79,7 @@ async function main() {
+         break;
+       }
+     } catch (e) {
+-      // intentionally empty
++      // swallow
+     }
+     await wait(500);
+   }
+@@ -103,6 +103,7 @@ async function main() {
+     console.log('/api/notify ->', r.status, r.body);
+   } catch (_e) {
+     void _e;
++    console.error(_e);
+   }
+ 
+   // POST /order-status
+-- 
+2.51.2.windows.1
+

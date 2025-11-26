@@ -1,0 +1,39 @@
+From 734f4268f23ce2ca7d83f6a3bedfd85c3a0ffcbf Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Tue, 25 Nov 2025 12:48:28 +0800
+Subject: [PATCH 31/34] chore: temporary commit (no-verify)
+
+---
+ .lintstagedrc.json | 21 +++++++++++++++++++++
+ 1 file changed, 21 insertions(+)
+
+diff --git a/.lintstagedrc.json b/.lintstagedrc.json
+index e69de29b..26dfce7d 100644
+--- a/.lintstagedrc.json
++++ b/.lintstagedrc.json
+@@ -0,0 +1,21 @@
++{
++  "src/**/*.{js,jsx,ts,tsx": [
++    "eslint --fix",
++    "prettier --write"
++  ],
++  "supabase/**/*.{js,jsx,ts,tsx": [
++    "eslint --fix",
++    "prettier --write"
++  ],
++  "scripts/**/*.{js,jsx,ts,tsx": [
++    "eslint --fix",
++    "prettier --write"
++  ],
++  "*.{js,jsx,ts,tsx": [
++    "eslint --fix",
++    "prettier --write"
++  ],
++  "**/*.{json,md,css,html": [
++    "prettier --write"
++  ]
++}
+\ No newline at end of file
+-- 
+2.51.2.windows.1
+

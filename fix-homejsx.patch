@@ -1,0 +1,7 @@
+--- a/src/pages/Home.jsx
++++ b/src/pages/Home.jsx
+@@ -1,5 +1,4 @@
+-import Card from '../components/Card';
++// Removed unused: Card
+
+ export default function Home() {

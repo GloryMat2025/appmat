@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simplified architecture SVG showing scripts and workflows -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="600" viewBox="0 0 1000 600">
+  <style>
+    .node { fill: #f8fafc; stroke: #0f172a; stroke-width: 1; rx: 6; }
+    .label { font: 14px sans-serif; fill: #0f172a; }
+    .title { font: 12px sans-serif; fill: #0ea5a3; }
+    .arrow { stroke: #0f172a; stroke-width: 1.5; marker-end: url(#arrow); }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0f172a" />
+    </marker>
+  </defs>
+
+  <!-- Developer flow -->
+  <rect x="30" y="30" width="140" height="40" class="node" />
+  <text x="40" y="55" class="label">Developer</text>
+
+  <rect x="190" y="30" width="140" height="40" class="node" />
+  <text x="200" y="55" class="label">Fork / Clone</text>
+
+  <rect x="350" y="30" width="160" height="40" class="node" />
+  <text x="360" y="55" class="label">Branch / Edit</text>
+
+  <rect x="540" y="30" width="160" height="40" class="node" />
+  <text x="550" y="55" class="label">Commit (Conventional)</text>
+
+  <rect x="730" y="30" width="140" height="40" class="node" />
+  <text x="740" y="55" class="label">Push / PR</text>
+
+  <!-- CI box -->
+  <rect x="180" y="110" width="700" height="420" fill="#ffffff" stroke="#e2e8f0" rx="8" />
+  <text x="190" y="135" class="title">GitHub Actions / CI</text>
+
+  <!-- Inside CI -->
+  <rect x="210" y="160" width="180" height="60" class="node" />
+  <text x="220" y="195" class="label">shots-smoke.yml</text>
+  <text x="220" y="212" class="label">(shots:mock / capture)</text>
+
+  <rect x="420" y="160" width="200" height="60" class="node" />
+  <text x="430" y="185" class="label">generate-gallery.mjs</text>
+  <text x="430" y="202" class="label">-> shots/gallery.html</text>
+
+  <rect x="650" y="160" width="200" height="60" class="node" />
+  <text x="660" y="185" class="label">zip-latest.mjs</text>
+  <text x="660" y="202" class="label">-> shots/*.zip</text>
+
+  <rect x="420" y="260" width="200" height="60" class="node" />
+  <text x="430" y="295" class="label">release.yml</text>
+  <text x="430" y="312" class="label">verify, changelog, release</text>
+
+  <rect x="650" y="260" width="200" height="60" class="node" />
+  <text x="660" y="295" class="label">version-bump.yml</text>
+  <text x="660" y="312" class="label">(standard-version)</text>
+
+  <!-- Artifacts -->
+  <rect x="420" y="360" width="200" height="60" class="node" />
+  <text x="430" y="395" class="label">shots/gallery.html</text>
+  <text x="430" y="412" class="label">shots/*.zip</text>
+
+  <rect x="650" y="360" width="200" height="60" class="node" />
+  <text x="660" y="395" class="label">GitHub Release</text>
+  <text x="660" y="412" class="label">(upload artifacts)</text>
+
+  <!-- arrows -->
+  <path d="M170,50 L190,50" class="arrow" />
+  <path d="M330,50 L350,50" class="arrow" />
+  <path d="M510,50 L540,50" class="arrow" />
+  <path d="M710,50 L730,50" class="arrow" />
+
+  <path d="M300,70 L300,160" class="arrow" />
+  <path d="M300,160 L300,160" class="arrow" />
+  <path d="M360,50 L360,160" class="arrow" />
+
+  <path d="M300,160 L210,190" class="arrow" />
+  <path d="M390,70 L430,160" class="arrow" />
+
+  <path d="M390,220 L430,220" class="arrow" />
+  <path d="M570,220 L650,220" class="arrow" />
+  <path d="M500,220 L420,220" class="arrow" />
+
+  <path d="M520,220 L520,260" class="arrow" />
+  <path d="M720,220 L720,260" class="arrow" />
+
+  <path d="M520,320 L520,360" class="arrow" />
+  <path d="M760,320 L760,360" class="arrow" />
+
+  <path d="M740,290 L760,290" class="arrow" />
+
+</svg>

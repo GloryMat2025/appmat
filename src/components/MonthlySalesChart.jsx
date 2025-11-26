@@ -8,7 +8,6 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-} from 'recharts';
 
 MonthlySalesChart.propTypes = {
   // TODO: define props here (auto added)

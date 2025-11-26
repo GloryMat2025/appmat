@@ -10,7 +10,6 @@ import {
   IonIcon
 } from "@ionic/react";
 
-import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import { getProductById } from "@/services/products";

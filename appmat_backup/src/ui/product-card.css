@@ -1,0 +1,20 @@
+.product-card {
+  border-radius: 14px;
+}
+
+.product-image {
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+.product-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.product-price {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #444;
+}

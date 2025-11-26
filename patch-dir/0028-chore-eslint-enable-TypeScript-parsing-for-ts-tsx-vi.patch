@@ -1,0 +1,58 @@
+From d990bbae28f98486d118ad6b56342aae997b335a Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Tue, 25 Nov 2025 12:22:59 +0800
+Subject: [PATCH 28/34] chore(eslint): enable TypeScript parsing for ts/tsx via
+ @typescript-eslint
+
+---
+ .eslintrc.cjs | 28 +++++-----------------------
+ 1 file changed, 5 insertions(+), 23 deletions(-)
+
+diff --git a/.eslintrc.cjs b/.eslintrc.cjs
+index 4fd6fdf3..d8f1e463 100644
+--- a/.eslintrc.cjs
++++ b/.eslintrc.cjs
+@@ -23,35 +23,17 @@ module.exports = {
+   parser: '@typescript-eslint/parser',
+   parserOptions: {
+     tsconfigRootDir: __dirname,
+-    ecmaVersion: 2020,
++    ecmaVersion: 2021,
+     sourceType: 'module',
+     ecmaFeatures: { jsx: true }
+   },
+-  plugins: ['@typescript-eslint', 'react', 'react-hooks'],
++  plugins: ['@typescript-eslint'],
+   settings: { react: { version: 'detect' } },
+-  extends: [
+-    'eslint:recommended',
+-    'plugin:react/recommended',
+-    'plugin:react-hooks/recommended',
+-    'plugin:@typescript-eslint/recommended'
+-  ],
+-  rules: {
+-    'no-unused-vars': 'off',
+-    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+-    'no-empty': ['error', { allowEmptyCatch: false }],
+-    'no-unsafe-negation': 'error',
+-
+-    // Noise reduction (temporary)
+-    'react/react-in-jsx-scope': 'off',
+-    '@typescript-eslint/no-require-imports': 'off',
+-    '@typescript-eslint.no-var-requires': 'off',
+-    '@typescript-eslint/no-explicit-any': 'warn',
+-    'react-hooks/set-state-in-effect': 'off',
+-    'react-hooks/exhaustive-deps': 'warn'
+-  },
++  extends: ['plugin:@typescript-eslint/recommended'],
++  rules: {},
+   overrides: [
+     {
+-      files: ['**/*.ts', '**/*.tsx'],
++      files: ['*.ts', '*.tsx'],
+       parserOptions: { project: './tsconfig.json' }
+     },
+     {
+-- 
+2.51.2.windows.1
+

@@ -1,0 +1,37 @@
+From bdccb199774a79044ff59bc01800b9f2b0ec3c43 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Sun, 23 Nov 2025 09:51:12 +0800
+Subject: [PATCH 05/34] =?UTF-8?q?chore(lint):=20JS-only=20fixes=20?=
+ =?UTF-8?q?=E2=80=94=20propTypes,=20safe=20negation,=20remove=20useless=20?=
+ =?UTF-8?q?escapes?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ components/Card.jsx | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/components/Card.jsx b/components/Card.jsx
+index 460a78aa..999b8484 100644
+--- a/components/Card.jsx
++++ b/components/Card.jsx
+@@ -1,5 +1,15 @@
+ import { motion } from 'framer-motion';
+ import useCart from '../hooks/useCart';
++import PropTypes from 'prop-types';
++
++/* eslint-disable react/prop-types */
++
++Card.propTypes = {
++  id: PropTypes.string,
++  title: PropTypes.string,
++  desc: PropTypes.string,
++  price: PropTypes.number,
++};
+ 
+ export default function Card({ id, title, desc, price }) {
+   const { addToCart } = useCart();
+-- 
+2.51.2.windows.1
+
