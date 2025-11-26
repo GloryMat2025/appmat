@@ -1,0 +1,16 @@
+--- a/src/main.jsx
++++ b/src/main.jsx
+@@ -1,16 +1,9 @@
+-import React from 'react';
+-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+-import App from './App';
+-import Cart from './page/Cart';
+-import Checkout from './page/Checkout';
+-import Admin from './page/Admin';
+-import { ThemeProvider } from './context/ThemeContext';
+-import { CartProvider } from './context/CartContext';
+-import Something from './Something';
++// Clean unused imports
++import React from 'react';
++import App from './App';
+

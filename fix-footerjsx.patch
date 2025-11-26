@@ -1,0 +1,8 @@
+--- a/src/components/Footer.jsx
++++ b/src/components/Footer.jsx
+@@ -1,5 +1,4 @@
+-import { motion } from 'framer-motion';
+-
++// removed unused motion import
+ export default function Footer() {
+   return (

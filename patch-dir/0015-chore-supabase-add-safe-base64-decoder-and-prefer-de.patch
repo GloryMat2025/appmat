@@ -1,0 +1,77 @@
+From 59d5c7e1cfa9ebcaa1dc34d19b8aaf49013e0773 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Sun, 23 Nov 2025 14:16:11 +0800
+Subject: [PATCH 15/34] chore(supabase): add safe base64 decoder and prefer
+ decoded env secrets
+
+---
+ supabase/scripts/decode-secret.js | 57 +++++++++++++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
+ create mode 100644 supabase/scripts/decode-secret.js
+
+diff --git a/supabase/scripts/decode-secret.js b/supabase/scripts/decode-secret.js
+new file mode 100644
+index 00000000..d0ee86fd
+--- /dev/null
++++ b/supabase/scripts/decode-secret.js
+@@ -0,0 +1,57 @@
++// supabase/scripts/decode-secret.js
++// Small helpers to safely decode Base64-encoded secrets from environment variables.
++// Exported helpers:
++//  - decodeEnvBase64(name): returns decoded string or throws on missing/malformed value
++//  - tryDecodeEnvBase64(name): returns decoded string or null on missing/malformed
++
++function isLikelyBase64(s) {
++  if (typeof s !== 'string' || s.length === 0) return false;
++  const trimmed = s.trim();
++
++  // Only valid base64 chars plus optional padding (=)
++  if (!/^[A-Za-z0-9+/=]+$/.test(trimmed)) return false;
++
++  // Length must be multiple of 4 once padded; add padding if needed for validation
++  const pad = trimmed.length % 4;
++  const normalized = pad === 0 ? trimmed : trimmed + '='.repeat(4 - pad);
++
++  // Try decode/encode roundtrip to verify it's real base64
++  try {
++    const buf = Buffer.from(normalized, 'base64');
++    // Re-encode and compare ignoring trailing '=' padding
++    const re = buf.toString('base64').replace(/=+$/, '');
++    const orig = trimmed.replace(/=+$/, '');
++    return re === orig;
++  } catch {
++    return false;
++  }
++}
++
++function decodeEnvBase64(name) {
++  const raw = process.env[name];
++  if (!raw) throw new Error(`Missing environment variable: ${name}`);
++  if (!isLikelyBase64(raw)) throw new Error(`Environment variable ${name} is not valid base64`);
++  try {
++    const buf = Buffer.from(raw, 'base64');
++    return buf.toString('utf8');
++  } catch (err) {
++    throw new Error(`Failed to decode ${name} as base64: ${err.message || err}`);
++  }
++}
++
++function tryDecodeEnvBase64(name) {
++  const raw = process.env[name];
++  if (!raw) return null;
++  if (!isLikelyBase64(raw)) return null;
++  try {
++    const buf = Buffer.from(raw, 'base64');
++    return buf.toString('utf8');
++  } catch {
++    return null;
++  }
++}
++
++module.exports = {
++  decodeEnvBase64,
++  tryDecodeEnvBase64,
++};
+-- 
+2.51.2.windows.1
+

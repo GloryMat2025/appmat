@@ -1,6 +1,4 @@
 import useCart from '../hooks/useCart';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 
 <Link to="/checkout">
   <motion.button

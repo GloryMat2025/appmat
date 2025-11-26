@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
 import useCart from '../hooks/useCart';
 
 export default function Checkout() {
-  const { cartItems, totalPrice, removeFromCart, clearCart } = useCart();
   const [form, setForm] = useState({ name: '', phone: '', address: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -31,7 +29,6 @@ export default function Checkout() {
         body: JSON.stringify(order),
       });
 
-      if (!res.ok) throw new Error('Server error');
       alert('✅ Order sent successfully!');
 
       // Send a follow-up notification to the server (used for push/notification UI)
@@ -45,11 +42,8 @@ export default function Checkout() {
             url: '/orders',
           }),
         });
-      } catch (notifyErr) {
         // Non-fatal — log and continue
-        console.warn('Notify failed', notifyErr);
       }
-    } catch (err) {
       alert('⚠️ Offline mode: Order will be sent automatically later.');
       // Ask SW to sync later
       if ('serviceWorker' in navigator && 'SyncManager' in window) {

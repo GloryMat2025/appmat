@@ -1,5 +1,4 @@
 import { IonPage, IonContent, IonButton } from "@ionic/react";
-import { useSearchParams } from "react-router-dom";
 
 const PaymentSuccess = () => {
   const [params] = useSearchParams();

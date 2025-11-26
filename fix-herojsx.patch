@@ -1,0 +1,7 @@
+--- a/src/components/Hero.jsx
++++ b/src/components/Hero.jsx
+@@ -1,5 +1,4 @@
+-import { motion } from 'framer-motion';
++// removed unused motion import
+
+ export default function Hero() {

@@ -1,57 +1,58 @@
 module.exports = {
   root: true,
-  env: { browser: true, node: true, es2022: true, jest: true },
-  // Ignore problematic files while we fix them incrementally
-  ignorePatterns: [
-    'node_modules/',
-    'dist/',
-    'public/',
-    'supabase/.temp/',
-    'vite.config.*',
-    '*.config.*',
-    '/*.eslintrc.*',
-    'backend/**',
-    'tests/e2e/**',
-
-    // Temporarily ignore files with parsing/JSX issues so lint runs are useful.
-    // We'll remove these ignores after fixing the files.
-    'src/router.jsx',
-    'src/page/AdminOrders/**',
-    'src/page/Cart/**',
-    'src/page/OrderDetail/**'
-  ],
+  env: {
+    browser: true,
+    node: true,
+    es2021: true
+  },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    tsconfigRootDir: __dirname,
     ecmaVersion: 2021,
     sourceType: 'module',
-    ecmaFeatures: { jsx: true }
+    ecmaFeatures: {
+      jsx: true
+    }
   },
-  plugins: ['@typescript-eslint'],
-  settings: { react: { version: 'detect' } },
-  extends: ['plugin:@typescript-eslint/recommended'],
-  rules: {},
+  plugins: ['@typescript-eslint', 'react', 'unused-imports'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'prettier'
+  ],
+  settings: {
+    react: {
+      version: 'detect'
+    }
+  },
+  rules: {
+    // Fail on unused imports (removal enforced)
+    'unused-imports/no-unused-imports': 'error',
+
+    // Disable core/TS unused-vars handling (we rely on unused-imports)
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'off',
+
+    // Allow explicit any for incremental migration
+    '@typescript-eslint/no-explicit-any': 'off',
+
+    // Projects using TypeScript or modern patterns may not use prop-types
+    'react/prop-types': 'off'
+  },
   overrides: [
     {
-      files: [
-        '*.ts', '*.tsx'],
-      parserOptions: { project: './tsconfig.json' }
-    },
-    {
-      files: ['**/*.js', '**/*.jsx', '**/*.cjs'],
-      parser: 'espree',
-      parserOptions: { ecmaVersion: 2020, sourceType: 'module', ecmaFeatures: { jsx: true } },
+      files: ['*.js', '*.jsx'],
       rules: {
-        '@typescript-eslint/no-require-imports': 'off',
-        '@typescript-eslint.no-var-requires': 'off'
+        'no-unused-vars': 'off',
+        '@typescript-eslint/no-unused-vars': 'off'
       }
     },
     {
-      files: ['supabase/**', 'scripts/**', 'tools/**'],
+      files: ['*.ts', '*.tsx'],
       rules: {
-        '@typescript-eslint.no-require-imports': 'off',
-        '@typescript-eslint.no-var-requires': 'off'
+        '@typescript-eslint/no-explicit-any': 'off'
       }
     }
   ]
 };
+

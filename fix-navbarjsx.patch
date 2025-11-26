@@ -1,0 +1,7 @@
+--- a/src/components/Navbar.jsx
++++ b/src/components/Navbar.jsx
+@@ -1,5 +1,4 @@
+-import { Link } from 'react-router-dom';
++// removed unused Link
+
+ export default function Navbar() {

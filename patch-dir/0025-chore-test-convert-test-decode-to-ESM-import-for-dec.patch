@@ -1,0 +1,27 @@
+From f26ff7749537993b2880b2acfdad5a39df3b4142 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Tue, 25 Nov 2025 11:45:31 +0800
+Subject: [PATCH 25/34] chore(test): convert test-decode to ESM import for
+ decode-secret
+
+---
+ supabase/scripts/test-decode.js | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/supabase/scripts/test-decode.js b/supabase/scripts/test-decode.js
+index fd582b20..6004b187 100644
+--- a/supabase/scripts/test-decode.js
++++ b/supabase/scripts/test-decode.js
+@@ -1,6 +1,6 @@
+-import { decodeEnvBase64, tryDecodeEnvBase64 } from './scripts/decode-secret.js';
++import { decodeEnvBase64, tryDecodeEnvBase64 } from './decode-secret.js';
+ 
+ process.env.TEST_B64 = Buffer.from('hello world').toString('base64');
+ 
+-console.log('tryDecodeEnvBase64:', tryDecodeEnvBase64('TEST_B64')); // expect 'hello world'
+-console.log('decodeEnvBase64:', decodeEnvBase64('TEST_B64')); // expect 'hello world'
++console.log('tryDecodeEnvBase64:', tryDecodeEnvBase64('TEST_B64'));
++console.log('decodeEnvBase64:', decodeEnvBase64('TEST_B64'));
+-- 
+2.51.2.windows.1
+

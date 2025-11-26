@@ -1,0 +1,22 @@
+From e5b54114aa64cac8a302ab1d00b3c70794537de3 Mon Sep 17 00:00:00 2001
+From: Your Name <github-actions[bot]@users.noreply.github.com>
+Date: Tue, 25 Nov 2025 12:28:14 +0800
+Subject: [PATCH 29/34] chore(eslint): ignore appmat_backup/ to reduce noisy
+ lint output
+
+---
+ .eslintignore | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/.eslintignore b/.eslintignore
+index 68448261..dbab2341 100644
+--- a/.eslintignore
++++ b/.eslintignore
+@@ -5,3 +5,4 @@ public/
+ appmat/
+ node_modules/
+ supabase/.temp
++appmat_backup/ 
+-- 
+2.51.2.windows.1
+

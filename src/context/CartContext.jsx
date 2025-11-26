@@ -1,6 +1,4 @@
-import React, { useState } from 'react';
 import { createContext, useContext } from 'react';
-import PropTypes from 'prop-types';
 
 const CartContext = createContext();
 
@@ -9,7 +7,6 @@ export const CartProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('cart');
       return saved ? JSON.parse(saved) : [];
-    } catch (e) {
       return [];
     }
   });

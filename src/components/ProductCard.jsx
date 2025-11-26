@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 
 export default function ProductCard({ title, price, image, onClick }) {
   return (
